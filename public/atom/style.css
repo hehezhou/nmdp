@@ -1,0 +1,145 @@
+* {
+    box-sizing: border-box;
+    overflow: auto;
+    font-family: Microsoft Yahei;
+}
+h1.welcome {
+    align-self: end;
+    justify-self: center;
+}
+h1.countdown {
+    align-self: center;
+    justify-self: center;
+    text-align: center;
+}
+h1.rank {
+    align-self: end;
+    justify-self: center;
+}
+p.join {
+    justify-self: center;
+    align-self: start;
+    font-size: 40px;
+    margin: 0;
+}
+p.ready-state {
+    text-align: center;
+    align-self: center;
+    justify-self: center;
+    font-size: 1.6em;
+    margin: 0;
+}
+body {
+    margin: 0;
+}
+button {
+    background-color: whitesmoke;
+    font-size: 1em;
+    border: 1px solid black;
+    border-radius: 2px;
+    outline: 0;
+}
+button.choose {
+    width: 130px;
+    height: 60px;
+    align-self: start;
+    justify-self: center;
+    text-align: center;
+}
+button.ready {
+    align-self: top;
+    justify-self: center;
+    width: 130px;
+    height: 60px;
+    background-color: greenyellow;
+}
+button.unready {
+    align-self: top;
+    justify-self: center;
+    width: 130px;
+    height: 60px;
+}
+button.restart {
+    align-self: top;
+    justify-self: center;
+    width: 90px;
+    height: 40px;
+}
+div.graph {
+    position: relative;
+    left: 0;
+    top: 0;
+    grid-row: st / en;
+}
+div.frame {
+    display: grid;
+    width: 100vw;
+    height: 100vh;
+}
+div.choose-interface {
+    grid-gap: 5px;
+    gap: 5px;
+    grid-template-rows: 40% repeat(auto-fill, 60px);
+    grid-template-columns: 100%;
+}
+div.join-interface {
+    grid-template-rows: 150px;
+    grid-template-columns: 100%;
+    align-content: center;
+}
+div.ready-interface {
+    grid-template-columns: 100%;
+    grid-template-rows: 9fr 3fr 8fr;
+}
+div.game-interface {
+    grid-auto-flow: column;
+    align-content: center;
+    justify-content: center;
+}
+div.end-interface {
+    grid-template-columns: 100%;
+    grid-template-rows: 45% 55%;
+}
+button:hover {
+    background-color: rgb(192, 192, 192);
+}
+button.ready:hover {
+    background-color: green;
+}
+canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-sizing: initial;
+    border: 2px solid black;
+}
+canvas.hover {
+    z-index: 4;
+}
+canvas.atom {
+    z-index: 3;
+    image-rendering: auto;
+}
+canvas.build {
+    z-index: 2;
+    image-rendering: auto;
+}
+canvas.background {
+    z-index: 1;
+}
+div.round {
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+}
+div.player-message {
+    text-align: center;
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+}
+div.message {
+    border-top: 2px solid black;
+    border-right: 2px solid black;
+    border-bottom: 2px solid black;
+    grid-row: st / en;
+}

@@ -1,0 +1,157 @@
+/**
+ * Atom 规则
+ * 这份规则描述适用于联机版，和单机程序中的实现未必一致。
+ */
+Player:{};
+Player.decide({Grid|None}):Grid|None=@;
+North:#;
+West:#;
+South:#;
+East:#;
+Direction:North|West|South|East;
+turn:Direction->Direction=[
+	North->West,
+	West->South,
+	South->East,
+	East->North,
+];
+turn_around:Direction->Direction=[
+	d->turn[turn[d]]
+	|for(d:Direction in Direction)~
+];
+(North:Direction).dx:Int=-1;
+(West:Direction).dx:Int=0;
+(South:Direction).dx:Int=1;
+(East:Direction).dx:Int=0;
+(North:Direction).dy:Int=0;
+(West:Direction).dy:Int=-1;
+(South:Direction).dy:Int=0;
+(East:Direction).dy:Int=1;
+None:#;
+Mountain:#;
+Water:#;
+Bridge:Direction->Boolean;
+Tower:{
+	produce_per_round:Int;
+};
+SpawnPoint:#;
+Terrain:Mountain|Water|None;
+Building:Bridge|Tower|SpawnPoint|None;
+Grid:{
+	owner:Player|None;
+	atoms:Int;
+	terrain:Terrain;
+	building:Building;
+};
+Map:Grid[][];
+Index:{
+	x:Int;
+	y:Int;
+};
+(map:Map).[Index{x:Int,y:Int}]:Grid|None=map[x][y];
+(map:Map).find[map[x:Int][y:Int]]:Index=Index{x:x,y:y};
+(map:Map).play:{Player}=map.is_ended?map.alive_players:map.round.play;
+(map:Map).alive_players:{Player}={p:Player|exist a:Grid in map:a.owner is p};
+(map:Map).is_ended:Boolean=all a:Grid,b:Grid in map:a.owner is None||b.owner is None||a.owner is b.owner;
+(map:Map).round{
+	for(p:Player in map.alive_players){
+		map.tower_produce(p);
+		map.place_atom(p);
+	}
+	map.tower_produce(None);
+	return map;
+};
+(map:Map).tower_produce(owner:Player|None){
+	map.simulate([
+		Transfer{source:None,destination:a,amount:a.building.produce_per_round}
+		|for(a:Grid in map){
+			if(a.owner is owner&&a.building is Tower&&a.atoms>=0)~
+		}
+	]);
+}
+(grid:Grid).can_place_atom:Boolean=grid.terrain is None&&grid.building in {None,SpawnPoint};
+(map:Map).place_atom(p:Player){
+	choice:Grid|None=p.decide({x:Grid|x.can_place_atom&&x.owner is p}|{None});
+	if(choice is Grid){
+		map.simulate([
+			Transfer{source:None,destination:choice,amount:1}
+		]);
+	}
+}
+Transfer:{
+	source:Grid|None;
+	destination:Grid;
+	amount:Int;
+};
+(map:Map).simulate([]:Transfer[]){}
+(map:Map).simulate(transfers:Transfer[]){
+	if(!map.is_ended){
+		map.simulate([
+			...t.destination.arrive(t.amount,t.source,map);
+			|for(t:Transfer in transfers){
+				if(t.source is Grid){
+					t.source.atoms-=t.amount;
+				}
+			}
+			for(t:Transfer in transfers)~
+		]);
+	}
+}
+(grid:Grid in map:Map).adjacents:Direction->Grid=[
+	d->a
+	|Index{x:Int,y:Int}=map.find(grid);
+	for(d:Direction in Direction){
+		a:Grid|None=map[Index{x:x+d.dx,y:y+d.dy}];
+		if(a is Grid)~
+	}
+];
+(grid:Grid in map:Map).empty_adjacents:Direction->Grid=[
+	d->g
+	|for(d:Direction->g:Grid in grid.adjacents){
+		if(g.access(turn_around[d]))~
+	}
+];
+(Grid{building:None|SpawnPoint|Tower,terrain:Terrain}).access(Direction)=terrain in {None,Water};
+(Grid{building:Bridge,terrain:Terrain}).access(d:Direction)=building[d];
+(Grid{building:None,terrain:Water}).arrive(Int,Grid|None,Map):Transfer[]=[];
+(grid:Grid{building:None|SpawnPoint|Tower,terrain:None}).arrive(amount:Int,source:Grid|None,map:Map):Transfer[]=[
+	Transfer{source:grid,destination:a,amount:grid.atoms div e-oc}
+	|e:Int=grid.empty_adjacents.$;
+	oc:Int=grid.atoms<0||e is 0?0:grid.atoms div e;
+	grid.atoms+=amount;
+	if(grid.atoms>=0){
+		if(source is Grid&&!(grid.owner is source.owner)){
+			dead:Player=a.owner;
+			if(grid.building is SpawnPoint){
+				for(a:Grid in map){
+					if(a.owner is dead){
+						a.owner=grid.owner;
+					}
+				}
+				grid.building=None;
+			}
+		}
+		if(e>0){
+			if(grid.atoms div e>oc){
+				for(a:Grid in grid.empty_adjacents)~
+			}
+		}
+	}
+];
+(bridge:Bridge).is_corner=bridge in {Bridge[e->e in {d,turn[d]}|for(e:Direction in Direction)~]|for(d:Direction in Direction)~};
+(grid:Grid{building:Bridge,terrain:Terrain}).arrive(amount:Int,source:Grid|None,map:Map):Transfer[]=[
+	Transfer{source:grid,destination:grid.adjacents[d],amount:amount}
+	|grid.atoms+=amount;
+	if(source is Grid){
+		grid.owner=source.owner;
+	}
+	if(building.is_corner){
+		e:Direction=source.adjacents.find(grid);
+		d:Direction=building[turn[e]]?turn[e]:turn_around[turn[e]];
+		~
+	}
+	else{
+		d:Direction=source.adjacents.find(grid);
+		~
+	}
+];

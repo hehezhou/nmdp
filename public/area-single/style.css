@@ -1,0 +1,28 @@
+* {
+    box-sizing: border-box;
+}
+
+.line{
+    height: 30px;
+    white-space: nowrap;
+}
+
+.grid{
+    height: 30px;
+    width: 30px;
+    display: inline-block;
+}
+
+.grid:hover{
+    border: 1px #49a7ff solid !important;
+}
+
+table,tr,th,td{
+    padding: 0;
+    border: none;
+    border-spacing: 0;
+}
+
+body{
+    margin: 8px;
+}
