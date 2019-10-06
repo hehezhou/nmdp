@@ -230,8 +230,8 @@ async function gameInterface(msg) {
                     cxt.fillStyle = 'rgba(79, 194, 230, 0.3)';
                     let nowTheta = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowHeight);
                     cxt.beginPath();
-                    cxt.arc(data.y - Y, data.x - X, playerRadius, data.attackTheta - theta, data.attackTheta + theta, false);
-                    cxt.arc(data.y - Y, data.x - X, knifeRadius, data.attackTheta + theta, data.attackTheta - theta, true);
+                    cxt.arc(data.y - Y, data.x - X, playerRadius, nowTheta - theta, nowTheta + theta, false);
+                    cxt.arc(data.y - Y, data.x - X, knifeRadius, nowTheta + theta, nowTheta - theta, true);
                     cxt.closePath();
                     cxt.fill();
                     cxt.stroke();
