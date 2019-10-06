@@ -1,0 +1,111 @@
+import {sqrt,sin,cos,atan2,max,min,PI,mid} from Math;
+import {randomReal} from Random;
+import {Set} from DataStructre;
+import {assert} from Assert;
+PLAYER_TIME_BEFORE_ATTACK:Real=1;
+PLAYER_MAX_SPEED:Real=30;
+PLAYER_ACC:Real=120;
+PLAYER_MAX_HEALTH:Real=100;
+PLAYER_ATTACK_RANGE:Real=40;
+PLAYER_ATTACK_ANGLE:Real=PI/6;
+PLAYER_ATTACK_DAMAGE:Real=75;
+PLAYER_ATTACK_HEAL:Real=25;
+PLAYER_HURT_PER_SEC:Real=40;
+ARENA_HEIGHT:Real=1000;
+ARENA_WIDTH:Real=1000;
+V:{
+	x:Real;
+	y:Real;
+};
+V{x1,y1}.+V{x2,y2}=V{x1+x2,y1+y2};
+V{x1,y1}.-V{x2,y2}=V{x1-x2,y1-y2};
+V{x,y}.*(a:Real)=V{x*a,y*a};
+V{x,y}./(a:Real)=V{x*a,y*a};
+V{x,y}.len:Real=sqrt(x*x+y*y);
+//atan2(x:Real,y:Real):Real;(>=0 <2*PI)
+V{x,y}.angle:Real=atan2(x,y);
+angleToV(angle:Real):V=V{cos(angle),sin(angle)};
+Waiting:{};
+BeforeAttack:{
+	time:Real;
+	angle:Real;
+};
+players:Set<Player>;
+Player:{
+	pos:V;
+	speed:V;
+	targetSpeed:V;
+	attackState:Waiting|BeforeAttack;
+	health:Real;
+	targetHealth:Real;
+	attack(angle:Real){
+		assert(attackState is Waiting);
+		attackState=BeforeAttack{PLAYER_TIME_BEFORE_ATTACK,angle};
+	}
+	move(newTargetSpeed:V){
+		if(newTargetSpeed!=V{0,0}){
+			newTargetSpeed*=PLAYER_MAX_SPEED/newTargetSpeed.len;
+		}
+		targetSpeed=newTargetSpeed;
+	}
+	inAttackRange(p:Player,angle:Real):Boolean{
+		dis:V=p.pos-pos;
+		if(dis.len==0||dis.len>PLAYER_ATTACK_RANGE){
+			return false;
+		}
+		delta:Real=dis.angle-angle;
+		return delta<=PLAYER_ATTACK_ANGLE||delta>=2*PI-PLAYER_ATTACK_ANGLE;
+	}
+	time(t:Real){
+		deltaSpeed:V=targetSpeed-speed;
+		dl:Real=deltaSpeed.len;
+		p:Real=max(dl/PLAYER_ACC,t);
+		pos+=speed*p/2;
+		speed+=p*deltaSpeed/deltaSpeed.len;
+		pos+=speed*(t-p/2);
+		pos.x=mid(-ARENA_WIDTH,pos.x,ARENA_WIDTH);
+		pos.y=mid(-ARENA_HEIGHT,pos.y,ARENA_HEIGHT);
+		if(attackState is BeforeAttack){
+			attackState.time-=t;
+			if(attackState.time<=0){
+				for(player:Player in players){
+					if(inAttackRange(player,attackState.angle)){
+						player.targetHealth-=PLAYER_ATTACK_DAMAGE;
+						targetHealth+=PLAYER_ATTACK_HEAL;
+					}
+				}
+				attackState=Waiting;
+			}
+		}
+		health=max(targetHealth,health-PLAYER_HURT_PER_SEC*t);
+	}
+};
+getDirection:Int=>v=[
+	-1=>V{0,0};
+	i:Int=>angleToV(i*PI/4);
+];
+Interface:{
+	attack:()=>();
+	setDirection:Int=>();
+};
+export join:Interface{
+	player:Player=Player{
+		pos:V{randomReal(-ARENA_WIDTH,ARENA_WIDTH),randomReal(-ARENA_HEIGHT,ARENA_HEIGHT)};
+		speed:V{0,0};
+		targetSpeed:V{0,0};
+		attackState:Waiting;
+		health:PLAYER_MAX_HEALTH;
+		targetHealth:PLAYER_MAX_HEALTH;
+	};
+	players.insert(player);
+	return Interface{
+		attack:()=>player.attack;
+		setDirection:i:Int=>player.move(getDirection(i));
+	};
+}
+export time(t:Real){
+	for(player:Player in players){
+		player.time(t);
+	}
+	players=players.filter(player:Player=>player.health>0);
+}
