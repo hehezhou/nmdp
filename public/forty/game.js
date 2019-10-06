@@ -183,7 +183,6 @@ async function gameInterface(msg) {
     };
     updateSize();
     window.addEventListener('resize', updateSize);
-    await new Promise(resolve => 0);
     let FORTY = new CORE.GAME(data);
     let playerList = data.player_list;
     let playerIndex = data.player_index;
