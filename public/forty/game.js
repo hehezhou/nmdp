@@ -183,7 +183,7 @@ async function gameInterface(msg) {
     };
     updateSize();
     window.addEventListener('resize', updateSize);
-    let FORTY = new CORE.GAME(data);
+    let FORTY = new GAME(data);
     let playerList = data.player_list;
     let playerIndex = data.player_index;
     let X = 0, Y = 0;
