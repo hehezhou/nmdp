@@ -188,11 +188,12 @@ async function gameInterface(msg) {
     let playerList = data.player_list;
     let playerIndex = data.player_index;
     let X = 0, Y = 0;
-    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1;
+    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 12, HPdis = 3;
     await new Promise(resolve => {
         let running = 1;
         let nowMouseX, nowMouseY;
         requestAnimationFrame(function x() {
+            cxt.clearRect(0, 0, nowWidth, nowHeight);
             let { players } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2;
@@ -237,6 +238,12 @@ async function gameInterface(msg) {
                     cxt.stroke();
                 }
                 else return;
+            });
+            cxt.lineWidth = 2;
+            players.forEach(data => {
+                cxt.fillStyle = 'red';
+                cxt.fillRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth * data.HP / data.maxHP, HPheight);
+                cxt.strokeRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth, HPheight);
             });
             if (running) requestAnimationFrame(x);
         });
