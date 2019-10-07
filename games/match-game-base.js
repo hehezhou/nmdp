@@ -13,6 +13,7 @@ module.exports = class MatchGame extends Game {
 		this.isStarted = false;
 		this.time = -Infinity;
 		this.readyCount = 0;
+		this.onlineCount = 0;
 		this.startTime = null;
 		let getter = key => this[key];
 		this.info = {
@@ -52,7 +53,7 @@ module.exports = class MatchGame extends Game {
 				player_count: this.playerCount(),
 				ready_count: this.readyCount,
 				start_time: this.startTime === null ? null : this.startTime - this.time,
-			}])
+			}]);
 		}
 		if (!this.isStarted && this.playerCount() >= this.minPlayer && this.readyCount === this.playerCount()) {
 			this.isStarted = true;
@@ -60,15 +61,19 @@ module.exports = class MatchGame extends Game {
 		}
 	}
 	join(id, callback) {
+		this.onlineCount += 1;
 		if (this.isStarted) {
 			let index = this.playerIndexs.get(id);
-			this.players[index].callback = callback;
+			let player = this.players[index];
+			player.callback = callback;
+			player.isOnline = true;
 		}
 		else {
 			this.players.push({
 				id,
 				callback,
 				isReady: false,
+				isOnline: true,
 			});
 			let p = this.players;
 			let swap = randomInteger(this.playerCount());
@@ -80,12 +85,20 @@ module.exports = class MatchGame extends Game {
 		}
 	}
 	leave(id) {
+		this.onlineCount -= 1;
 		let index = this.playerIndexs.get(id);
 		let p = this.players;
-		p[index].callback = () => { };
-		if (!this.isStarted) {
+		let player = p[index];
+		if (this.isStarted) {
+			player.callback = () => { };
+			player.isOnline = false;
+			if (this.onlineCount === 0) {
+				this.emit('end');
+			}
+		}
+		else {
 			let last = this.playerCount() - 1;
-			if (p[index].isReady) {
+			if (player.isReady) {
 				this.readyCount -= 1;
 			}
 			([p[index], p[last]] = [p[last], p[index]]);

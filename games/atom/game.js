@@ -13,34 +13,44 @@ module.exports = class Atom extends MatchGame {
 			width: vaild.integer(width, { hint: 'width', min: MIN_SIZE, max: MAX_SIZE }),
 		};
 		this.on('start', () => this.onStart());
-		this.on('input',(playerID,data)=>{
-			this.onInput(playerID,data);
+		this.on('input', (playerID, data) => {
+			this.onInput(playerID, data);
 		})
 		this.info.id = 'atom';
 	}
+	join(playerID, callback) {
+		super.join(playerID, callback);
+		if (this.isStarted) {
+			let index = this.playerIndexs.get(playerID);
+			this.send(index);
+		}
+	}
 	onStart() {
 		this.game = new Game({
-			players: this.players.map((player,index)=>index),
+			players: this.players.map((player, index) => index),
 			map: mapGens[0]({
 				height: this.settings.height,
 				width: this.settings.width,
-				players: this.players.map((player,index)=>index),
+				players: this.players.map((player, index) => index),
 			}),
 			onUpdate: decide => {
 				for (let player of this.players) {
 					player.callback(['game_update', {
-						round:this.game.round,
-						turn:this.game.turn,
-						choice:decide,
+						round: this.game.round,
+						turn: this.game.turn,
+						choice: decide,
 					}]);
 				}
 			},
-			onDecide: (player, callback) => {
+			onDecide: (playerIndex, callback) => {
 				this.onChoice = callback;
+				if (!this.players[playerIndex].isOnline) {
+					this.onChoice(null);
+				}
 			},
 			onEnd: () => {
-				for(let player of this.players){
-					player.callback(['game_end',null]);
+				for (let player of this.players) {
+					player.callback(['game_end', null]);
 				}
 				this.emit('end');
 			},
@@ -60,6 +70,19 @@ module.exports = class Atom extends MatchGame {
 			turn: this.game.turn,
 			map: this.game.gameMap.toPlain(),
 		}]);
+	}
+	leave(playerID) {
+		super.leave(playerID);
+		if (this.onlineCount === 0) {
+			return;
+		}
+		if (this.isStarted) {
+			let index = this.playerIndexs.get(playerID);
+			if (this.game.turn === index) {
+				// pass
+				this.onChoice(null);
+			}
+		}
 	}
 	onInput(playerID, input) {
 		let index = this.playerIndexs.get(playerID);
@@ -81,8 +104,8 @@ module.exports = class Atom extends MatchGame {
 	serialization() {
 		return JSON.stringify({
 			...this.settings,
-			minPlayer:this.minPlayer,
-			maxPlayer:this.maxPlayer,
+			minPlayer: this.minPlayer,
+			maxPlayer: this.maxPlayer,
 		});
 	}
 	static unserialization(data) {
