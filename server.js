@@ -1,13 +1,10 @@
-const WebServer = require('./web-server.js');
 const GameServer = require('./game-server.js');
 const zlib = require('zlib');
 const fs = require('fs');
 const CLI = require('./cli.js');
 const promisify = require('./utils/promisify.js');
-(new WebServer()).listen(80);
 
-const PATH='./saves/';
-const PORT = 1926;
+const PATH = './saves/';
 
 function genFileName(prefix = 'file') {
 	return `${prefix}@${Date.now()}.dat`;
@@ -34,22 +31,22 @@ function loadSaveFile(path) {
 			console.log(`* reading save file from ${path}`);
 			return (GameServer.unserialization(result.toString()));
 		})
-		.catch(error=>{
+		.catch(error => {
 			console.warn(`! invalid save file ${path}`);
 			console.error(error);
 			throw error;
-		});	
+		});
 }
 
-async function clearSaveFile(path){
+async function clearSaveFile(path) {
 	let result = await promisify(fs.readdir)(path);
 	let infos = result
 		.map(parseFileName)
 		.filter(info => info !== null && info.prefix === 'save')
 		.sort((a, b) => b.time - a.time);
-	let [,...useless]=infos;
-	await Promise.all(useless.map(info=>{
-		let name = path+info.fileName;
+	let [, ...useless] = infos;
+	await Promise.all(useless.map(info => {
+		let name = path + info.fileName;
 		return promisify(fs.unlink)(name);
 	}));
 }
@@ -61,9 +58,9 @@ async function loadSaveDir(path) {
 		.filter(info => info !== null && info.prefix === 'save')
 		.sort((a, b) => b.time - a.time);
 	for (let info of infos) {
-		let name = path+info.fileName;
+		let name = path + info.fileName;
 		try {
-			let server=await loadSaveFile(name);
+			let server = await loadSaveFile(name);
 			await clearSaveFile(path);
 			return server;
 		}
@@ -74,7 +71,7 @@ async function loadSaveDir(path) {
 	throw new Error('no save files');
 }
 
-async function loadGameServer(saveUrl){
+async function loadGameServer(saveUrl) {
 	if (saveUrl !== undefined) {
 		try {
 			return await loadSaveFile(saveUrl);
@@ -93,34 +90,48 @@ async function loadGameServer(saveUrl){
 	}
 }
 
-(async () => {
+module.exports = class Server {
+	constructor() {
+		this.port=null;
+		loadGameServer(process.argv[2])
+		.then(gameServer=>{
+			if(this.port){
+				gameServer.listen(this.port);
+			}
+			this.gameServer = gameServer;
 
-	let gameServer = await loadGameServer(process.argv[2]);
+			setInterval(()=>{
+				this.save();
+			}, 60000);
 
-	gameServer.listen(PORT);
-
-	function save() {
-		return promisify(zlib.gzip)(gameServer.serialization())
-			.then(
-				result => promisify(fs.writeFile)(PATH+genFileName('save'), result)
-			)
-			.then(()=>clearSaveFile(PATH));
+			CLI(gameServer)
+				.on('save',()=>{
+					this.save();
+				})
+				.on('close',()=>{
+					this.exit();
+				});
+		});
 	}
-
-	setInterval(save, 60000);
-
-	async function exit() {
-		save()
-			.then(() => {
-				process.exit(0);
-			})
-			.catch(error => {
-				console.error(error);
-				process.exit(1);
-			});
+	async save(){
+		const result = await promisify(zlib.gzip)(this.gameServer.serialization());
+		await promisify(fs.writeFile)(PATH + genFileName('save'), result);
+		return await clearSaveFile(PATH);
 	}
-
-	CLI(gameServer)
-		.on('save',save)
-		.on('close',exit);
-})();
+	async exit(){
+		try {
+			await this.save();
+			process.exit(0);
+		}
+		catch (error) {
+			console.error(error);
+			process.exit(1);
+		}
+	}
+	listen(port) {
+		this.port=port;
+		if(this.gameServer!==undefined){
+			this.gameServer.listen(port);
+		}
+	}
+}
