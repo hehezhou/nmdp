@@ -1,5 +1,5 @@
 class GAME {
-    constructor(data) {
+    constructor({ data }) {
 
     }
     update(data) {
@@ -8,7 +8,10 @@ class GAME {
     getNowMap() {
 
     }
-    check({x, y}) {
-        
+    check({ x, y }) {
+
+    }
+    ranking() {
+
     }
 }

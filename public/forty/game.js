@@ -166,14 +166,14 @@ async function gameInterface(msg) {
     let { data, type } = msg;
     let nowWidth, nowHeight;
     let canvas = HTML.create('canvas');
+    let standingBox = HTML.create('div', 'standing');
     let cxt = canvas.getContext('2d');
     document.body.appendChild(canvas);
+    document.body.appendChild(ranking);
     document.body.className = 'game';
     function updateSize() {
         nowWidth = window.innerWidth;
         nowHeight = window.innerHeight;
-        canvas.style.width = nowWidth;
-        canvas.style.height = nowHeight;
         let d = (nowWidth * nowHeight + 0.01) / (1920 * 969) * 2;
         d = d ** 0.5;
         nowWidth = Math.ceil(nowWidth / d);
@@ -183,7 +183,7 @@ async function gameInterface(msg) {
     };
     updateSize();
     window.addEventListener('resize', updateSize);
-    let FORTY = new GAME(data);
+    let FORTY = new GAME({data});
     let playerList = data.player_list;
     let playerIndex = data.player_index;
     let X = 0, Y = 0;
@@ -193,7 +193,7 @@ async function gameInterface(msg) {
         let nowMouseX, nowMouseY;
         requestAnimationFrame(function x() {
             cxt.clearRect(0, 0, nowWidth, nowHeight);
-            let { players } = FORTY.getNowMap();
+            let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2;
             });
@@ -244,6 +244,18 @@ async function gameInterface(msg) {
                 cxt.fillRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth * data.HP / data.maxHP, HPheight);
                 cxt.strokeRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth, HPheight);
             });
+            standingBox.innerHTML = '';
+            for(let i = 0; i < 10; i++) {
+                if(i < standing.length) {
+                    standingBox.innerHTML += `${i + 1}.${standing[i]} ${players[standing[i]].score}<br/>`;
+                }
+                else {
+                    standing.innerHTML += '<br/>';
+                }
+            }
+            if(players[playerIndex]) {
+                standing.innerHTML += `<hr/>${standing.indexOf(playerIndex) + 1}.${playerIndex} ${players[playerIndex].score}`;
+            }
             if (running) requestAnimationFrame(x);
         });
         function pos({ x, y }) {
