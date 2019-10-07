@@ -370,7 +370,7 @@ const WORK = {
         else return console.error(`unknown type ${type}`), CONTINUE_TAG;
     },
     readyInterface: async function (type) {
-        if (type === CONTINUE_TAG) return CONTINUE_TAG;
+        if (type === CONTINUE_TAG) return {type: CONTINUE_TAG};
         HTML.clearBody();
         let frame = HTML.create('div', 'frame ready-interface'),
             readyMsg = HTML.create('p', 'ready-state'),
