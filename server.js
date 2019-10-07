@@ -115,6 +115,14 @@ module.exports = class Server {
 	}
 	async save(){
 		const result = await promisify(zlib.gzip)(this.gameServer.serialization());
+		try{
+			await promisify(fs.mkdir)(PATH);
+		}
+		catch(error){
+			if(error.code!=='EEXIST'){
+				throw error;
+			}
+		}
 		await promisify(fs.writeFile)(PATH + genFileName('save'), result);
 		return await clearSaveFile(PATH);
 	}
