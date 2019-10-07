@@ -23,6 +23,9 @@
 const io = new WebSocket(`ws://${location.hostname}:1926`);
 const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), GAME_CONTINUE = Symbol('game_continue');
 
+const W = 1, S = 2, A = 4, D = 8;
+const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
+
 let roomId;
 function send(message) {
     io.send(JSON.stringify(message));
@@ -302,6 +305,61 @@ async function gameInterface(msg) {
                 attack({ x, y });
             }
         });
+        var {keydownListener, keyupListener} = (() => {
+            let w = 0, s = 0, a = 0, d = 0, now = -1;
+            function updatedirect() {
+                let newD = 0;
+                if(w) newD |= W;
+                if(s) newD |= S;
+                if(a) newD |= A;
+                if(d) newD |= D;
+                if(newD != now) send(['move', newD]);
+            }
+            return {
+                keydownListener: function (data) {
+                    if(data.key === 'w') {
+                        w = 1;
+                        updatedirect();
+                    }
+                    else if(data.key === 's') {
+                        s = 1;
+                        updatedirect();
+                    }
+                    else if(data.key === 'a') {
+                        a = 1;
+                        updatedirect();
+                    }
+                    else if(data.key === 'd') {
+                        d = 1;
+                        updatedirect();
+                    }
+                    else return;
+                    data.preventDefault();
+                },
+                keyupListener: function (data) {
+                    if(data.key === 'w') {
+                        w = 0;
+                        updatedirect();
+                    }
+                    else if(data.key === 's') {
+                        s = 0;
+                        updatedirect();
+                    }
+                    else if(data.key === 'a') {
+                        a = 0;
+                        updatedirect();
+                    }
+                    else if(data.key === 'd') {
+                        d = 0;
+                        updatedirect();
+                    }
+                    else return;
+                    data.preventDefault();
+                },
+            };
+        })();
+        canvas.addEventListener('keydown', keydownListener);
+        canvas.addEventListener('keyup', keyupListener);
         io.addEventListener('message', function x(msg) {
             let data = JSON.parse(msg.data);
             if (data[0] === 'force_quit') {
@@ -309,6 +367,8 @@ async function gameInterface(msg) {
                 document.body.className = '';
                 window.removeEventListener('resize', updateSize);
                 io.removeEventListener('message', x);
+                canvas.removeEventListener('keydown', keydownListener);
+                canvas.removeEventListener('keyup', keyupListener);
                 running = 0;
                 resolve(CONTINUE_TAG);
             }
