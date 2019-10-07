@@ -1,4 +1,25 @@
 "use strict";
+/** receive
+ * ['game_start', {map_height, map_width, id}]
+ * PlayerData: {
+ *     pos: Vector;
+ *     speed: Vector;
+ *     targetSpeed: Vector;
+ *     timeBeforeAttacking: Vector;
+ * }
+ * ['game_update', {map:{players: Map<ID, PlayerData>}}]
+ * ['player_lose', {playerID, killerID}]
+ */
+
+ /** send
+  * ['attack', theta]
+  * ['move', -1 ~ 7];
+  */
+/**
+ * 3  2  1
+ * 4 -1  0
+ * 5  6  7
+ */
 const io = new WebSocket(`ws://${location.hostname}:1926`);
 const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), GAME_CONTINUE = Symbol('game_continue');
 
@@ -187,7 +208,7 @@ async function gameInterface(msg) {
     let playerList = data.player_list;
     let playerIndex = data.player_index;
     let X = 0, Y = 0;
-    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 12, HPdis = 3;
+    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 12, HPdis = 3, attactTime = 1;
     await new Promise(resolve => {
         let running = 1;
         let nowMouseX, nowMouseY;
@@ -210,7 +231,12 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 if (data.onattack) {
                     cxt.strokeStyle = data.attackRestTime <= lastTime ? 'rgba(255, 56, 56, 0.8)' : data.id === playerIndex ? 'rgba(61, 139, 255, 0.8)' : 'rgba(90, 90, 90, 0.8)';
-                    cxt.fillStyle = data.attackRestTime <= lastTime ? 'rgba(255, 56, 56, 0.4)' : data.id === playerIndex ? 'rgba(61, 139, 255, 0.4)' : 'rgba(90, 90, 90, 0.4)';
+                    cxt.fillStyle = 
+                        data.attackRestTime <= lastTime ? 
+                            'rgba(255, 56, 56, 0.5)' 
+                            : data.id === playerIndex ? 
+                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})` 
+                                : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
                     cxt.lineWidth = 1;
                     if (data.attackRestTime <= lastTime) {
                         let tag = data.attackRestTime / lastTime;
