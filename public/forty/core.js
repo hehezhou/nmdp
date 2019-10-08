@@ -86,10 +86,36 @@ const GAME = (() => {
             this.lastTime = Date.now();
         }
         output() {
-
+            let ans = [];
+            for(let i of this.players) {
+                let data = {};
+                data.id = i[0];
+                data.onattack = i[1].attackState !== Waiting;
+                if(i[1].attackState !== Waiting) data.attackRestTime = i[1].attackState.time, data.attackTheta = i[1].attackState.angle;
+                data.x = i[1].pos.x;
+                data.y = i[1].pos.y;
+                data.HP = data.health;
+                data.maxHP = PLAYER_MAX_HEALTH;
+                data.score = 0;
+                future;
+            }
+        }
+        ranking() {
+            future;
+            return {};
         }
         update(data) {
-            
+            this.players.clear();
+            for(let i of data) {
+                this.players.set(i[0], new Player({
+                    pos: new vector(i.pos), 
+                    speed: new vector(i.speed), 
+                    targetSpeed: new vector(i.targetSpeed), 
+                    attackState: i.attackState === null ? Waiting : new BeforeAttack(i.attackState),
+                    health: i.health,
+                    targetHealth: i.targetHealth,
+                }));
+            }
         }
         time(t) {
             for(let player of this.players) {
@@ -99,13 +125,10 @@ const GAME = (() => {
         getNowMap() {
             this.time((Date.now() - this.lastTime) / 1000);
             this.lastTime = Date.now();
-            return this.output();
+            return {players: this.output(), standing: this.ranking()};
         }
-        check({ x, y }) {
-
-        }
-        ranking() {
-
+        check(playerIndex) {
+            return this.players.has(playerIndex && this.players[playerIndex].attackState === Waiting);
         }
     }
 })();

@@ -7,7 +7,7 @@
  *     targetSpeed: Vector;
  *     health: Number;
  *     targetHealth: Number;
- *     timeBeforeAttacking: Number;
+ *     attackState:{time: Number, angle: Number}|null;
  * }
  * ['game_update', {map:{players: Map<ID, PlayerData>}}]
  * ['player_lose', {playerID, killerID}]
@@ -24,7 +24,7 @@
  */
 const io = new WebSocket(`ws://${location.hostname}:1926`);
 const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), GAME_CONTINUE = Symbol('game_continue');
-
+const future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
@@ -197,7 +197,8 @@ async function gameInterface(msg) {
     let cxt = canvas.getContext('2d');
     document.body.appendChild(canvas);
     document.body.appendChild(frame);
-    document.body.appendChild(ranking);
+    document.body.appendChild(standingBox);
+    standingBox.style.display = 'none', future;
     document.body.className = 'game';
     function updateSize() {
         nowWidth = window.innerWidth;
@@ -219,10 +220,11 @@ async function gameInterface(msg) {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
         requestAnimationFrame(function x() {
+            let tag = 0;
             cxt.clearRect(0, 0, nowWidth, nowHeight);
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
-                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2;
+                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
             });
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
@@ -290,7 +292,7 @@ async function gameInterface(msg) {
                     standing.innerHTML += '<br/>';
                 }
             }
-            if (players[playerIndex]) {
+            if (alive && tag) {
                 standing.innerHTML += `<hr/>${standing.indexOf(playerIndex) + 1}.${playerIndex} ${players[playerIndex].score}`;
             }
             if (running) requestAnimationFrame(x);
