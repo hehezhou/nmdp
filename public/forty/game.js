@@ -221,7 +221,8 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
     let X = 0, Y = 0, killTag;
-    const playerRadius = 3, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.05, HPheight = 4, HPwidth = 20, HPdis = 3, attactTime = 1;
+    const playerRadius = 3, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, HPdis = 3, attactTime = 1;
+    const lineDis = 100, lineWidth = 4;
     await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
@@ -233,11 +234,11 @@ async function gameInterface(msg) {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
             });
             cxt.fillStyle = 'rgb(128, 128, 128)'
-            for(let i = Math.floor(X / 30) * 30 - X; i < nowHeight; i += 30) {
-                cxt.fillRect(0 * RATIO, i * RATIO, nowWidth * RATIO, 4 * RATIO);
+            for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
+                cxt.fillRect(0 * RATIO, i * RATIO, nowWidth * RATIO, lineWidth * RATIO);
             }
-            for(let i = Math.floor(Y / 30) * 30 - Y; i < nowWidth; i += 30) {
-                cxt.fillRect(i * RATIO, 0 * RATIO, 4 * RATIO, nowHeight * RATIO);
+            for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
+                cxt.fillRect(i * RATIO, 0 * RATIO, lineWidth * RATIO, nowHeight * RATIO);
             }
             cxt.fillStyle = 'red';
             players.forEach(data => {
