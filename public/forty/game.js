@@ -27,7 +27,7 @@
  * 5  6  7
  */
 const io = new WebSocket(`ws://${location.hostname}:1926`);
-const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), GAME_CONTINUE = Symbol('game_continue');
+const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa');
 const future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
@@ -70,7 +70,6 @@ const HTML = {
 
 async function chooseInterface(tag) {
     const typeList = {
-        '重新连接': { check: () => Boolean(localStorage.fortyLastRoomId), type: GAME_CONTINUE, },
         '经典 FFA': { check: () => true, type: JOIN_AUTO_FFA, },
     };
     HTML.clearBody();
@@ -122,26 +121,7 @@ async function joinInterface(type) {
             });
         });
     }
-    async function gameContinue() {
-        let p = HTML.create('p', 'join');
-        frame.appendChild(p);
-        document.body.appendChild(frame);
-        return await new Promise(resolve => {
-            let tmp = addWait(p, '正在重新连接');
-            send(['join', localStorage.fortyLastRoomId]);
-            localStorage.removeItem('fortyLastRoomId');
-            io.addEventListener('message', function x(msg) {
-                let data = JSON.parse(msg.data);
-                if (data[0] === 'join_success') localStorage.fortyLastRoomId = roomId = data[1], resolve(type);
-                else if (data[0] === 'join_fail') alert('重新连接失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
-                else return;
-                clearInterval(tmp);
-                io.removeEventListener('message', x);
-            });
-        });
-    }
-    if (type === GAME_CONTINUE) return await gameContinue();
-    else if (type === JOIN_AUTO_FFA) return await joinAutoFFA();
+    if (type === JOIN_AUTO_FFA) return await joinAutoFFA();
     else return console.error(`unknown type ${type}`), CONTINUE_TAG;
 }
 async function readyInterface(type) {
@@ -196,7 +176,7 @@ async function gameInterface(msg) {
     if (msg === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
     let { data, type } = msg;
-    let height = data.height, width = data.width;
+    let height = data.map_height, width = data.map_width;
     let nowWidth, nowHeight, alive = 1;
     let canvas = HTML.create('canvas'), frame = HTML.create('div', 'frame game-interface-ffa');
     frame.style.display = 'none';
@@ -237,12 +217,13 @@ async function gameInterface(msg) {
             cxt.fillStyle = 'rgb(128, 128, 128)'
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
                 if(i + X > 0 || i + X < -width) continue;
-                cxt.fillRect(0 * RATIO, i * RATIO, nowWidth * RATIO, lineWidth * RATIO);
+                cxt.fillRect((0 - Y) * RATIO, i * RATIO, (width + lineWidth) * RATIO, lineWidth * RATIO);
             }
             for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
                 if(i + Y < 0 || i + Y > height) continue;
-                cxt.fillRect(i * RATIO, 0 * RATIO, lineWidth * RATIO, nowHeight * RATIO);
+                cxt.fillRect(i * RATIO, (-height - X) * RATIO, lineWidth * RATIO, (height + lineWidth) * RATIO);
             }
+            console.log(X, Y);
             cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
