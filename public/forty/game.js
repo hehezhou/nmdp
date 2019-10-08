@@ -335,7 +335,7 @@ async function gameInterface(msg) {
                 if (s) newD |= S;
                 if (a) newD |= A;
                 if (d) newD |= D;
-                if (newD != now && alive) send(['set_direcion', newD]);
+                if (newD != now && alive) send(['set_direction', newD]), now = newD;
             }
             return {
                 keydownListener: function (data) {
