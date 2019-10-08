@@ -62,15 +62,15 @@ const GAME = (() => {
             this.health = health;
             this.targetHealth = targetHealth;
         }
-        time(t) {
+        time(t, height, width) {
             let deltaSpeed = sub(this.targetSpeed - this.speed);
             let dl = deltaSpeed.len();
             let p = Math.max(dl / PLAYER_ACC, t);
             this.pos = plus(pos, div(mult(deltaSpeed, p), 2));
             this.speed = plus(this.speed, mult(deltaSpeed, p / deltaSpeed.len()));
             this.pos = plus(this.pos, mult(speed, (t - p / 2)));
-            this.pos.x = mid(0, this.pos.x, ARENA_WIDTH);
-            this.pos.y = mid(0, this.pos.y, ARENA_HEIGHT);
+            this.pos.x = mid(0, this.pos.x, width);
+            this.pos.y = mid(0, this.pos.y, height);
             if(this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if(this.attackState.time < 0) this.attackState = Waiting;
@@ -78,16 +78,28 @@ const GAME = (() => {
             this.health = max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * t);
         }
     }
-    let players = new Set();
     return class {
         constructor({ data }) {
+            this.players = new Map();
+            this.width = data.width;
+            this.height = data.height;
+            this.lastTime = Date.now();
+        }
+        output() {
 
         }
         update(data) {
-
+            
+        }
+        time(t) {
+            for(let player of this.players) {
+                player[1].time(t, this.height, this.width);
+            }
         }
         getNowMap() {
-
+            this.time((Date.now() - this.lastTime) / 1000);
+            this.lastTime = Date.now();
+            return this.output();
         }
         check({ x, y }) {
 

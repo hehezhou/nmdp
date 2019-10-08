@@ -5,7 +5,9 @@
  *     pos: Vector;
  *     speed: Vector;
  *     targetSpeed: Vector;
- *     timeBeforeAttacking: Vector;
+ *     health: Number;
+ *     targetHealth: Number;
+ *     timeBeforeAttacking: Number;
  * }
  * ['game_update', {map:{players: Map<ID, PlayerData>}}]
  * ['player_lose', {playerID, killerID}]
