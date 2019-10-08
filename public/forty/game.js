@@ -422,6 +422,7 @@ async function gameInterface(msg) {
                     canvas.removeEventListener('keyup', keyupListener);
                     running = 0;
                     alive = 0;
+                    send(['leave', null]);
                     resolve(CONTINUE_TAG);
                     return;
                     frame.style.display = 'grid';
