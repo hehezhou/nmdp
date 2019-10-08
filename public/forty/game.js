@@ -260,6 +260,12 @@ async function gameInterface(msg) {
                                 `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
                     cxt.lineWidth = 1;
+                    cxt.beginPath();
+                    cxt.arc(data.y - Y, data.x - X, playerRadius, -data.attackTheta - theta, -data.attackTheta + theta, false);
+                    cxt.arc(data.y - Y, data.x - X, knifeRadius, -data.attackTheta + theta, -data.attackTheta - theta, true);
+                    cxt.closePath();
+                    cxt.fill();
+                    cxt.stroke();
                     if (data.attackRestTime <= lastTime) {
                         let tag = data.attackRestTime / lastTime;
                         let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
@@ -289,6 +295,7 @@ async function gameInterface(msg) {
             cxt.lineWidth = 2;
             players.forEach(data => {
                 cxt.fillStyle = 'red';
+                cxt.strokeStyle = 'black';
                 cxt.fillRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth * data.HP / data.maxHP, HPheight);
                 cxt.strokeRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth, HPheight);
             });
@@ -315,7 +322,7 @@ async function gameInterface(msg) {
         });
         canvas.addEventListener('click', ({ offsetX: y, offsetY: x }) => {
             ({ x, y } = pos({ x, y }));
-            nowMouseX = x = Math.floor(x), nowMouseY = y = Math.floor(y);
+            x = Math.floor(x), y = Math.floor(y);
             if (alive && FORTY.check(playerIndex)) {
                 send(['attack', Math.atan2(y - nowWidth / 2, nowHeight / 2 - x)]);
             }
