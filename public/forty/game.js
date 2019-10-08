@@ -229,7 +229,7 @@ async function gameInterface(msg) {
             cxt.clearRect(0, 0, nowWidth, nowHeight);
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
-                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1, console.log(data.x, data.y);
+                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
             });
             cxt.fillStyle = 'rgb(128, 128, 128)'
             for(let i = Math.floor(X / 50) * 50 - X; i < nowHeight; i += 50) {
@@ -333,7 +333,6 @@ async function gameInterface(msg) {
             x = Math.floor(x), y = Math.floor(y);
             if (alive && FORTY.check(playerIndex)) {
                 let tmp = Math.atan2(nowHeight / 2 - x, y - nowWidth / 2);
-                console.log(tmp);
                 send(['attack', tmp < 0 ? tmp + 2 * Math.PI : tmp]);
             }
         });

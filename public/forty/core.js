@@ -95,9 +95,9 @@ const GAME = (() => {
                 data.id = i[0];
                 data.onattack = i[1].attackState !== Waiting;
                 if (i[1].attackState !== Waiting) data.attackRestTime = i[1].attackState.time, data.attackTheta = i[1].attackState.angle;
-                data.x = i[1].pos.x;
-                data.y = i[1].pos.y;
-                data.HP = data.health;
+                data.x = -i[1].pos.y;
+                data.y = i[1].pos.x;
+                data.HP = i[1].health;
                 data.maxHP = PLAYER_MAX_HEALTH;
                 data.score = 0;
                 future;
@@ -121,6 +121,7 @@ const GAME = (() => {
                     health: i[1].health,
                     targetHealth: i[1].target_health,
                 }));
+                console.log(i[1].speed, i[1].target_speed, i[1].pos);
             }
         }
         time(t) {
