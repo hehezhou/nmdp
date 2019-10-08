@@ -197,7 +197,7 @@ module.exports = class Forty extends Game {
 		this.time = timeStamp;
 		let deaths=[];
 		this.players.forEach(player=>{
-			player.time(deltaTime);
+			player.time(deltaTime/1000);
 		});
 		this.players.forEach((player,id)=>{
 			if(player.health<=0){
