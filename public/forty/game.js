@@ -332,19 +332,25 @@ async function gameInterface(msg) {
             }
             return {
                 keydownListener: function (data) {
-                    if (data.key === 'w') {
+                    let key = data.key.toLowerCase();
+                    console.log(key);
+                    if(key === 'arrowup') key = 'w';
+                    if(key === 'arrowdown') key = 's';
+                    if(key === 'arrowleft') key = 'a';
+                    if(key === 'arrowright') key = 'd';
+                    if (key === 'w') {
                         w = 1;
                         updatedirect();
                     }
-                    else if (data.key === 's') {
+                    else if (key === 's') {
                         s = 1;
                         updatedirect();
                     }
-                    else if (data.key === 'a') {
+                    else if (key === 'a') {
                         a = 1;
                         updatedirect();
                     }
-                    else if (data.key === 'd') {
+                    else if (key === 'd') {
                         d = 1;
                         updatedirect();
                     }
@@ -352,19 +358,24 @@ async function gameInterface(msg) {
                     data.preventDefault();
                 },
                 keyupListener: function (data) {
-                    if (data.key === 'w') {
+                    let key = data.key.toLowerCase();
+                    if(key === 'arrowup') key = 'w';
+                    if(key === 'arrowdown') key = 's';
+                    if(key === 'arrowleft') key = 'a';
+                    if(key === 'arrowright') key = 'd';
+                    if (key === 'w') {
                         w = 0;
                         updatedirect();
                     }
-                    else if (data.key === 's') {
+                    else if (key === 's') {
                         s = 0;
                         updatedirect();
                     }
-                    else if (data.key === 'a') {
+                    else if (key === 'a') {
                         a = 0;
                         updatedirect();
                     }
-                    else if (data.key === 'd') {
+                    else if (key === 'd') {
                         d = 0;
                         updatedirect();
                     }
