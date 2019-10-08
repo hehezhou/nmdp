@@ -134,7 +134,7 @@ const GAME = (() => {
             return { players: this.output(), standing: this.ranking() };
         }
         check(playerIndex) {
-            return this.players.has(playerIndex && this.players[playerIndex].attackState === Waiting);
+            return this.players.has(playerIndex) && this.players.get(playerIndex).attackState === Waiting;
         }
     }
 })();
