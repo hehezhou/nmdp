@@ -4,14 +4,14 @@ const { mid } = require('../../utils/math.js');
 const { randomReal } = require('../../utils/random.js');
 const vaild = require('../../utils/vaild.js');
 const PLAYER_TIME_BEFORE_ATTACK = 1;
-const PLAYER_MAX_SPEED = 30;
-const PLAYER_ACC = 120;
+const PLAYER_MAX_SPEED = 60;
+const PLAYER_ACC = 200;
 const PLAYER_MAX_HEALTH = 100;
 const PLAYER_ATTACK_RANGE = 40;
 const PLAYER_ATTACK_ANGLE = Math.PI / 6;
 const PLAYER_ATTACK_DAMAGE = 75;
 const PLAYER_ATTACK_HEAL = 25;
-const PLAYER_HURT_PER_SEC = 40;
+const PLAYER_HURT_PER_SEC = 100;
 const ARENA_HEIGHT = 1000;
 const ARENA_WIDTH = 1000;
 class Waiting { };
@@ -205,7 +205,7 @@ module.exports = class Forty extends Game {
 			}
 		});
 		deaths.forEach(death=>{
-			this.players.delete(deadID);
+			this.players.delete(death.deadID);
 			for(let [,{callback}] of this.players){
 				callback(['player_lose',death]);
 			}
