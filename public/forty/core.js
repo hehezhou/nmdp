@@ -61,14 +61,15 @@ const GAME = (() => {
             this.attackState = attackState;
             this.health = health;
             this.targetHealth = targetHealth;
+            this.score = 0;
         }
         time(t, height, width) {
-            let deltaSpeed = sub(this.targetSpeed - this.speed);
+            let deltaSpeed = sub(this.targetSpeed, this.speed);
             let dl = deltaSpeed.len();
             let p = Math.max(dl / PLAYER_ACC, t);
-            this.pos = plus(pos, div(mult(deltaSpeed, p), 2));
+            this.pos = plus(this.pos, div(mult(deltaSpeed, p), 2));
             this.speed = plus(this.speed, mult(deltaSpeed, p / deltaSpeed.len()));
-            this.pos = plus(this.pos, mult(speed, (t - p / 2)));
+            this.pos = plus(this.pos, mult(this.speed, (t - p / 2)));
             if (this.pos.x < 0) this.pos.x = 0;
             if (this.pos.y < 0) this.pos.y = 0;
             if (this.pos.x > width) this.pos.x = width;
@@ -77,7 +78,7 @@ const GAME = (() => {
                 this.attackState.time -= t;
                 if (this.attackState.time < 0) this.attackState = Waiting;
             }
-            this.health = max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * t);
+            this.health = Math.max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * t);
         }
     }
     return class {
@@ -111,14 +112,14 @@ const GAME = (() => {
         }
         update(data) {
             this.players.clear();
-            for (let i of data) {
+            for (let i of data.map.players) {
                 this.players.set(i[0], new Player({
-                    pos: new vector(i.pos),
-                    speed: new vector(i.speed),
-                    targetSpeed: new vector(i.target_speed),
-                    attackState: i.attackState === null ? Waiting : new BeforeAttack(i.attack_state),
-                    health: i.health,
-                    targetHealth: i.target_health,
+                    pos: new vector(i[1].pos),
+                    speed: new vector(i[1].speed),
+                    targetSpeed: new vector(i[1].target_speed),
+                    attackState: i[1].attack_state === null ? Waiting : new BeforeAttack(i[1].attack_state),
+                    health: i[1].health,
+                    targetHealth: i[1].target_health,
                 }));
             }
         }

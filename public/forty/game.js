@@ -1,6 +1,10 @@
 "use strict";
 /** receive
  * ['game_start', {map_height, map_width, id}]
+ * Vector: {
+ *     x: number;
+ *     y: number;
+ * }
  * PlayerData: {
  *     pos: Vector;
  *     speed: Vector;
@@ -286,14 +290,14 @@ async function gameInterface(msg) {
             standingBox.innerHTML = '';
             for (let i = 0; i < 10; i++) {
                 if (i < standing.length) {
-                    standingBox.innerHTML += `${i + 1}.${standing[i]} ${players[standing[i]].score}<br/>`;
+                    standingBox.innerHTML += `${i + 1}.${standing[i]} ${players[players.findIndex(data => data.id === standing[i])].score}<br/>`;
                 }
                 else {
                     standing.innerHTML += '<br/>';
                 }
             }
             if (alive && tag) {
-                standing.innerHTML += `<hr/>${standing.indexOf(playerIndex) + 1}.${playerIndex} ${players[playerIndex].score}`;
+                standing.innerHTML += `<hr/>${players.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${players[players.findIndex(data => data.id === playerIndex)].score}`;
             }
             if (running) requestAnimationFrame(x);
         });
