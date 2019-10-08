@@ -24,6 +24,9 @@ class BeforeAttack {
 module.exports = class Forty extends Game {
 	constructor(settings) {
 		super(settings);
+		this.info={
+			id:'forty',
+		};
 		this.settings=settings;
 		let players = new Map();
 		this.players = players;
