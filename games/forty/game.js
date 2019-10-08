@@ -141,8 +141,10 @@ module.exports = class Forty extends Game {
 	}
 	leave(id) {
 		let player = this.players.get(id);
-		player.callback = () => { };
-		player.startMove(new V(0, 0));
+		if(player !== undefined){
+			player.callback = () => { };
+			player.startMove(new V(0, 0));
+		}
 		this.update();
 	}
 	input(id, input) {
