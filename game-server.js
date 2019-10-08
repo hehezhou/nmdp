@@ -169,11 +169,6 @@ module.exports = class GameServer {
 		let player = this.players[playerID];
 		try {
 			let content = JSON.parse(playerMessage);
-			// console.log(playerID, '\t>>\t', content);
-			if (this.isPlayerInGame(playerID)) {
-				this.games[player.gameID].input(playerID, content);
-				return;
-			}
 			let [type, data] = vaild.array(content, { length: 2 });
 			type = vaild.string(type, { hint: 'type' });
 			switch (type) {
@@ -187,12 +182,19 @@ module.exports = class GameServer {
 				}
 				case 'leave':{
 					this.playerLeave(playerID);
+					break;
 				}
 				case 'create': {
 					// FALL DOWN
 				}
 				default: {
-					throw new Error('the type is not supported');
+					if (this.isPlayerInGame(playerID)) {
+						this.games[player.gameID].input(playerID, content);
+						return;
+					}
+					else{
+						throw new Error('the type is not supported');
+					}
 				}
 			}
 		}
