@@ -105,8 +105,9 @@ const GAME = (() => {
             return ans;
         }
         ranking() {
-            future;
-            return {};
+            let ans = Array.from(this.players);
+            ans.sort((a, b) => b[1].score - a[1].score);
+            return ans.map(a => a[0]);
         }
         update(data) {
             this.players.clear();
