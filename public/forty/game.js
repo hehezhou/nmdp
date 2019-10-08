@@ -230,7 +230,7 @@ async function gameInterface(msg) {
                 cxt.strokeStyle = 'black';
                 cxt.lineWidth = 1;
                 cxt.fillStyle = data.color;
-                if(data.id === playerIndex && killTag) {
+                if (data.id === playerIndex && killTag) {
                     killTag--;
                     cxt.lineWidth = 2;
                     cxt.strokeStyle = 'white';
@@ -382,10 +382,10 @@ async function gameInterface(msg) {
             else if (data[0] === 'game_update') {
                 FORTY.update(data[1]);
             }
-            else if(data[0] === 'player_lose') {
-                let {killerID, deadID} = data[1];
-                if(killerID === playerIndex) killTag = 20;
-                else if(deadID === playerIndex) {
+            else if (data[0] === 'player_lose') {
+                let { killerID, deadID } = data[1];
+                if (killerID === playerIndex) killTag = 20;
+                else if (deadID === playerIndex) {
                     alive = 0;
                     frame.style.display = 'grid';
                     frame.innerHTML = '';

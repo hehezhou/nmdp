@@ -13,7 +13,7 @@ const GAME = (() => {
         ARENA_WIDTH = 1000;
     class vector {
         constructor(x, y) {
-            if(typeof x === 'number') {
+            if (typeof x === 'number') {
                 this.x = x, this.y = y;
             }
             else {
@@ -26,35 +26,35 @@ const GAME = (() => {
         }
         angle() {
             let ans = Math.atan2(y, x);
-            if(ans < 0) ans += 2 * Math.PI;
+            if (ans < 0) ans += 2 * Math.PI;
             return ans;
         }
     };
-    function plus(a, b) {return new vector(a.x + b.x, a.y + b.y);}
-    function sub(a, b) {return new vector(a.x - b.x, a.y - b.y);}
-    function mult(a, b) {return new vector(a.x * b, a.y * b);}
-    function div(a, b) {return new vector(a.x / b, a.y / b);}
+    function plus(a, b) { return new vector(a.x + b.x, a.y + b.y); }
+    function sub(a, b) { return new vector(a.x - b.x, a.y - b.y); }
+    function mult(a, b) { return new vector(a.x * b, a.y * b); }
+    function div(a, b) { return new vector(a.x / b, a.y / b); }
     function angleToVector(angle) {
         return new vector(cos(angle), sin(angle));
     }
     let Waiting = Symbol('waiting');
     class BeforeAttack {
-        constructor({time, angle}) {
+        constructor({ time, angle }) {
             this.time = time;
             this.angle = angle;
         }
     }
     function mid(a, b, c) {
-        if(a < b) a ^= b ^= a ^= b;
-        if(b < c) b ^= c ^= b ^= c;
-        if(a < b) a ^= b ^= a ^= b;
+        if (a < b) a ^= b ^= a ^= b;
+        if (b < c) b ^= c ^= b ^= c;
+        if (a < b) a ^= b ^= a ^= b;
         return b;
     }
     class Player {
         /**
          * @param {{pos: vector, speed: vector, targetSpeed: vector, attackState: Waiting|BeforeAttack, health: number, targetHealth: number}} param0 
          */
-        constructor({pos, speed, targetSpeed, attackState, health, targetHealth}) {
+        constructor({ pos, speed, targetSpeed, attackState, health, targetHealth }) {
             this.pos = pos;
             this.speed = speed;
             this.targetSpeed = targetSpeed;
@@ -69,13 +69,13 @@ const GAME = (() => {
             this.pos = plus(pos, div(mult(deltaSpeed, p), 2));
             this.speed = plus(this.speed, mult(deltaSpeed, p / deltaSpeed.len()));
             this.pos = plus(this.pos, mult(speed, (t - p / 2)));
-            if(this.pos.x < 0) this.pos.x = 0;
-            if(this.pos.y < 0) this.pos.y = 0;
-            if(this.pos.x > width) this.pos.x = width;
-            if(this.pos.y > height) this.pos.y = height;
-            if(this.attackState instanceof BeforeAttack) {
+            if (this.pos.x < 0) this.pos.x = 0;
+            if (this.pos.y < 0) this.pos.y = 0;
+            if (this.pos.x > width) this.pos.x = width;
+            if (this.pos.y > height) this.pos.y = height;
+            if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
-                if(this.attackState.time < 0) this.attackState = Waiting;
+                if (this.attackState.time < 0) this.attackState = Waiting;
             }
             this.health = max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * t);
         }
@@ -89,11 +89,11 @@ const GAME = (() => {
         }
         output() {
             let ans = [];
-            for(let i of this.players) {
+            for (let i of this.players) {
                 let data = {};
                 data.id = i[0];
                 data.onattack = i[1].attackState !== Waiting;
-                if(i[1].attackState !== Waiting) data.attackRestTime = i[1].attackState.time, data.attackTheta = i[1].attackState.angle;
+                if (i[1].attackState !== Waiting) data.attackRestTime = i[1].attackState.time, data.attackTheta = i[1].attackState.angle;
                 data.x = i[1].pos.x;
                 data.y = i[1].pos.y;
                 data.HP = data.health;
@@ -110,11 +110,11 @@ const GAME = (() => {
         }
         update(data) {
             this.players.clear();
-            for(let i of data) {
+            for (let i of data) {
                 this.players.set(i[0], new Player({
-                    pos: new vector(i.pos), 
-                    speed: new vector(i.speed), 
-                    targetSpeed: new vector(i.target_speed), 
+                    pos: new vector(i.pos),
+                    speed: new vector(i.speed),
+                    targetSpeed: new vector(i.target_speed),
                     attackState: i.attackState === null ? Waiting : new BeforeAttack(i.attack_state),
                     health: i.health,
                     targetHealth: i.target_health,
@@ -122,14 +122,14 @@ const GAME = (() => {
             }
         }
         time(t) {
-            for(let player of this.players) {
+            for (let player of this.players) {
                 player[1].time(t, this.height, this.width);
             }
         }
         getNowMap() {
             this.time((Date.now() - this.lastTime) / 1000);
             this.lastTime = Date.now();
-            return {players: this.output(), standing: this.ranking()};
+            return { players: this.output(), standing: this.ranking() };
         }
         check(playerIndex) {
             return this.players.has(playerIndex && this.players[playerIndex].attackState === Waiting);
