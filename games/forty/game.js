@@ -120,7 +120,7 @@ module.exports = class Forty extends Game {
 				),
 				callback,
 			});
-			this.players.set(player);
+			this.players.set(id,player);
 		}
 		else {
 			player = this.players.get(id);
