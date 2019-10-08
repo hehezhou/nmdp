@@ -324,7 +324,8 @@ async function gameInterface(msg) {
             ({ x, y } = pos({ x, y }));
             x = Math.floor(x), y = Math.floor(y);
             if (alive && FORTY.check(playerIndex)) {
-                send(['attack', Math.atan2(y - nowWidth / 2, nowHeight / 2 - x)]);
+                let tmp = Math.atan2(y - nowWidth / 2, nowHeight / 2 - x)
+                send(['attack', tmp < 0 ? tmp + 2 * PI : tmp]);
             }
         });
         var { keydownListener, keyupListener } = (() => {
