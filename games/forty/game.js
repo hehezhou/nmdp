@@ -205,7 +205,7 @@ module.exports = class Forty extends Game {
 			}
 		});
 		deaths.forEach(death=>{
-			this.players.delete(deadID);
+			this.players.delete(death.deadID);
 			for(let [,{callback}] of this.players){
 				callback(['player_lose',death]);
 			}
