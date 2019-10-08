@@ -196,6 +196,7 @@ async function gameInterface(msg) {
     if (msg === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
     let { data, type } = msg;
+    let height = data.height, width = data.width;
     let nowWidth, nowHeight, alive = 1;
     let canvas = HTML.create('canvas'), frame = HTML.create('div', 'frame game-interface-ffa');
     frame.style.display = 'none';
@@ -235,9 +236,11 @@ async function gameInterface(msg) {
             });
             cxt.fillStyle = 'rgb(128, 128, 128)'
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
+                if(i + X > 0 || i + X < -width) continue;
                 cxt.fillRect(0 * RATIO, i * RATIO, nowWidth * RATIO, lineWidth * RATIO);
             }
             for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
+                if(i + Y < 0 || i + Y > height) continue;
                 cxt.fillRect(i * RATIO, 0 * RATIO, lineWidth * RATIO, nowHeight * RATIO);
             }
             cxt.fillStyle = 'red';
@@ -306,7 +309,7 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 cxt.fillStyle = 'red';
                 cxt.strokeStyle = 'black';
-                cxt.fillRect((data.y - Y - HPwidth / 2) * RATIO, (data.x - X + HPdis + playerRadius) * RATIO, HPwidth * data.HP / data.maxHP * RATIO, HPheight * RATIO);
+                cxt.fillRect((data.y - Y - HPwidth / 2) * RATIO, (data.x - X + HPdis + playerRadius) * RATIO, Math.max(0, HPwidth * data.HP / data.maxHP * RATIO), HPheight * RATIO);
                 cxt.strokeRect((data.y - Y - HPwidth / 2) * RATIO, (data.x - X + HPdis + playerRadius) * RATIO, HPwidth * RATIO, HPheight * RATIO);
             });
             standingBox.innerHTML = '';
@@ -412,7 +415,15 @@ async function gameInterface(msg) {
                 let { killerID, deadID } = data[1];
                 if (killerID === playerIndex) killTag = 20;
                 else if (deadID === playerIndex) {
+                    document.body.className = '';
+                    window.removeEventListener('resize', updateSize);
+                    io.removeEventListener('message', x);
+                    canvas.removeEventListener('keydown', keydownListener);
+                    canvas.removeEventListener('keyup', keyupListener);
+                    running = 0;
                     alive = 0;
+                    resolve(CONTINUE_TAG);
+                    return;
                     frame.style.display = 'grid';
                     frame.innerHTML = '';
                     let msg = HTML.create('h1', 'restart', '您已阵亡');
@@ -437,9 +448,8 @@ async function run() {
     });
     await new Promise(resolve => io.addEventListener('open', resolve));
     tag = 1;
-    let tmp = null;
     while (1) {
-        tmp = await endInterface(await gameInterface(await readyInterface(await joinInterface(await chooseInterface(tmp)))));
+        await endInterface(await gameInterface(await readyInterface(await joinInterface(await chooseInterface(null)))));
     }
 }
 run();
