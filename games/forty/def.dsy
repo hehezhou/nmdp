@@ -63,7 +63,7 @@ Player:{
 		p:Real=min(dl/PLAYER_ACC,t);
 		pos+=speed*p/2;
 		if(deltaSpeed!==V{0,0}){
-			speed+=p*deltaSpeed/deltaSpeed.len;
+			speed+=p*PLAYER_ACC*deltaSpeed/deltaSpeed.len;
 		}
 		pos+=speed*(t-p/2);
 		pos.x=mid(0,pos.x,ARENA_WIDTH);
