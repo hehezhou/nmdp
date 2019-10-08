@@ -98,7 +98,9 @@ const GAME = (() => {
                 data.maxHP = PLAYER_MAX_HEALTH;
                 data.score = 0;
                 future;
+                ans.push(data);
             }
+            return ans;
         }
         ranking() {
             future;
