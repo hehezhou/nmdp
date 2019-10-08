@@ -191,6 +191,7 @@ async function readyInterface(type) {
         })
     });
 }
+const RATIO = 5;
 async function gameInterface(msg) {
     if (msg === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
@@ -208,48 +209,48 @@ async function gameInterface(msg) {
     function updateSize() {
         nowWidth = window.innerWidth;
         nowHeight = window.innerHeight;
-        let d = (nowWidth * nowHeight + 0.01) / (1920 * 969) * 10;
+        let d = (nowWidth * nowHeight + 0.01) / (1920 * 969) * 15;
         d = d ** 0.5;
         nowWidth = Math.ceil(nowWidth / d);
         nowHeight = Math.ceil(nowHeight / d);
-        canvas.width = nowWidth;
-        canvas.height = nowHeight;
+        canvas.width = nowWidth * RATIO;
+        canvas.height = nowHeight * RATIO;
     };
     updateSize();
     window.addEventListener('resize', updateSize);
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
     let X = 0, Y = 0, killTag;
-    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.05, HPheight = 8, HPwidth = 25, HPdis = 3, attactTime = 1;
+    const playerRadius = 3, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.05, HPheight = 4, HPwidth = 20, HPdis = 3, attactTime = 1;
     await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
         requestAnimationFrame(function x() {
             let tag = 0;
-            cxt.clearRect(0, 0, nowWidth, nowHeight);
+            cxt.clearRect(0 * RATIO, 0 * RATIO, nowWidth * RATIO, nowHeight * RATIO);
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
             });
             cxt.fillStyle = 'rgb(128, 128, 128)'
             for(let i = Math.floor(X / 30) * 30 - X; i < nowHeight; i += 30) {
-                cxt.fillRect(0, i, nowWidth, 4);
+                cxt.fillRect(0 * RATIO, i * RATIO, nowWidth * RATIO, 4 * RATIO);
             }
             for(let i = Math.floor(Y / 30) * 30 - Y; i < nowWidth; i += 30) {
-                cxt.fillRect(i, 0, 4, nowHeight);
+                cxt.fillRect(i * RATIO, 0 * RATIO, 4 * RATIO, nowHeight * RATIO);
             }
             cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
-                cxt.lineWidth = 1;
+                cxt.lineWidth = 0.2 * RATIO;
                 cxt.fillStyle = data.color;
                 if (data.id === playerIndex && killTag) {
                     killTag--;
-                    cxt.lineWidth = 2;
+                    cxt.lineWidth = 1 * RATIO;
                     cxt.strokeStyle = 'white';
                 }
                 cxt.beginPath();
-                cxt.arc(data.y - Y, data.x - X, playerRadius, 0, 2 * Math.PI);
+                cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, playerRadius * RATIO, 0, 2 * Math.PI);
                 cxt.closePath();
                 cxt.fill();
                 cxt.stroke();
@@ -267,10 +268,10 @@ async function gameInterface(msg) {
                             : data.id === playerIndex ?
                                 `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
-                    cxt.lineWidth = 1;
+                    cxt.lineWidth = 0.2 * RATIO;
                     cxt.beginPath();
-                    cxt.arc(data.y - Y, data.x - X, playerRadius, -data.attackTheta - theta, -data.attackTheta + theta, false);
-                    cxt.arc(data.y - Y, data.x - X, knifeRadius, -data.attackTheta + theta, -data.attackTheta - theta, true);
+                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, playerRadius * RATIO, -data.attackTheta - theta, -data.attackTheta + theta, false);
+                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, knifeRadius * RATIO, -data.attackTheta + theta, -data.attackTheta - theta, true);
                     cxt.closePath();
                     cxt.fill();
                     cxt.stroke();
@@ -278,34 +279,34 @@ async function gameInterface(msg) {
                         let tag = data.attackRestTime / lastTime;
                         let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
                         cxt.strokeStyle = 'white';
-                        cxt.lineWidth = 2;
+                        cxt.lineWidth = 1 * RATIO;
                         cxt.beginPath();
-                        cxt.moveTo(data.y - Y + Math.cos(Theta) * playerRadius, data.x - X - Math.sin(Theta) * playerRadius);
-                        cxt.lineTo(data.y - Y + Math.cos(Theta) * knifeRadius, data.x - X - Math.sin(Theta) * knifeRadius);
+                        cxt.moveTo((data.y - Y + Math.cos(Theta) * playerRadius) * RATIO, (data.x - X - Math.sin(Theta) * playerRadius) * RATIO);
+                        cxt.lineTo((data.y - Y + Math.cos(Theta) * knifeRadius) * RATIO, (data.x - X - Math.sin(Theta) * knifeRadius) * RATIO);
                         cxt.closePath();
                         cxt.stroke();
                     }
                 }
                 else if (data.id === playerIndex) {
-                    cxt.lineWidth = 1;
+                    cxt.lineWidth = 0.4 * RATIO;
                     cxt.strokeStyle = 'rgba(79, 194, 230, 0.6)';
                     cxt.fillStyle = 'rgba(79, 194, 230, 0.3)';
                     let nowTheta = -Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
                     cxt.beginPath();
-                    cxt.arc(data.y - Y, data.x - X, playerRadius, nowTheta - theta, nowTheta + theta, false);
-                    cxt.arc(data.y - Y, data.x - X, knifeRadius, nowTheta + theta, nowTheta - theta, true);
+                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, playerRadius * RATIO, nowTheta - theta, nowTheta + theta, false);
+                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, knifeRadius * RATIO, nowTheta + theta, nowTheta - theta, true);
                     cxt.closePath();
                     cxt.fill();
                     cxt.stroke();
                 }
                 else return;
             });
-            cxt.lineWidth = 2;
+            cxt.lineWidth = 1;
             players.forEach(data => {
                 cxt.fillStyle = 'red';
                 cxt.strokeStyle = 'black';
-                cxt.fillRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth * data.HP / data.maxHP, HPheight);
-                cxt.strokeRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth, HPheight);
+                cxt.fillRect((data.y - Y - HPwidth / 2) * RATIO, (data.x - X + HPdis + playerRadius) * RATIO, HPwidth * data.HP / data.maxHP * RATIO, HPheight * RATIO);
+                cxt.strokeRect((data.y - Y - HPwidth / 2) * RATIO, (data.x - X + HPdis + playerRadius) * RATIO, HPwidth * RATIO, HPheight * RATIO);
             });
             standingBox.innerHTML = '';
             for (let i = 0; i < 10; i++) {
@@ -322,7 +323,7 @@ async function gameInterface(msg) {
             if (running) requestAnimationFrame(x);
         });
         function pos({ x, y }) {
-            return { x: x / canvas.offsetHeight * canvas.height, y: y / canvas.offsetWidth * canvas.width };
+            return { x: x / canvas.offsetHeight * canvas.height / RATIO, y: y / canvas.offsetWidth * canvas.width / RATIO };
         }
         canvas.addEventListener('mousemove', ({ offsetX: y, offsetY: x }) => {
             ({ x, y } = pos({ x, y }));
