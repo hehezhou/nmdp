@@ -34,6 +34,7 @@ const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
 let roomId;
 function send(message) {
+    console.log(message);
     io.send(JSON.stringify(message));
 }
 function clone(obj) {
@@ -207,7 +208,7 @@ async function gameInterface(msg) {
     function updateSize() {
         nowWidth = window.innerWidth;
         nowHeight = window.innerHeight;
-        let d = (nowWidth * nowHeight + 0.01) / (1920 * 969) * 2;
+        let d = (nowWidth * nowHeight + 0.01) / (1920 * 969) * 6;
         d = d ** 0.5;
         nowWidth = Math.ceil(nowWidth / d);
         nowHeight = Math.ceil(nowHeight / d);
@@ -219,7 +220,7 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
     let X = 0, Y = 0, killTag;
-    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 12, HPdis = 3, attactTime = 1;
+    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 8, HPwidth = 25, HPdis = 3, attactTime = 1;
     await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
@@ -247,7 +248,11 @@ async function gameInterface(msg) {
             });
             players.forEach(data => {
                 if (data.onattack) {
-                    cxt.strokeStyle = data.attackRestTime <= lastTime ? 'rgba(255, 56, 56, 0.8)' : data.id === playerIndex ? 'rgba(61, 139, 255, 0.8)' : 'rgba(90, 90, 90, 0.8)';
+                    cxt.strokeStyle = data.attackRestTime <= lastTime ? 
+                        'rgba(255, 56, 56, 0.8)' 
+                        : data.id === playerIndex ? 
+                            'rgba(61, 139, 255, 0.8)' 
+                            : 'rgba(90, 90, 90, 0.8)';
                     cxt.fillStyle =
                         data.attackRestTime <= lastTime ?
                             'rgba(255, 56, 56, 0.5)'
@@ -255,6 +260,12 @@ async function gameInterface(msg) {
                                 `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
                     cxt.lineWidth = 1;
+                    cxt.beginPath();
+                    cxt.arc(data.y - Y, data.x - X, playerRadius, -data.attackTheta - theta, -data.attackTheta + theta, false);
+                    cxt.arc(data.y - Y, data.x - X, knifeRadius, -data.attackTheta + theta, -data.attackTheta - theta, true);
+                    cxt.closePath();
+                    cxt.fill();
+                    cxt.stroke();
                     if (data.attackRestTime <= lastTime) {
                         let tag = data.attackRestTime / lastTime;
                         let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
@@ -271,7 +282,7 @@ async function gameInterface(msg) {
                     cxt.lineWidth = 1;
                     cxt.strokeStyle = 'rgba(79, 194, 230, 0.6)';
                     cxt.fillStyle = 'rgba(79, 194, 230, 0.3)';
-                    let nowTheta = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowHeight);
+                    let nowTheta = -Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
                     cxt.beginPath();
                     cxt.arc(data.y - Y, data.x - X, playerRadius, nowTheta - theta, nowTheta + theta, false);
                     cxt.arc(data.y - Y, data.x - X, knifeRadius, nowTheta + theta, nowTheta - theta, true);
@@ -284,6 +295,7 @@ async function gameInterface(msg) {
             cxt.lineWidth = 2;
             players.forEach(data => {
                 cxt.fillStyle = 'red';
+                cxt.strokeStyle = 'black';
                 cxt.fillRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth * data.HP / data.maxHP, HPheight);
                 cxt.strokeRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth, HPheight);
             });
@@ -308,12 +320,11 @@ async function gameInterface(msg) {
             ({ x, y } = pos({ x, y }));
             nowMouseX = Math.floor(x), nowMouseY = Math.floor(y);
         });
-        canvas.addEventListener('click', ({ offsetX: y, offset: x }) => {
+        canvas.addEventListener('click', ({ offsetX: y, offsetY: x }) => {
             ({ x, y } = pos({ x, y }));
-            nowMouseX = x = Math.floor(x), nowMouseY = y = Math.floor(y);
-            x += X, y += Y;
+            x = Math.floor(x), y = Math.floor(y);
             if (alive && FORTY.check(playerIndex)) {
-                send(['attack', Math.atan2(nowHeight / 2 - y + Y, x - X - nowWidth / 2)])
+                send(['attack', Math.atan2(y - nowWidth / 2, nowHeight / 2 - x)]);
             }
         });
         var { keydownListener, keyupListener } = (() => {
@@ -369,8 +380,8 @@ async function gameInterface(msg) {
                 },
             };
         })();
-        canvas.addEventListener('keydown', keydownListener);
-        canvas.addEventListener('keyup', keyupListener);
+        document.addEventListener('keydown', keydownListener);
+        document.addEventListener('keyup', keyupListener);
         io.addEventListener('message', async function x(msg) {
             let data = JSON.parse(msg.data);
             if (data[0] === 'force_quit') {
