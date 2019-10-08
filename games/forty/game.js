@@ -60,7 +60,7 @@ module.exports = class Forty extends Game {
 			startMove(targetSpeed) {
 				let len = targetSpeed.len;
 				if (len > 0) {
-					targetSpeed.mulX(PLAYER_MAX_SPEED / len);
+					targetSpeed.mulM(PLAYER_MAX_SPEED / len);
 				}
 				this.targetSpeed = targetSpeed;
 			}
