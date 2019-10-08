@@ -130,6 +130,7 @@ module.exports = class Forty extends Game {
 			map_width: ARENA_WIDTH,
 			id,
 		}]);
+		this.send();
 	}
 	getDirection(dirID) {
 		if (dirID === -1) {
@@ -141,6 +142,7 @@ module.exports = class Forty extends Game {
 		let player = this.players.get(id);
 		player.callback = () => { };
 		player.startMove(new V(0, 0));
+		this.send();
 	}
 	input(id, input) {
 		let [type, data] = input;
@@ -151,16 +153,39 @@ module.exports = class Forty extends Game {
 		switch (type) {
 			case 'attack': {
 				player.startAttack(vaild.real(data, { min: 0, max: Math.PI * 2, hint: 'angle' }));
+				this.send();
 				break;
 			}
 			case 'set_direction': {
 				player.startMove(this.getDirection(vaild.integer(data, { min: -1, max: 7, hint: 'direction' })));
+				this.send();
 				break;
 			}
 			default: {
 				throw new Error('unknown input type');
 			}
 		}
+	}
+	send(id=null){
+		let players = [];
+		for (let [id, player] of this.players) {
+			players.push([id, {
+				pos: player.pos,
+				speed: player.speed,
+				target_speed: player.targetSpeed,
+				health: player.health,
+				target_health: player.targetHealth,
+				attack_state: player.attackState instanceof BeforeAttack
+					? player.attackState
+					: null
+			}]);
+		}
+		let receivers=id===null
+			?this.players.map(([,p])=>p)
+			:[this.players.get(id)];
+		receivers.forEach(player=>{
+			player.callback(['game_update',{map:{players}}]);
+		});
 	}
 	setTime(timeStamp) {
 		let deltaTime=timeStamp-this.time;
@@ -180,21 +205,8 @@ module.exports = class Forty extends Game {
 				callback(['player_lose',death]);
 			}
 		});
-		let players = [];
-		for (let [id, player] of this.players) {
-			players.push([id, {
-				pos: player.pos,
-				speed: player.speed,
-				target_speed: player.targetSpeed,
-				health: player.health,
-				target_health: player.targetHealth,
-				attack_state: player.attackState instanceof BeforeAttack
-					? player.attackState
-					: null
-			}]);
-		}
-		for (let [, player] of this.players) {
-			player.callback(['game_update',{map:{players}}]);
+		if(deaths.length>0){
+			this.send();
 		}
 	}
 	serialization() {
