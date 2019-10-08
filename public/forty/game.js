@@ -34,7 +34,6 @@ const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
 let roomId;
 function send(message) {
-    console.log(message);
     io.send(JSON.stringify(message));
 }
 function clone(obj) {
@@ -223,7 +222,6 @@ async function gameInterface(msg) {
                 if(i + Y < 0 || i + Y > height) continue;
                 cxt.fillRect(i * RATIO, (-height - X) * RATIO, lineWidth * RATIO, (height + lineWidth) * RATIO);
             }
-            console.log(X, Y);
             cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';

@@ -121,7 +121,6 @@ const GAME = (() => {
                     health: i[1].health,
                     targetHealth: i[1].target_health,
                 }));
-                console.log(i[1].speed, i[1].target_speed, i[1].pos);
             }
         }
         time(t) {
