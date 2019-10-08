@@ -69,8 +69,10 @@ const GAME = (() => {
             this.pos = plus(pos, div(mult(deltaSpeed, p), 2));
             this.speed = plus(this.speed, mult(deltaSpeed, p / deltaSpeed.len()));
             this.pos = plus(this.pos, mult(speed, (t - p / 2)));
-            this.pos.x = mid(0, this.pos.x, width);
-            this.pos.y = mid(0, this.pos.y, height);
+            if(this.pos.x < 0) this.pos.x = 0;
+            if(this.pos.y < 0) this.pos.y = 0;
+            if(this.pos.x > width) this.pos.x = width;
+            if(this.pos.y > height) this.pos.y = height;
             if(this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if(this.attackState.time < 0) this.attackState = Waiting;
