@@ -89,7 +89,7 @@ module.exports = class Forty extends Game {
 				for (let [, player] of players) {
 					if (this.canAttack(player, this.attackState.angle)) {
 						player.targetHealth -= PLAYER_ATTACK_DAMAGE;
-						player.lastDamager = null;
+						player.lastDamager = this;
 						this.targetHealth = Math.min(this.targetHealth+PLAYER_ATTACK_HEAL,PLAYER_MAX_HEALTH);
 					}
 				}
@@ -201,7 +201,7 @@ module.exports = class Forty extends Game {
 		});
 		this.players.forEach((player,id)=>{
 			if(player.health<=0){
-				deaths.push({deadID:id,killerID:player.lastDamager.id});
+				deaths.push({deadID:id,killerID:(player.lastDamager||{id:null}).id});
 			}
 		});
 		deaths.forEach(death=>{
