@@ -367,7 +367,7 @@ async function gameInterface(msg) {
         })();
         canvas.addEventListener('keydown', keydownListener);
         canvas.addEventListener('keyup', keyupListener);
-        io.addEventListener('message', function x(msg) {
+        io.addEventListener('message', async function x(msg) {
             let data = JSON.parse(msg.data);
             if (data[0] === 'force_quit') {
                 alert('您已被移出房间，原因: ' + data[1]);
