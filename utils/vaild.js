@@ -21,6 +21,21 @@ module.exports.integer = function integer(input, options = {}) {
 		throw new Error(`${hint} must be an integer between ${min} and ${max}`);
 	}
 }
+module.exports.real = function real(input, options = {}) {
+	const { min = -Infinity, max = Infinity, hint = 'input', allows = [] } = options;
+	if (typeof input === 'string') {
+		input = Number(input);
+	}
+	if (typeof input === 'number'
+		&& (!Number.isNaN(input)
+			&& input >= min
+			&& input <= max) || allows.includes(input)) {
+		return input;
+	}
+	else {
+		throw new Error(`${hint} must be an number between ${min} and ${max}`);
+	}
+}
 module.exports.array = function array(input, options = {}) {
 	const { length = {}, hint = 'input' } = options;
 	const { min = 0, max = Infinity } = formatMinMax(length);

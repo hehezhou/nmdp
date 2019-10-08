@@ -38,17 +38,18 @@ Player:{
 	attackState:Waiting|BeforeAttack;
 	health:Real;
 	targetHealth:Real;
-	attack(angle:Real){
+	lastDamager:Player|null;
+	startAttack(angle:Real){
 		assert(attackState is Waiting);
 		attackState=BeforeAttack{PLAYER_TIME_BEFORE_ATTACK,angle};
 	}
-	move(newTargetSpeed:V){
+	startMove(newTargetSpeed:V){
 		if(newTargetSpeed!=V{0,0}){
 			newTargetSpeed*=PLAYER_MAX_SPEED/newTargetSpeed.len;
 		}
 		targetSpeed=newTargetSpeed;
 	}
-	inAttackRange(p:Player,angle:Real):Boolean{
+	canAttack(p:Player,angle:Real):Boolean{
 		dis:V=p.pos-pos;
 		if(dis.len==0||dis.len>PLAYER_ATTACK_RANGE){
 			return false;
@@ -56,24 +57,33 @@ Player:{
 		delta:Real=dis.angle-angle;
 		return delta<=PLAYER_ATTACK_ANGLE||delta>=2*PI-PLAYER_ATTACK_ANGLE;
 	}
-	time(t:Real){
+	move(t:Real){
 		deltaSpeed:V=targetSpeed-speed;
 		dl:Real=deltaSpeed.len;
-		p:Real=max(dl/PLAYER_ACC,t);
+		p:Real=min(dl/PLAYER_ACC,t);
 		pos+=speed*p/2;
-		speed+=p*deltaSpeed/deltaSpeed.len;
+		if(deltaSpeed!==V{0,0}){
+			speed+=p*deltaSpeed/deltaSpeed.len;
+		}
 		pos+=speed*(t-p/2);
 		pos.x=mid(0,pos.x,ARENA_WIDTH);
 		pos.y=mid(0,pos.y,ARENA_HEIGHT);
+	}
+	attack(){
+		for(player:Player in players){
+			if(canAttack(player,attackState.angle)){
+				player.targetHealth-=PLAYER_ATTACK_DAMAGE;
+				player.lastDamager=$;
+				targetHealth=min(PLAYER_MAX_HEALTH,targetHealth+PLAYER_ATTACK_HEAL);
+			}
+		}
+	}
+	time(t:Real){
+		move(t);
 		if(attackState is BeforeAttack){
 			attackState.time-=t;
 			if(attackState.time<=0){
-				for(player:Player in players){
-					if(inAttackRange(player,attackState.angle)){
-						player.targetHealth-=PLAYER_ATTACK_DAMAGE;
-						targetHealth+=PLAYER_ATTACK_HEAL;
-					}
-				}
+				attack();
 				attackState=Waiting;
 			}
 		}

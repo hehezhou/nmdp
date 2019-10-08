@@ -208,6 +208,7 @@ module.exports = class GameServer {
 		let game = unserialization
 			? GameClass.unserialization(data)
 			: new GameClass(data);
+		game.setTime(Date.now());
 		this.games[id] = game;
 		game.on('end', () => {
 			delete (this.games)[id];
