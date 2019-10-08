@@ -15,7 +15,7 @@
 
 /** send
  * ['attack', theta]
- * ['move', -1 ~ 7];
+ * ['set_direction', -1 ~ 7];
  */
 /**
  * 3  2  1
@@ -320,7 +320,7 @@ async function gameInterface(msg) {
                 if (s) newD |= S;
                 if (a) newD |= A;
                 if (d) newD |= D;
-                if (newD != now && alive) send(['move', newD]);
+                if (newD != now && alive) send(['set_direcion', newD]);
             }
             return {
                 keydownListener: function (data) {
