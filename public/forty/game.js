@@ -208,7 +208,7 @@ async function gameInterface(msg) {
     function updateSize() {
         nowWidth = window.innerWidth;
         nowHeight = window.innerHeight;
-        let d = (nowWidth * nowHeight + 0.01) / (1920 * 969) * 6;
+        let d = (nowWidth * nowHeight + 0.01) / (1920 * 969) * 10;
         d = d ** 0.5;
         nowWidth = Math.ceil(nowWidth / d);
         nowHeight = Math.ceil(nowHeight / d);
@@ -232,11 +232,11 @@ async function gameInterface(msg) {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
             });
             cxt.fillStyle = 'rgb(128, 128, 128)'
-            for(let i = Math.floor(X / 50) * 50 - X; i < nowHeight; i += 50) {
-                cxt.fillRect(0, i, nowWidth, 5);
+            for(let i = Math.floor(X / 30) * 30 - X; i < nowHeight; i += 30) {
+                cxt.fillRect(0, i, nowWidth, 4);
             }
-            for(let i = Math.floor(Y / 50) * 50 - Y; i < nowWidth; i += 50) {
-                cxt.fillRect(i, 0, 5, nowHeight);
+            for(let i = Math.floor(Y / 30) * 30 - Y; i < nowWidth; i += 30) {
+                cxt.fillRect(i, 0, 4, nowHeight);
             }
             cxt.fillStyle = 'red';
             players.forEach(data => {
