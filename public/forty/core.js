@@ -114,10 +114,10 @@ const GAME = (() => {
                 this.players.set(i[0], new Player({
                     pos: new vector(i.pos), 
                     speed: new vector(i.speed), 
-                    targetSpeed: new vector(i.targetSpeed), 
-                    attackState: i.attackState === null ? Waiting : new BeforeAttack(i.attackState),
+                    targetSpeed: new vector(i.target_speed), 
+                    attackState: i.attackState === null ? Waiting : new BeforeAttack(i.attack_state),
                     health: i.health,
-                    targetHealth: i.targetHealth,
+                    targetHealth: i.target_health,
                 }));
             }
         }

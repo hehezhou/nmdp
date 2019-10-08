@@ -4,13 +4,13 @@
  * PlayerData: {
  *     pos: Vector;
  *     speed: Vector;
- *     targetSpeed: Vector;
+ *     target_speed: Vector;
  *     health: Number;
- *     targetHealth: Number;
- *     attackState:{time: Number, angle: Number}|null;
+ *     target_health: Number;
+ *     attack_state:{time: Number, angle: Number}|null;
  * }
  * ['game_update', {map:{players: Map<ID, PlayerData>}}]
- * ['player_lose', {playerID, killerID}]
+ * ['player_lose', {deadID, killerID}]
  */
 
 /** send
@@ -383,9 +383,9 @@ async function gameInterface(msg) {
                 FORTY.update(data[1]);
             }
             else if(data[0] === 'player_lose') {
-                let {killerID, playerID} = data[1];
+                let {killerID, deadID} = data[1];
                 if(killerID === playerIndex) killTag = 20;
-                else if(playerID === playerIndex) {
+                else if(deadID === playerIndex) {
                     alive = 0;
                     frame.style.display = 'grid';
                     frame.innerHTML = '';
