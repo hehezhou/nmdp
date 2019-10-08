@@ -68,7 +68,7 @@ const GAME = (() => {
             let dl = deltaSpeed.len();
             let p = Math.min(dl / PLAYER_ACC, t);
             this.pos = plus(this.pos, mult(this.speed, p / 2));
-            if(deltaSpeed.len() > 0) this.speed = plus(this.speed, mult(deltaSpeed, p / deltaSpeed.len()));
+            if(deltaSpeed.len() > 1e-5) this.speed = plus(this.speed, mult(deltaSpeed, PLAYER_ACC * p / deltaSpeed.len()));
             this.pos = plus(this.pos, mult(this.speed, (t - p / 2)));
             if (this.pos.x < 0) this.pos.x = 0;
             if (this.pos.y < 0) this.pos.y = 0;
@@ -84,8 +84,8 @@ const GAME = (() => {
     return class {
         constructor({ data }) {
             this.players = new Map();
-            this.width = data.width;
-            this.height = data.height;
+            this.width = data.map_width;
+            this.height = data.map_height;
             this.lastTime = Date.now();
         }
         output() {
