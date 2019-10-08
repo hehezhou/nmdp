@@ -220,7 +220,7 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
     let X = 0, Y = 0, killTag;
-    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 8, HPwidth = 25, HPdis = 3, attactTime = 1;
+    const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.05, HPheight = 8, HPwidth = 25, HPdis = 3, attactTime = 1;
     await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
@@ -229,8 +229,16 @@ async function gameInterface(msg) {
             cxt.clearRect(0, 0, nowWidth, nowHeight);
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
-                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
+                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1, console.log(data.x, data.y);
             });
+            cxt.fillStyle = 'rgb(128, 128, 128)'
+            for(let i = Math.floor(X / 50) * 50 - X; i < nowHeight; i += 50) {
+                cxt.fillRect(0, i, nowWidth, 5);
+            }
+            for(let i = Math.floor(Y / 50) * 50 - Y; i < nowWidth; i += 50) {
+                cxt.fillRect(i, 0, 5, nowHeight);
+            }
+            cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
                 cxt.lineWidth = 1;
@@ -324,7 +332,9 @@ async function gameInterface(msg) {
             ({ x, y } = pos({ x, y }));
             x = Math.floor(x), y = Math.floor(y);
             if (alive && FORTY.check(playerIndex)) {
-                send(['attack', Math.atan2(y - nowWidth / 2, nowHeight / 2 - x)]);
+                let tmp = Math.atan2(nowHeight / 2 - x, y - nowWidth / 2);
+                console.log(tmp);
+                send(['attack', tmp < 0 ? tmp + 2 * Math.PI : tmp]);
             }
         });
         var { keydownListener, keyupListener } = (() => {
@@ -335,7 +345,7 @@ async function gameInterface(msg) {
                 if (s) newD |= S;
                 if (a) newD |= A;
                 if (d) newD |= D;
-                if (newD != now && alive) send(['set_direction', newD]), now = newD;
+                if (newD != now && alive) send(['set_direction', moveList[newD]]), now = newD;
             }
             return {
                 keydownListener: function (data) {
