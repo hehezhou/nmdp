@@ -79,7 +79,7 @@ module.exports = class Forty extends Game {
 				let accT = Math.min(len / PLAYER_ACC, s);
 				this.pos.addM(this.speed.mul(accT / 2));
 				if (len > 0) {
-					this.speed.addM(deltaSpeed.mul(1 / len).mul(accT));
+					this.speed.addM(deltaSpeed.mul(1 / len).mul(accT * PLAYER_ACC));
 				}
 				this.pos.addM(this.speed.mul(s - accT / 2));
 				this.pos.x = mid(this.pos.x, 0, ARENA_WIDTH);
