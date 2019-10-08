@@ -63,8 +63,8 @@ Player:{
 		pos+=speed*p/2;
 		speed+=p*deltaSpeed/deltaSpeed.len;
 		pos+=speed*(t-p/2);
-		pos.x=mid(-ARENA_WIDTH,pos.x,ARENA_WIDTH);
-		pos.y=mid(-ARENA_HEIGHT,pos.y,ARENA_HEIGHT);
+		pos.x=mid(0,pos.x,ARENA_WIDTH);
+		pos.y=mid(0,pos.y,ARENA_HEIGHT);
 		if(attackState is BeforeAttack){
 			attackState.time-=t;
 			if(attackState.time<=0){
@@ -90,7 +90,7 @@ Interface:{
 };
 export join:Interface{
 	player:Player=Player{
-		pos:V{randomReal(-ARENA_WIDTH,ARENA_WIDTH),randomReal(-ARENA_HEIGHT,ARENA_HEIGHT)};
+		pos:V{randomReal(0,ARENA_WIDTH),randomReal(0,ARENA_HEIGHT)};
 		speed:V{0,0};
 		targetSpeed:V{0,0};
 		attackState:Waiting;
