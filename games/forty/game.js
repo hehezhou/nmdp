@@ -206,14 +206,16 @@ module.exports = class Forty extends Game {
 		});
 		this.players.forEach((player, id) => {
 			if (player.health <= 0) {
-				deaths.push({ deadID: id, killerID: (pladdddddyer.lastDamager || { id: null }).id });
+				deaths.push({ deadID: id, killerID: (player.lastDamager || { id: null }).id });
 			}
 		});
 		deaths.forEach(death => {
-			this.players.delete(death.deadID);
 			for (let [, { callback }] of this.players) {
 				callback(['player_lose', death]);
 			}
+		});
+		deaths.forEach(death=>{
+			this.players.delete(death.deadID);
 		});
 		if (deaths.length > 0) {
 			this.update();
