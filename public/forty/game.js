@@ -11,10 +11,10 @@
  * ['player_lose', {playerID, killerID}]
  */
 
- /** send
-  * ['attack', theta]
-  * ['move', -1 ~ 7];
-  */
+/** send
+ * ['attack', theta]
+ * ['move', -1 ~ 7];
+ */
 /**
  * 3  2  1
  * 4 -1  0
@@ -61,7 +61,7 @@ const HTML = {
     },
 };
 
-async function chooseInterface() {
+async function chooseInterface(tag) {
     const typeList = {
         '重新连接': { check: () => Boolean(localStorage.fortyLastRoomId), type: GAME_CONTINUE, },
         '经典 FFA': { check: () => true, type: JOIN_AUTO_FFA, },
@@ -185,14 +185,16 @@ async function readyInterface(type) {
     });
 }
 async function gameInterface(msg) {
-    if (msg === CONTINUE_TAG) return;
+    if (msg === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
     let { data, type } = msg;
-    let nowWidth, nowHeight;
-    let canvas = HTML.create('canvas');
+    let nowWidth, nowHeight, alive = 1;
+    let canvas = HTML.create('canvas'), frame = HTML.create('div', 'frame game-interface-ffa');
+    frame.style.display = 'none';
     let standingBox = HTML.create('div', 'standing');
     let cxt = canvas.getContext('2d');
     document.body.appendChild(canvas);
+    document.body.appendChild(frame);
     document.body.appendChild(ranking);
     document.body.className = 'game';
     function updateSize() {
@@ -207,24 +209,28 @@ async function gameInterface(msg) {
     };
     updateSize();
     window.addEventListener('resize', updateSize);
-    let FORTY = new GAME({data});
-    let playerList = data.player_list;
-    let playerIndex = data.player_index;
-    let X = 0, Y = 0;
+    let FORTY = new GAME({ data });
+    let playerIndex = data.id;
+    let X = 0, Y = 0, killTag;
     const playerRadius = 5, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 12, HPdis = 3, attactTime = 1;
     await new Promise(resolve => {
         let running = 1;
-        let nowMouseX, nowMouseY;
+        let nowMouseX = 0, nowMouseY = 0;
         requestAnimationFrame(function x() {
             cxt.clearRect(0, 0, nowWidth, nowHeight);
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2;
             });
-            cxt.strokeStyle = 'black';
-            cxt.lineWidth = 1;
             players.forEach(data => {
+                cxt.strokeStyle = 'black';
+                cxt.lineWidth = 1;
                 cxt.fillStyle = data.color;
+                if(data.id === playerIndex && killTag) {
+                    killTag--;
+                    cxt.lineWidth = 2;
+                    cxt.strokeStyle = 'white';
+                }
                 cxt.beginPath();
                 cxt.arc(data.y - Y, data.x - X, playerRadius, 0, 2 * Math.PI);
                 cxt.closePath();
@@ -234,11 +240,11 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 if (data.onattack) {
                     cxt.strokeStyle = data.attackRestTime <= lastTime ? 'rgba(255, 56, 56, 0.8)' : data.id === playerIndex ? 'rgba(61, 139, 255, 0.8)' : 'rgba(90, 90, 90, 0.8)';
-                    cxt.fillStyle = 
-                        data.attackRestTime <= lastTime ? 
-                            'rgba(255, 56, 56, 0.5)' 
-                            : data.id === playerIndex ? 
-                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})` 
+                    cxt.fillStyle =
+                        data.attackRestTime <= lastTime ?
+                            'rgba(255, 56, 56, 0.5)'
+                            : data.id === playerIndex ?
+                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
                     cxt.lineWidth = 1;
                     if (data.attackRestTime <= lastTime) {
@@ -253,7 +259,7 @@ async function gameInterface(msg) {
                         cxt.stroke();
                     }
                 }
-                else if(data.id === playerIndex) {
+                else if (data.id === playerIndex) {
                     cxt.lineWidth = 1;
                     cxt.strokeStyle = 'rgba(79, 194, 230, 0.6)';
                     cxt.fillStyle = 'rgba(79, 194, 230, 0.3)';
@@ -274,24 +280,21 @@ async function gameInterface(msg) {
                 cxt.strokeRect(data.y - Y - HPwidth / 2, data.x - X + HPdis + playerRadius, HPwidth, HPheight);
             });
             standingBox.innerHTML = '';
-            for(let i = 0; i < 10; i++) {
-                if(i < standing.length) {
+            for (let i = 0; i < 10; i++) {
+                if (i < standing.length) {
                     standingBox.innerHTML += `${i + 1}.${standing[i]} ${players[standing[i]].score}<br/>`;
                 }
                 else {
                     standing.innerHTML += '<br/>';
                 }
             }
-            if(players[playerIndex]) {
+            if (players[playerIndex]) {
                 standing.innerHTML += `<hr/>${standing.indexOf(playerIndex) + 1}.${playerIndex} ${players[playerIndex].score}`;
             }
             if (running) requestAnimationFrame(x);
         });
         function pos({ x, y }) {
             return { x: x / canvas.offsetHeight * canvas.height, y: y / canvas.offsetWidth * canvas.width };
-        }
-        function attack() {
-            debugger;
         }
         canvas.addEventListener('mousemove', ({ offsetX: y, offsetY: x }) => {
             ({ x, y } = pos({ x, y }));
@@ -301,35 +304,35 @@ async function gameInterface(msg) {
             ({ x, y } = pos({ x, y }));
             nowMouseX = x = Math.floor(x), nowMouseY = y = Math.floor(y);
             x += X, y += Y;
-            if (FORTY.check({ x, y })) {
-                attack({ x, y });
+            if (alive && FORTY.check(playerIndex)) {
+                send(['attack', Math.atan2(nowHeight / 2 - y + Y, x - X - nowWidth / 2)])
             }
         });
-        var {keydownListener, keyupListener} = (() => {
+        var { keydownListener, keyupListener } = (() => {
             let w = 0, s = 0, a = 0, d = 0, now = -1;
             function updatedirect() {
                 let newD = 0;
-                if(w) newD |= W;
-                if(s) newD |= S;
-                if(a) newD |= A;
-                if(d) newD |= D;
-                if(newD != now) send(['move', newD]);
+                if (w) newD |= W;
+                if (s) newD |= S;
+                if (a) newD |= A;
+                if (d) newD |= D;
+                if (newD != now && alive) send(['move', newD]);
             }
             return {
                 keydownListener: function (data) {
-                    if(data.key === 'w') {
+                    if (data.key === 'w') {
                         w = 1;
                         updatedirect();
                     }
-                    else if(data.key === 's') {
+                    else if (data.key === 's') {
                         s = 1;
                         updatedirect();
                     }
-                    else if(data.key === 'a') {
+                    else if (data.key === 'a') {
                         a = 1;
                         updatedirect();
                     }
-                    else if(data.key === 'd') {
+                    else if (data.key === 'd') {
                         d = 1;
                         updatedirect();
                     }
@@ -337,19 +340,19 @@ async function gameInterface(msg) {
                     data.preventDefault();
                 },
                 keyupListener: function (data) {
-                    if(data.key === 'w') {
+                    if (data.key === 'w') {
                         w = 0;
                         updatedirect();
                     }
-                    else if(data.key === 's') {
+                    else if (data.key === 's') {
                         s = 0;
                         updatedirect();
                     }
-                    else if(data.key === 'a') {
+                    else if (data.key === 'a') {
                         a = 0;
                         updatedirect();
                     }
-                    else if(data.key === 'd') {
+                    else if (data.key === 'd') {
                         d = 0;
                         updatedirect();
                     }
@@ -375,10 +378,28 @@ async function gameInterface(msg) {
             else if (data[0] === 'game_update') {
                 FORTY.update(data[1]);
             }
+            else if(data[0] === 'player_lose') {
+                let {killerID, playerID} = data[1];
+                if(killerID === playerIndex) killTag = 20;
+                else if(playerID === playerIndex) {
+                    alive = 0;
+                    frame.style.display = 'grid';
+                    frame.innerHTML = '';
+                    let msg = HTML.create('h1', 'restart', '您已阵亡');
+                    let btn = HTML.create('button', 'restart', '复活');
+                    frame.appendChild(msg);
+                    frame.appendChild(btn);
+                    await new Promise(resolve => btn.addEventListener('click', resolve));
+                    frame.style.display = 'none';
+                    alive = 1;
+                }
+            }
         });
     });
 }
-
+function endInterface(data) {
+    if (data === CONTINUE_TAG) return null;
+}
 async function run() {
     let tag = 0;
     io.addEventListener('close', () => {
@@ -386,6 +407,9 @@ async function run() {
     });
     await new Promise(resolve => io.addEventListener('open', resolve));
     tag = 1;
-    while (1) await gameInterface(await readyInterface(await joinInterface(await chooseInterface())));
+    let tmp = null;
+    while (1) {
+        tmp = await endInterface(await gameInterface(await readyInterface(await joinInterface(await chooseInterface(tmp)))));
+    }
 }
 run();

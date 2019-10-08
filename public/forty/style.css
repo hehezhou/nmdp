@@ -63,12 +63,6 @@ button.unready {
     width: 130px;
     height: 60px;
 }
-button.restart {
-    align-self: top;
-    justify-self: center;
-    width: 90px;
-    height: 40px;
-}
 div.frame {
     display: grid;
     width: 100vw;
@@ -120,4 +114,21 @@ div.standing {
     padding: 5px;
     width: 20vw;
     text-align: center;
+}
+div.game-interface-ffa {
+    grid-template-rows: 50% 50%;
+    grid-template-columns: 100%;
+    z-index: 2;
+}
+h1.restart {
+    align-self: bottom;
+    justify-self: center;
+    text-align: center;
+    font-size: 40px;
+}
+button.restart {
+    align-self: top;
+    justify-self: center;
+    width: 100px;
+    height: 40px;
 }
