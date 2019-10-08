@@ -48,8 +48,9 @@ module.exports = class Forty extends Game {
 				this.attackState = attackState;
 				this.health = health;
 				this.targetHealth = targetHealth;
-				this.lastDamager = lastDamager,
-					this.callback = callback;
+				this.lastDamager = lastDamager;
+				this.callback = callback;
+				this.needUpdate = false;
 			}
 			startAttack(angle) {
 				if (!(this.attackState instanceof Waiting)) {
@@ -104,6 +105,7 @@ module.exports = class Forty extends Game {
 					if (this.attackState.time <= 0) {
 						this.attack();
 						this.attackState = new Waiting();
+						this.needUpdate = true;
 					}
 				}
 				this.health = Math.max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * s);
@@ -134,7 +136,7 @@ module.exports = class Forty extends Game {
 			map_width: ARENA_WIDTH,
 			id,
 		}]);
-		this.update();
+		this.needUpdate = true;
 	}
 	getDirection(dirID) {
 		if (dirID === -1) {
@@ -148,7 +150,7 @@ module.exports = class Forty extends Game {
 			player.callback = () => { };
 			player.startMove(new V(0, 0));
 		}
-		this.update();
+		this.needUpdate = true;
 	}
 	input(id, input) {
 		let [type, data] = input;
@@ -159,12 +161,12 @@ module.exports = class Forty extends Game {
 		switch (type) {
 			case 'attack': {
 				player.startAttack(vaild.real(data, { min: 0, max: Math.PI * 2, hint: 'angle' }));
-				this.update();
+				this.needUpdate = true;
 				break;
 			}
 			case 'set_direction': {
 				player.startMove(this.getDirection(vaild.integer(data, { min: -1, max: 7, hint: 'direction' })));
-				this.update();
+				this.needUpdate = true;
 				break;
 			}
 			default: {
@@ -214,11 +216,15 @@ module.exports = class Forty extends Game {
 				callback(['player_lose', death]);
 			}
 		});
-		deaths.forEach(death=>{
+		deaths.forEach(death => {
 			this.players.delete(death.deadID);
 		});
 		if (deaths.length > 0) {
+			this.needUpdate = true;
+		}
+		if (this.needUpdate) {
 			this.update();
+			this.needUpdate = false;
 		}
 	}
 	serialization() {
