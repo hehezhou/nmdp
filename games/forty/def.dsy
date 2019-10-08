@@ -55,6 +55,9 @@ Player:{
 			return false;
 		}
 		delta:Real=dis.angle-angle;
+		if(delta<0){
+			delta+=2*PI;
+		}
 		return delta<=PLAYER_ATTACK_ANGLE||delta>=2*PI-PLAYER_ATTACK_ANGLE;
 	}
 	move(t:Real){
