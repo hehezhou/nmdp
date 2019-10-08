@@ -120,15 +120,10 @@ module.exports = class Forty extends Game {
 				),
 				callback,
 			});
-			this.players.set(id, {
-				player,
-				callback,
-				isOnline: true,
-			});
+			this.players.set(player);
 		}
 		else {
 			player = this.players.get(id);
-			player.isOnline = true;
 		}
 		player.callback(['game_start', {
 			map_height: ARENA_HEIGHT,
@@ -144,7 +139,6 @@ module.exports = class Forty extends Game {
 	}
 	leave(id) {
 		let player = this.players.get(id);
-		player.isOnline = false;
 		player.callback = () => { };
 		player.startMove(new V(0, 0));
 	}
