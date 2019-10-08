@@ -124,6 +124,7 @@ module.exports = class Forty extends Game {
 		}
 		else {
 			player = this.players.get(id);
+			player.callback = callback;
 		}
 		player.callback(['game_start', {
 			map_height: ARENA_HEIGHT,
