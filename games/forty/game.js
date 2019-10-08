@@ -24,10 +24,10 @@ class BeforeAttack {
 module.exports = class Forty extends Game {
 	constructor(settings) {
 		super(settings);
-		this.info={
-			id:'forty',
+		this.info = {
+			id: 'forty',
 		};
-		this.settings=settings;
+		this.settings = settings;
 		let players = new Map();
 		this.players = players;
 		this.time = -Infinity;
@@ -49,7 +49,7 @@ module.exports = class Forty extends Game {
 				this.health = health;
 				this.targetHealth = targetHealth;
 				this.lastDamager = lastDamager,
-				this.callback = callback;
+					this.callback = callback;
 			}
 			startAttack(angle) {
 				if (!(this.attackState instanceof Waiting)) {
@@ -71,6 +71,9 @@ module.exports = class Forty extends Game {
 					return false;
 				}
 				let theta = distance.angle - angle;
+				if (theta < 0) {
+					theta += 2 * Math.PI;
+				}
 				return theta <= PLAYER_ATTACK_ANGLE || theta >= 2 * Math.PI - PLAYER_ATTACK_ANGLE;
 			}
 			move(s) {
@@ -90,7 +93,7 @@ module.exports = class Forty extends Game {
 					if (this.canAttack(player, this.attackState.angle)) {
 						player.targetHealth -= PLAYER_ATTACK_DAMAGE;
 						player.lastDamager = this;
-						this.targetHealth = Math.min(this.targetHealth+PLAYER_ATTACK_HEAL,PLAYER_MAX_HEALTH);
+						this.targetHealth = Math.min(this.targetHealth + PLAYER_ATTACK_HEAL, PLAYER_MAX_HEALTH);
 					}
 				}
 			}
@@ -120,7 +123,7 @@ module.exports = class Forty extends Game {
 				),
 				callback,
 			});
-			this.players.set(id,player);
+			this.players.set(id, player);
 		}
 		else {
 			player = this.players.get(id);
@@ -141,7 +144,7 @@ module.exports = class Forty extends Game {
 	}
 	leave(id) {
 		let player = this.players.get(id);
-		if(player !== undefined){
+		if (player !== undefined) {
 			player.callback = () => { };
 			player.startMove(new V(0, 0));
 		}
@@ -149,7 +152,7 @@ module.exports = class Forty extends Game {
 	}
 	input(id, input) {
 		let [type, data] = input;
-		if(!this.players.has(id)){
+		if (!this.players.has(id)) {
 			throw new Error('player is died');
 		}
 		let player = this.players.get(id);
@@ -169,7 +172,7 @@ module.exports = class Forty extends Game {
 			}
 		}
 	}
-	update(id=null){
+	update(id = null) {
 		let players = [];
 		for (let [id, player] of this.players) {
 			players.push([id, {
@@ -183,36 +186,36 @@ module.exports = class Forty extends Game {
 					: null
 			}]);
 		}
-		let message=['game_update',{map:{players}}];
-		if(id!==null){
-			let player=this.players.get(id);
+		let message = ['game_update', { map: { players } }];
+		if (id !== null) {
+			let player = this.players.get(id);
 			player.callback(message);
 		}
-		else{
-			this.players.forEach((player)=>{
+		else {
+			this.players.forEach((player) => {
 				player.callback(message);
 			});
 		}
 	}
 	setTime(timeStamp) {
-		let deltaTime=timeStamp-this.time;
+		let deltaTime = timeStamp - this.time;
 		this.time = timeStamp;
-		let deaths=[];
-		this.players.forEach(player=>{
-			player.time(deltaTime/1000);
+		let deaths = [];
+		this.players.forEach(player => {
+			player.time(deltaTime / 1000);
 		});
-		this.players.forEach((player,id)=>{
-			if(player.health<=0){
-				deaths.push({deadID:id,killerID:(player.lastDamager||{id:null}).id});
+		this.players.forEach((player, id) => {
+			if (player.health <= 0) {
+				deaths.push({ deadID: id, killerID: (pladdddddyer.lastDamager || { id: null }).id });
 			}
 		});
-		deaths.forEach(death=>{
+		deaths.forEach(death => {
 			this.players.delete(death.deadID);
-			for(let [,{callback}] of this.players){
-				callback(['player_lose',death]);
+			for (let [, { callback }] of this.players) {
+				callback(['player_lose', death]);
 			}
 		});
-		if(deaths.length>0){
+		if (deaths.length > 0) {
 			this.update();
 		}
 	}
