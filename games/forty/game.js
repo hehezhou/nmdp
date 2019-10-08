@@ -170,7 +170,7 @@ module.exports = class Forty extends Game {
 			player.time(deltaTime);
 		});
 		this.players.forEach((player,id)=>{
-			if(players.health<=0){
+			if(player.health<=0){
 				deaths.push({deadID:id,killerID:player.lastDamager.id});
 			}
 		});
