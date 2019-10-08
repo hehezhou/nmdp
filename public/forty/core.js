@@ -1,14 +1,14 @@
 const GAME = (() => {
     const
         PLAYER_TIME_BEFORE_ATTACK = 1,
-        PLAYER_MAX_SPEED = 30,
-        PLAYER_ACC = 120,
+        PLAYER_MAX_SPEED = 60,
+        PLAYER_ACC = 200,
         PLAYER_MAX_HEALTH = 100,
         PLAYER_ATTACK_RANGE = 40,
         PLAYER_ATTACK_ANGLE = Math.PI / 6,
         PLAYER_ATTACK_DAMAGE = 75,
         PLAYER_ATTACK_HEAL = 25,
-        PLAYER_HURT_PER_SEC = 40,
+        PLAYER_HURT_PER_SEC = 100,
         ARENA_HEIGHT = 1000,
         ARENA_WIDTH = 1000;
     class vector {
