@@ -180,12 +180,16 @@ module.exports = class Forty extends Game {
 					: null
 			}]);
 		}
-		let receivers=id===null
-			?this.players.map(([,p])=>p)
-			:[this.players.get(id)];
-		receivers.forEach(player=>{
-			player.callback(['game_update',{map:{players}}]);
-		});
+		let message=['game_update',{map:{players}}];
+		if(id!==null){
+			let player=this.players.get(id);
+			player.callback(message);
+		}
+		else{
+			this.players.forEach(([,player])=>{
+				player.callback(message);
+			});
+		}
 	}
 	setTime(timeStamp) {
 		let deltaTime=timeStamp-this.time;
