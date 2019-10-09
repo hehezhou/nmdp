@@ -65,9 +65,13 @@ module.exports = class Area extends Game {
 		let callback = this.players[index].callback;
 		if (this.isStarted) {
 			if (reconnecting) {
+				let playerList = new Array(this.playerCount());
+				for (let [id, index] of this.playerIndexs) {
+					playerList[index] = id;
+				};
 				callback(['game_start', {
 					player_index: index,
-					player_list: this.players.map((player, index) => `player ${index}`),
+					player_list: playerList,
 					height: this.height,
 					width: this.width,
 				}]);
