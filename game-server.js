@@ -23,8 +23,14 @@ module.exports = class GameServer {
 				let { type, data } = gameData.games[id];
 				this.createGame(id, type, data, true);
 			}
-			this.matchs = vaild.object(gameData.matchs, { hint: 'matchs' });
 			this.playerIPToID = new Map(gameData.playerIPToID);
+			this.matchs = vaild.object(gameData.matchs, { hint: 'matchs' });
+			for (let id in this.matchs) {
+				let gameID = this.matchs[id].gameID;
+				if (gameID !== null) {
+					this.createGameForMatch(id, gameID);
+				}
+			}
 		}
 		this.players = Object.create(null);
 		setInterval(() => {
@@ -42,9 +48,9 @@ module.exports = class GameServer {
 		return this;
 	}
 	playerConnect(webSocket, request) {
-		let playerIP=request.connection.remoteAddress;
-		if(!this.playerIPToID.has(playerIP)){
-			this.playerIPToID.set(playerIP,`tourist #${this.playerIPToID.size+1}`);
+		let playerIP = request.connection.remoteAddress;
+		if (!this.playerIPToID.has(playerIP)) {
+			this.playerIPToID.set(playerIP, `tourist #${this.playerIPToID.size + 1}`);
 		}
 		let playerID = this.playerIPToID.get(playerIP);
 		if (playerID in this.players) {
@@ -120,17 +126,22 @@ module.exports = class GameServer {
 			this.sendMessage(playerID, ['join_fail', e.message]);
 		}
 	}
-	createGameForMatch(matchID) {
+	createGameForMatch(matchID, gameID = null) {
 		let match = this.matchs[matchID];
-		let gameID = `${matchID}#${match.index++}`;
-		if(gameID in this.games){
-			gameID += `@${Date.now()}`;
+		if (gameID === null) {
+			gameID = `${matchID}#${match.index++}`;
+			if (gameID in this.games) {
+				gameID += `@${Date.now()}`;
+			}
+			gameID = this.createGame(gameID, match.type, match.settings, false);
 		}
-		match.gameID = this.createGame(gameID, match.type, match.settings, false);
-		let game=this.games[match.gameID];
-		game.on('start',()=>{
-			this.createGameForMatch(matchID);
-		})
+		match.gameID = gameID;
+		let game = this.games[match.gameID];
+		game.once('start', () => {
+			if (match.gameID === gameID) {
+				this.createGameForMatch(matchID);
+			}
+		});
 		return gameID;
 	}
 	playerJoinMatch(playerID, playerInput) {
@@ -186,7 +197,7 @@ module.exports = class GameServer {
 					this.playerJoinMatch(playerID, data);
 					break;
 				}
-				case 'leave':{
+				case 'leave': {
 					this.playerLeave(playerID);
 					break;
 				}
@@ -198,7 +209,7 @@ module.exports = class GameServer {
 						this.games[player.gameID].input(playerID, content);
 						return;
 					}
-					else{
+					else {
 						throw new Error('the type is not supported');
 					}
 				}
@@ -233,7 +244,13 @@ module.exports = class GameServer {
 			gameID: null,
 			index: 0,
 		};
-		this.createGameForMatch(id);
+		try{
+			this.createGameForMatch(id);
+		}
+		catch(error){
+			delete (this.matchs)[id];
+			throw error;
+		}
 		return id;
 	}
 	serialization() {
