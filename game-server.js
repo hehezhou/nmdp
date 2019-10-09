@@ -205,7 +205,7 @@ module.exports = class GameServer {
 			}
 		}
 		catch (e) {
-			this.sendMessage(playerID, ['invalid', e.stack]);
+			this.sendMessage(playerID, ['invalid', e.stack.split('\n')]);
 		}
 	}
 	createGame(id, type, data, unserialization = false) {
