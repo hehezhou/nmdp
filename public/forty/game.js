@@ -371,7 +371,7 @@ async function gameInterface(msg) {
                 else break;
             }
             if (alive && tag) {
-                standingBox.innerHTML += `<hr/>${players.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分<br />`;
+                standingBox.innerHTML += `<hr/>${standing.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分<br />`;
                 if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
             }
             if (running) requestAnimationFrame(x);
