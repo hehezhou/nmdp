@@ -90,7 +90,7 @@ div.ready-interface {
     grid-template-columns: 100%;
     grid-template-rows: 9fr 3fr 8fr;
 }
-div.end-interface {
+div.end-interface-die {
     grid-template-columns: 100%;
     grid-template-rows: 45% 55%;
 }
@@ -147,7 +147,7 @@ div.standing {
     left: 10px;
     top: 10px;
     z-index: 1;
-    height: 285px;
+    height: 50%;
     font-size: 20px;
     padding: 5px;
     width: 20vw;
@@ -168,6 +168,19 @@ h1.restart {
 button.restart {
     font-size: 1.5em;
     z-index: 3;
+    align-self: start;
+    justify-self: center;
+    width: 130px;
+    height: 50px;
+}
+h1.killer {
+    align-self: end;
+    justify-self: center;
+    text-align: center;
+    font-size: 80px;
+}
+button.restart-die {
+    font-size: 1.5em;
     align-self: start;
     justify-self: center;
     width: 130px;

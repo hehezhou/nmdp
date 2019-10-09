@@ -28,7 +28,7 @@
  * 5  6  7
  */
 const io = new WebSocket(`ws://${location.hostname}:1926`);
-const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), SET_SETTINGS = Symbol('set_settings');
+const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), SET_SETTINGS = Symbol('set_settings'), DIE = Symbol('die');
 const future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
@@ -230,6 +230,7 @@ async function gameInterface(msg) {
     let nowWidth, nowHeight, alive = 1;
     let canvas = HTML.create('canvas'), frame = HTML.create('div', 'frame game-interface-ffa');
     frame.style.display = 'none';
+    let deadMsg = '', deadMsgToTime = 0;
     let standingBox = HTML.create('div', 'standing');
     let cxt = canvas.getContext('2d');
     document.body.appendChild(canvas);
@@ -352,7 +353,8 @@ async function gameInterface(msg) {
                 else break;
             }
             if (alive && tag) {
-                standingBox.innerHTML += `<hr/>${players.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分`;
+                standingBox.innerHTML += `<hr/>${players.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分<br />`;
+                if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
             }
             if (running) requestAnimationFrame(x);
         });
@@ -462,7 +464,7 @@ async function gameInterface(msg) {
                     running = 0;
                     alive = 0;
                     send(['leave', null]);
-                    resolve(CONTINUE_TAG);
+                    resolve({type: DIE, data: killerID});
                     return;
                     frame.style.display = 'grid';
                     frame.innerHTML = '';
@@ -474,17 +476,28 @@ async function gameInterface(msg) {
                     frame.style.display = 'none';
                     alive = 1;
                 }
+                else if(killerID === playerIndex) {
+                    deadMsg = `<strong>你击杀了${deadID}!</strong>`;
+                }
             }
         });
     });
+}
+async function endInterface(data) {
+    if (data === CONTINUE_TAG) return null;
+    else if(data.type === DIE) {
+        let frame = HTML.create('div', 'frame end-interface-die');
+        frame.appendChild(HTML.create('h1', 'killer', `你被${data.data}击杀了`));
+        let btn = HTML.create('button', 'restart-die', '确定');
+        frame.appendChild(btn);
+        await new Promise(resolve => btn.addEventListener('click', resolve));
+    }
+    else return;
 }
 function loadSettings() {
     if(localStorage.fortySettings === undefined) return;
     let data = JSON.parse(localStorage.fortySettings);
     for(let i in data) if(i in SETTINGS) SETTINGS[i] = data[i];
-}
-function endInterface(data) {
-    if (data === CONTINUE_TAG) return null;
 }
 async function run() {
     let tag = 0;
@@ -493,8 +506,9 @@ async function run() {
     });
     await new Promise(resolve => io.addEventListener('open', resolve));
     tag = 1;
+    let tmp = null;
     while (1) {
-        await endInterface(await gameInterface(await readyInterface(await joinInterface(await chooseInterface(null)))));
+        await endInterface(await gameInterface(await readyInterface(await joinInterface(await chooseInterface(tmp)))));
     }
 }
 loadSettings();
