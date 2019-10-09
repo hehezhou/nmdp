@@ -11,6 +11,8 @@ PLAYER_ATTACK_ANGLE:Real=PI/6;
 PLAYER_ATTACK_DAMAGE:Real=75;
 PLAYER_ATTACK_HEAL:Real=25;
 PLAYER_HURT_PER_SEC:Real=100;
+PLAYER_KILL_STEAL:Real=0.5;
+PLAYER_KILL_SCORE:Real=100;
 ARENA_HEIGHT:Real=1000;
 ARENA_WIDTH:Real=1000;
 V:{
@@ -39,6 +41,7 @@ Player:{
 	health:Real;
 	targetHealth:Real;
 	lastDamager:Player|null;
+	score:Real;
 	startAttack(angle:Real){
 		assert(attackState is Waiting);
 		attackState=BeforeAttack{PLAYER_TIME_BEFORE_ATTACK,angle};
@@ -109,6 +112,7 @@ export join:Interface{
 		attackState:Waiting;
 		health:PLAYER_MAX_HEALTH;
 		targetHealth:PLAYER_MAX_HEALTH;
+		score:0,
 	};
 	players.insert(player);
 	return Interface{
@@ -119,6 +123,14 @@ export join:Interface{
 export time(t:Real){
 	for(player:Player in players){
 		player.time(t);
+	}
+	for(player:Player in players){
+		if(player.health<0){
+			if(player.lastDamager in players){
+				player.lastDamager.score+=player.score*PLAYER_KILL_STEAL+PLAYER_KILL_SCORE;
+			}
+			player.score=0;
+		}
 	}
 	players=players.filter(player:Player=>player.health>0);
 }

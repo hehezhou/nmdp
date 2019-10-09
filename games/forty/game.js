@@ -14,6 +14,8 @@ const PLAYER_ATTACK_HEAL = 25;
 const PLAYER_HURT_PER_SEC = 100;
 const ARENA_HEIGHT = 1000;
 const ARENA_WIDTH = 1000;
+const PLAYER_KILL_STEAL = 0.5;
+const PLAYER_KILL_SCORE = 100;
 class Waiting { };
 class BeforeAttack {
 	constructor(time, angle) {
@@ -41,6 +43,7 @@ module.exports = class Forty extends Game {
 				health = PLAYER_MAX_HEALTH,
 				targetHealth = PLAYER_MAX_HEALTH,
 				lastDamager = null,
+				score = 0,
 				callback,
 			}) {
 				this.pos = pos;
@@ -50,6 +53,7 @@ module.exports = class Forty extends Game {
 				this.health = health;
 				this.targetHealth = targetHealth;
 				this.lastDamager = lastDamager;
+				this.score = score;
 				this.callback = callback;
 				this.needUpdate = false;
 			}
@@ -186,7 +190,8 @@ module.exports = class Forty extends Game {
 				target_health: player.targetHealth,
 				attack_state: player.attackState instanceof BeforeAttack
 					? player.attackState
-					: null
+					: null,
+				score: player.score,
 			}]);
 		}
 		let message = ['game_update', { map: { players } }];
@@ -210,6 +215,10 @@ module.exports = class Forty extends Game {
 		this.players.forEach((player, id) => {
 			if (player.health <= 0) {
 				deaths.push({ deadID: id, killerID: (player.lastDamager || { id: null }).id });
+				if (player.lastDamager !== null) {
+					player.lastDamager.score += player.score * PLAYER_KILL_STEAL + PLAYER_KILL_SCORE;
+				}
+				player.score = 0;
 			}
 		});
 		deaths.forEach(death => {
