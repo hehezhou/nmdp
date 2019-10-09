@@ -129,8 +129,9 @@ const GAME = (() => {
             }
         }
         getNowMap() {
-            this.time((Date.now() - this.lastTime) / 1000);
-            this.lastTime = Date.now();
+            let now = Date.now();
+            this.time((now - this.lastTime) / 1000);
+            this.lastTime = now;
             return { players: this.output(), standing: this.ranking() };
         }
         check(playerIndex) {
