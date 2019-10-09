@@ -54,14 +54,14 @@ const GAME = (() => {
         /**
          * @param {{pos: vector, speed: vector, targetSpeed: vector, attackState: Waiting|BeforeAttack, health: number, targetHealth: number}} param0 
          */
-        constructor({ pos, speed, targetSpeed, attackState, health, targetHealth }) {
+        constructor({ pos, speed, targetSpeed, attackState, health, targetHealth, score }) {
             this.pos = pos;
             this.speed = speed;
             this.targetSpeed = targetSpeed;
             this.attackState = attackState;
             this.health = health;
             this.targetHealth = targetHealth;
-            this.score = 0;
+            this.score = score;
         }
         time(t, height, width) {
             let deltaSpeed = sub(this.targetSpeed, this.speed);
@@ -99,8 +99,7 @@ const GAME = (() => {
                 data.y = i[1].pos.x;
                 data.HP = i[1].health;
                 data.maxHP = PLAYER_MAX_HEALTH;
-                data.score = 0;
-                future;
+                data.score = i[1].score;
                 ans.push(data);
             }
             return ans;
@@ -120,6 +119,7 @@ const GAME = (() => {
                     attackState: i[1].attack_state === null ? Waiting : new BeforeAttack(i[1].attack_state),
                     health: i[1].health,
                     targetHealth: i[1].target_health,
+                    score: typeof i[1].score === 'number' ? i[1].score : 0,
                 }));
             }
         }

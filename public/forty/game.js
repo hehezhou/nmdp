@@ -12,6 +12,7 @@
  *     health: Number;
  *     target_health: Number;
  *     attack_state:{time: Number, angle: Number}|null;
+ *     score: Number;
  * }
  * ['game_update', {map:{players: Map<ID, PlayerData>}}]
  * ['player_lose', {deadID, killerID}]
@@ -234,7 +235,6 @@ async function gameInterface(msg) {
     document.body.appendChild(canvas);
     document.body.appendChild(frame);
     document.body.appendChild(standingBox);
-    standingBox.style.display = 'none', future;
     document.body.className = 'game';
     function updateSize() {
         nowWidth = window.innerWidth;
@@ -341,7 +341,7 @@ async function gameInterface(msg) {
             standingBox.innerHTML = '';
             for (let i = 0; i < 10; i++) {
                 if (i < standing.length) {
-                    standingBox.innerHTML += `${i + 1}.${standing[i]} ${players[players.findIndex(data => data.id === standing[i])].score}<br/>`;
+                    standingBox.innerHTML += `${i + 1}.${standing[i]} ${Math.floor(players[players.findIndex(data => data.id === standing[i])].score)}分<br/>`;
                 }
                 else {
                     standing.innerHTML += '<br/>';
