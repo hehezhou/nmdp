@@ -233,7 +233,7 @@ const CANVAS = {
         let fill;
         if (terrain === MOUNTAIN) fill = this.COLOR.mountainColor;
         else if (terrain === WATER) fill = this.COLOR.waterColor;
-        else if (terrain === NONE) fill = ((owner === -1 && (atom_count <= 0 || building.type != TOWER)) || building.type === BRIDGE) ? this.COLOR.emptyColor : this.COLOR.colorList[owner];
+        else if (terrain === NONE) fill = owner === -1 ? this.COLOR.emptyColor : this.COLOR.colorList[owner];
         else throw new Error('error type');
         this.ctx1.fillStyle = this.COLOR.toRGBString(fill);
         this.ctx1.fillRect(y * this.Ratio, x * this.Ratio, this.Ratio, this.Ratio);
@@ -248,13 +248,13 @@ const CANVAS = {
         else if (terrain === WATER && (x + y) % (2 * this.Ratio)) DRAW.water(this.ctx2, 'black', pos);
         else this.ctx2.clearRect(pos.y, pos.x, this.Ratio, this.Ratio);
     },
-    setAtom: function ({ x: y, y: x }, { building, atoms: atom_count }) {
+    setAtom: function ({ x: y, y: x }, { owner, building, atoms: atom_count }) {
         x = x * this.Ratio;
         y = y * this.Ratio;
         this.ctx3.clearRect(x, y, this.Ratio, this.Ratio);
         if (atom_count === 0) return;
         let delta = 2 * Math.PI / atom_count;
-        let color = atom_count > 0 ? 'white' : 'red';
+        let color = atom_count > 0 ? owner === null ? 'gray' : 'white' : 'red';
         if (atom_count < 0) atom_count = -atom_count;
         if (building === BRIDGE || atom_count === 1) {
             this.ctx3.beginPath();
