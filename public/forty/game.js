@@ -213,7 +213,7 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
             });
-            cxt.fillStyle = 'rgb(128, 128, 128)'
+            cxt.fillStyle = 'rgb(128, 128, 128)';
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
                 if(i + X > 0 || i + X < -width) continue;
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowHeight) continue;
