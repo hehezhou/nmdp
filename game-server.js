@@ -44,7 +44,7 @@ module.exports = class GameServer {
 	playerConnect(webSocket, request) {
 		let playerIP=request.connection.remoteAddress;
 		if(!this.playerIPToID.has(playerIP)){
-			this.playerIPToID.set(playerIP,`tourist #${this.playerIPToID.size()+1}`);
+			this.playerIPToID.set(playerIP,`tourist #${this.playerIPToID.size+1}`);
 		}
 		let playerID = this.playerIPToID.get(playerIP);
 		if (playerID in this.players) {
