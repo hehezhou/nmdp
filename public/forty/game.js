@@ -333,7 +333,6 @@ async function gameInterface(msg) {
             return {
                 keydownListener: function (data) {
                     let key = data.key.toLowerCase();
-                    console.log(key);
                     if(key === 'arrowup') key = 'w';
                     if(key === 'arrowdown') key = 's';
                     if(key === 'arrowleft') key = 'a';
