@@ -3,8 +3,8 @@ module.exports=class V{
 		this.x=x;
 		this.y=y;
 	}
-	clone({x,y}){
-		return new V(x,y);
+	clone(){
+		return new V(this.x,this.y);
 	}
 	addM({x,y}){
 		this.x+=x;
