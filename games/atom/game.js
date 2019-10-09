@@ -1,17 +1,21 @@
 const MatchGame = require('../match-game-base.js');
 const vaild = require('../../utils/vaild.js');
+const { randomPick } = require('../../utils/random.js');
 const { Game } = require('./core.js');
 const mapGens = require('./map-generator.js');
-const MIN_SIZE = 1;
+const MIN_SIZE = 3;
 const MAX_SIZE = 100;
 module.exports = class Atom extends MatchGame {
 	constructor(settings) {
 		super(settings);
-		const { width, height } = settings;
+		const { width = 25, height = 25 } = settings;
 		this.settings = {
 			height: vaild.integer(height, { hint: 'height', min: MIN_SIZE, max: MAX_SIZE }),
 			width: vaild.integer(width, { hint: 'width', min: MIN_SIZE, max: MAX_SIZE }),
 		};
+		if (this.settings.height * this.settings.width < this.maxPlayer) {
+			throw new Error('space is not enough');
+		}
 		this.on('start', () => this.onStart());
 		this.on('input', (playerID, data) => {
 			this.onInput(playerID, data);
@@ -28,7 +32,7 @@ module.exports = class Atom extends MatchGame {
 	onStart() {
 		this.game = new Game({
 			players: this.players.map((player, index) => index),
-			map: mapGens[0]({
+			map: new (randomPick(mapGens))().getMap({
 				height: this.settings.height,
 				width: this.settings.width,
 				players: this.players.map((player, index) => index),

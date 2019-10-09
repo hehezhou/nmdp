@@ -395,11 +395,17 @@ class Game {
 	}
 };
 
-module.exports.WATER = WATER;
-module.exports.MOUNTAIN = MOUNTAIN;
-module.exports.Bridge = Bridge;
-module.exports.Tower = Tower;
-module.exports.SpawnPoint = SpawnPoint;
-module.exports.Grid = Grid;
-module.exports.GameMap = GameMap;
-module.exports.Game = Game;
+module.exports = {
+	WATER,
+	MOUNTAIN,
+	Bridge,
+	Tower,
+	SpawnPoint,
+	Grid,
+	GameMap,
+	Game,
+	NORTH,
+	WEST,
+	SOUTH,
+	EAST,
+};
