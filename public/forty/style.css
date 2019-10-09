@@ -135,14 +135,14 @@ div.standing {
     pointer-events: none;
     background-color: rgba(128, 128, 128, 0.5);
     border: 0;
-    border-radius: 2px;
+    border-radius: 0.5vh;
     position: absolute;
-    left: 10px;
-    top: 10px;
+    left: 1vw;
+    top: 1vh;
     z-index: 1;
     height: 50vh;
     font-size: 3vh;
-    padding: 5px;
+    padding: 2vh;
     width: 20vw;
     text-align: center;
 }
@@ -184,8 +184,14 @@ button.restart-die {
 }
 canvas.little-map {
     position: absolute;
-    right: 5px;
-    top: 5px;
+    right: 1vw;
+    top: 1vh;
     z-index: 3;
     pointer-events: none;
+}
+hr {
+    border: 0.1vh solid black;
+}
+br {
+    height: 0.5vh;
 }

@@ -35,7 +35,7 @@ const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
 const SETTINGS = {
     PLAYERRADIUS: 3,
-    LITTLEMAPSIZE: 300,
+    LITTLEMAPSIZE: 40,
 };
 
 let roomId;
@@ -81,7 +81,7 @@ async function settingInterface() {
     HTML.clearBody();
     let nameList = {
         'PLAYERRADIUS': {text: '人物大小: ', btnList: [{text: '小', value: 1.5}, {text: '中', value: 3}, {text: '大', value: 5}]},
-        'LITTLEMAPSIZE': {text: '小地图大小: ', btnList: [{text: '小', value: 150}, {text: '中', value: 300}, {text: '大', value: 500}]},
+        'LITTLEMAPSIZE': {text: '小地图大小: ', btnList: [{text: '小', value: 20}, {text: '中', value: 40}, {text: '大', value: 60}]},
     };
     function update() {
         for(let i in SETTINGS) {
@@ -237,7 +237,7 @@ async function gameInterface(msg) {
     let { data, type } = msg;
     let height = data.map_height, width = data.map_width;
     let nowWidth, nowHeight, alive = 1;
-    let ratio = Math.min(height / SETTINGS.LITTLEMAPSIZE, width / SETTINGS.LITTLEMAPSIZE);
+    let ratio = Math.min(height / (SETTINGS.LITTLEMAPSIZE * window.innerHeight / 100), width / (SETTINGS.LITTLEMAPSIZE * window.innerHeight / 100));
     let svg = SVG.create('svg'), frame = HTML.create('div', 'frame game-interface-ffa');
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     svg.setAttribute('version', '1.1');
@@ -246,8 +246,8 @@ async function gameInterface(msg) {
     let littleMap = HTML.create('canvas', 'little-map');
     littleMap.height = Math.ceil(height / ratio), littleMap.width = Math.ceil(width / ratio);
     HTML.setPixelated(littleMap);
-    littleMap.style.height = `${SETTINGS.LITTLEMAPSIZE}px`;
-    littleMap.style.width = `${SETTINGS.LITTLEMAPSIZE}px`;
+    littleMap.style.height = `${SETTINGS.LITTLEMAPSIZE}vh`;
+    littleMap.style.width = `${SETTINGS.LITTLEMAPSIZE}vh`;
     let deadMsg = '', deadMsgToTime = 0;
     let standingBox = HTML.create('div', 'standing');
     document.body.appendChild(svg);
