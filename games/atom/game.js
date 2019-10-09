@@ -62,7 +62,10 @@ module.exports = class Atom extends MatchGame {
 	}
 	send(index) {
 		let player = this.players[index];
-		let playerList = this.players.map((player, index) => `player ${index}`);
+		let playerList = new Array(this.playerCount());
+		for (let [id, index] of this.playerIndexs) {
+			playerList[index] = id;
+		};
 		player.callback(['game_start', {
 			player_list: playerList,
 			player_index: index,

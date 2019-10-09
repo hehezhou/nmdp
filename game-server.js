@@ -17,12 +17,14 @@ module.exports = class GameServer {
 	constructor(gameData) {
 		this.games = Object.create(null);
 		this.matchs = Object.create(null);
+		this.playerIPToID = new Map();
 		if (gameData !== undefined) {
 			for (let id in gameData.games) {
 				let { type, data } = gameData.games[id];
 				this.createGame(id, type, data, true);
 			}
 			this.matchs = vaild.object(gameData.matchs, { hint: 'matchs' });
+			this.playerIPToID = new Map(gameData.playerIPToID);
 		}
 		this.players = Object.create(null);
 		setInterval(() => {
@@ -40,7 +42,11 @@ module.exports = class GameServer {
 		return this;
 	}
 	playerConnect(webSocket, request) {
-		let playerID = `player#${request.connection.remoteAddress}`;
+		let playerIP=request.connection.remoteAddress;
+		if(!this.playerIPToID.has(playerIP)){
+			this.playerIPToID.set(playerIP,`tourist #${this.playerIPToID.size()+1}`);
+		}
+		let playerID = this.playerIPToID.get(playerIP);
 		if (playerID in this.players) {
 			this.playerDisconnect(playerID, 'a player with same id connected');
 		}
@@ -234,6 +240,7 @@ module.exports = class GameServer {
 		let result = {
 			games: {},
 			matchs: this.matchs,
+			playerIPToID: Array.from(this.playerIPToID),
 		};
 		for (let id in this.games) {
 			let game = this.games[id];
