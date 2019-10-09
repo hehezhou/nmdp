@@ -238,12 +238,12 @@ const CANVAS = {
         this.ctx1.fillStyle = this.COLOR.toRGBString(fill);
         this.ctx1.fillRect(y * this.Ratio, x * this.Ratio, this.Ratio, this.Ratio);
     },
-    setBuilding: function ({ x, y }, { terrain, building, owner }) {
+    setBuilding: function ({ x, y }, { atoms, terrain, building, owner }) {
         if (owner === null) owner = -1;
         let pos = { x: x * this.Ratio, y: y * this.Ratio };
         if (building.type === TOWER) DRAW.tower(this.ctx2, 'black', pos);
         else if (building.type === BORN) DRAW.born(this.ctx2, 'black', pos);
-        else if (building.type === BRIDGE) DRAW.bridge(this.ctx2, owner === -1 ? 'black' : this.COLOR.toRGBString(this.COLOR.colorList[owner]), pos, building.entry);
+        else if (building.type === BRIDGE) DRAW.bridge(this.ctx2, owner === -1 ? 'white' : this.COLOR.toRGBString(this.COLOR.colorList[owner]), pos, building.entry);
         else if (terrain === MOUNTAIN) DRAW.mountain(this.ctx2, 'black', pos);
         else if (terrain === WATER && (x + y) % (2 * this.Ratio)) DRAW.water(this.ctx2, 'black', pos);
         else this.ctx2.clearRect(pos.y, pos.x, this.Ratio, this.Ratio);
@@ -252,11 +252,11 @@ const CANVAS = {
         x = x * this.Ratio;
         y = y * this.Ratio;
         this.ctx3.clearRect(x, y, this.Ratio, this.Ratio);
-        if (atom_count === 0 || building.type === BRIDGE) return;
+        if (atom_count === 0) return;
         let delta = 2 * Math.PI / atom_count;
         let color = atom_count > 0 ? 'white' : 'red';
         if (atom_count < 0) atom_count = -atom_count;
-        if (atom_count === 1) {
+        if (building === BRIDGE || atom_count === 1) {
             this.ctx3.beginPath();
             this.ctx3.arc(x + 25, y + 25, 5, 0, 2 * Math.PI);
             this.ctx3.closePath();
@@ -370,7 +370,7 @@ const WORK = {
         else return console.error(`unknown type ${type}`), CONTINUE_TAG;
     },
     readyInterface: async function (type) {
-        if (type === CONTINUE_TAG) return {type: CONTINUE_TAG};
+        if (type === CONTINUE_TAG) return { type: CONTINUE_TAG };
         HTML.clearBody();
         let frame = HTML.create('div', 'frame ready-interface'),
             readyMsg = HTML.create('p', 'ready-state'),
@@ -548,7 +548,7 @@ const WORK = {
                 if (ATOM.check(playerIndex, { x, y })) {
                     send(['decide', { x, y }]);
                 }
-                else msgBox.innerHTML += `请选择一个属于自己的空地<br/>`;
+                else msgBox.innerHTML += `请选择自己的空地或出生点<br/>`;
             });
             document.addEventListener('keydown', (event) => {
                 if (event.key !== 'p' && event.key !== 'P') return;
@@ -591,7 +591,7 @@ const WORK = {
     },
     endInterface: async function (data) {
         if (data === CONTINUE_TAG) return CONTINUE_TAG;
-        let {rank, playerIndex} = data;
+        let { rank, playerIndex } = data;
         await new Promise(resolve => setTimeout(resolve, 4750));
         rank = rank.indexOf(playerIndex);
         HTML.clearBody();
