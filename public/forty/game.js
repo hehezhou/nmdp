@@ -254,7 +254,7 @@ async function gameInterface(msg) {
     let X = 0, Y = 0;
     const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
     const lineDis = 100, lineWidth = 4;
-    await new Promise(resolve => {
+    return await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
         requestAnimationFrame(function x() {
@@ -478,6 +478,7 @@ async function gameInterface(msg) {
                 }
                 else if(killerID === playerIndex) {
                     deadMsg = `<strong>你击杀了${deadID}!</strong>`;
+                    deadMsgToTime = Date.now() + 2000;
                 }
             }
         });
@@ -486,10 +487,12 @@ async function gameInterface(msg) {
 async function endInterface(data) {
     if (data === CONTINUE_TAG) return null;
     else if(data.type === DIE) {
+        HTML.clearBody();
         let frame = HTML.create('div', 'frame end-interface-die');
         frame.appendChild(HTML.create('h1', 'killer', `你被${data.data}击杀了`));
         let btn = HTML.create('button', 'restart-die', '确定');
         frame.appendChild(btn);
+        document.body.appendChild(frame);
         await new Promise(resolve => btn.addEventListener('click', resolve));
     }
     else return;
