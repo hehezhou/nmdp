@@ -148,8 +148,8 @@ div.standing {
     left: 10px;
     top: 10px;
     z-index: 1;
-    height: 50%;
-    font-size: 20px;
+    height: 50vh;
+    font-size: 3vh;
     padding: 5px;
     width: 20vw;
     text-align: center;
