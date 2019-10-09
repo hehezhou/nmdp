@@ -44,6 +44,7 @@ module.exports = class Forty extends Game {
 				targetHealth = PLAYER_MAX_HEALTH,
 				lastDamager = null,
 				score = 0,
+				id,
 				callback,
 			}) {
 				this.pos = pos;
@@ -54,8 +55,9 @@ module.exports = class Forty extends Game {
 				this.targetHealth = targetHealth;
 				this.lastDamager = lastDamager;
 				this.score = score;
+				this.id = id;
 				this.callback = callback;
-				this.needUpdate = false;
+				game.needUpdate = false;
 			}
 			startAttack(angle) {
 				if (!(this.attackState instanceof Waiting)) {
@@ -129,6 +131,7 @@ module.exports = class Forty extends Game {
 					randomReal(0, ARENA_HEIGHT),
 				),
 				callback,
+				id,
 			});
 			this.players.set(id, player);
 		}
