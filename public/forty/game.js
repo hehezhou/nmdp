@@ -251,7 +251,7 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
     let X = 0, Y = 0;
-    const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, HPdis = 3, attactTime = 1;
+    const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
     const lineDis = 100, lineWidth = 4;
     await new Promise(resolve => {
         let running = 1;
@@ -337,18 +337,22 @@ async function gameInterface(msg) {
                 cxt.strokeStyle = 'black';
                 cxt.fillRect((data.y - Y - HPwidth / 2) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius) * SETTINGS.RATIO, Math.max(0, HPwidth * data.HP / data.maxHP * SETTINGS.RATIO), HPheight * SETTINGS.RATIO);
                 cxt.strokeRect((data.y - Y - HPwidth / 2) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius) * SETTINGS.RATIO, HPwidth * SETTINGS.RATIO, HPheight * SETTINGS.RATIO);
+                cxt.fillStyle = 'black';
+                cxt.font = `${fontSize * SETTINGS.RATIO}px 微软雅黑`;
+                cxt.font
+                cxt.textAlign = 'center';
+                cxt.textBaseline = 'top';
+                cxt.fillText(data.id, (data.y - Y) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius + nameDis + HPheight) * SETTINGS.RATIO);
             });
             standingBox.innerHTML = '';
             for (let i = 0; i < 10; i++) {
                 if (i < standing.length) {
                     standingBox.innerHTML += `${i + 1}.${standing[i]} ${Math.floor(players[players.findIndex(data => data.id === standing[i])].score)}分<br/>`;
                 }
-                else {
-                    standing.innerHTML += '<br/>';
-                }
+                else break;
             }
             if (alive && tag) {
-                standing.innerHTML += `<hr/>${players.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${players[players.findIndex(data => data.id === playerIndex)].score}`;
+                standingBox.innerHTML += `<hr/>${players.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分`;
             }
             if (running) requestAnimationFrame(x);
         });
