@@ -1,13 +1,14 @@
-const { GameMap, Grid, SpawnPoint, Tower, Bridge, MOUNTAIN, NORTH, WEST, SOUTH, EAST } = require('./core.js');
+const { GameMap, Grid, SpawnPoint, Tower, Bridge, MOUNTAIN, WATER, NORTH, WEST, SOUTH, EAST } = require('./core.js');
 const { build, forEach } = require('../../utils/two_dim.js');
-const { randomInteger, randomReal } = require('../../utils/random.js');
+const { randomInteger, randomReal, noiseGen } = require('../../utils/random.js');
 const V = require('../../utils/v.js');
-const isEmpty = g => g.terrain === null && g.building === null;
+const isEmpty = g => g.terrain === null && g.building === null && g.owner === null && g.atoms === 0;
 class MapGenerator {
 	constructor() { }
-	build({ height, width }) {
+	build({ height, width, players }) {
 		this.height = height;
 		this.width = width;
+		this.players = players;
 		this.map = build(height, width, () => new Grid({
 			owner: null,
 			atoms: 0,
@@ -71,6 +72,21 @@ class MapGenerator {
 		this.generate(settings);
 		return new GameMap(this.map);
 	}
+	spreadPlayers() {
+		let angle = randomReal(0, 2 * Math.PI);
+		let mid = new V(this.height, this.width).mul(1 / 2);
+		for (let player of this.players) {
+			let pos = this.ray(mid, V.fromAngle(angle));
+			let grid = new Grid({
+				owner: player,
+				atoms: 0,
+				terrain: null,
+				building: new SpawnPoint(),
+			});
+			this.set(pos, grid);
+			angle += 2 * Math.PI / this.players.length;
+		}
+	}
 };
 class SimpleGen extends MapGenerator {
 	constructor() {
@@ -130,32 +146,21 @@ class ArenaGen extends MapGenerator {
 			terrain: null,
 			building: new Tower(1),
 		});
-		let angle = randomReal(0, 2 * Math.PI);
-		for (let player of players) {
-			let pos = this.ray(mid, V.fromAngle(angle));
-			let grid = new Grid({
-				owner: player,
-				atoms: 0,
-				terrain: null,
-				building: new SpawnPoint(),
-			});
-			this.set(pos, grid);
-			angle += 2 * Math.PI / players.length;
-		}
-		for (let [direction,bridge] of [
-			[new V(-1,0),{[NORTH]:true,[SOUTH]:true}],
-			[new V(0,-1),{[WEST]:true,[EAST]:true}],
-			[new V(1,0),{[NORTH]:true,[SOUTH]:true}],
-			[new V(0,1),{[WEST]:true,[EAST]:true}],
+		this.spreadPlayers();
+		for (let [direction, bridge] of [
+			[new V(-1, 0), { [NORTH]: true, [SOUTH]: true }],
+			[new V(0, -1), { [WEST]: true, [EAST]: true }],
+			[new V(1, 0), { [NORTH]: true, [SOUTH]: true }],
+			[new V(0, 1), { [WEST]: true, [EAST]: true }],
 		]) {
-			this.ray(mid.add(direction.mul(2)),direction,isEmpty,(pos)=>{
-				let go=pos.add(direction);
-				if(this.inMap(go)&&isEmpty(this.get(go))){
-					this.set(pos,new Grid({
-						owner:null,
-						atoms:0,
-						terrain:null,
-						building:new Bridge(bridge),
+			this.ray(mid.add(direction.mul(2)), direction, isEmpty, (pos) => {
+				let go = pos.add(direction);
+				if (this.inMap(go) && isEmpty(this.get(go))) {
+					this.set(pos, new Grid({
+						owner: null,
+						atoms: 0,
+						terrain: null,
+						building: new Bridge(bridge),
 					}));
 				}
 			});
@@ -163,5 +168,47 @@ class ArenaGen extends MapGenerator {
 	}
 }
 
-const mapGens = [ArenaGen];
+class WildGen extends MapGenerator {
+	constructor() {
+		super();
+	}
+	generate({ height, weight, players }) {
+		this.spreadPlayers();
+		let noise = noiseGen();
+		forEach(this.map, (grid, x, y) => {
+			let block = noise(x / 3, y / 3);
+			if (isEmpty(grid) && block < -0.5) {
+				if (x === 0 || x + 1 === height || y === 0 || y + 1 === height) {
+					this.map[x][y] = new Grid({
+						owner: null,
+						atoms: Math.random() < 0.2 ? randomInteger(-6, 0) : 0,
+						terrain: null,
+						building: null,
+					});
+				}
+				else {
+					this.map[x][y] = new Grid({
+						owner: null,
+						atoms: 0,
+						terrain: block > -0.7 ? WATER : MOUNTAIN,
+						building: null,
+					});
+				}
+			}
+		});
+		for (let i = 0; i < 3; i++) {
+			try {
+				this.randomPlace(new Grid({
+					owner: null,
+					atoms: Math.random() < 0.05 ? 0 : randomInteger(-6, -3),
+					terrain: null,
+					building: new Tower(1),
+				}));
+			}
+			catch (e) { }
+		}
+	}
+}
+
+const mapGens = [WildGen];
 module.exports = mapGens;
