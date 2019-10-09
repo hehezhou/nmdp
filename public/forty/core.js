@@ -81,6 +81,13 @@ const GAME = (() => {
             this.health = Math.max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * t);
         }
     }
+    function getColor(id) {
+        let hash = 0, base = 12;
+        const mod = 1 << 24;
+        id = id.split('');
+        id.forEach(data => hash = (hash * base + data.charCodeAt() * data.charCodeAt()) % mod);
+        return '#' + hash.toString(16).padStart(6, '0');
+    }
     return class {
         constructor({ data }) {
             this.players = new Map();
@@ -100,6 +107,7 @@ const GAME = (() => {
                 data.HP = i[1].health;
                 data.maxHP = PLAYER_MAX_HEALTH;
                 data.score = i[1].score;
+                data.color = getColor(i[0]);
                 ans.push(data);
             }
             return ans;

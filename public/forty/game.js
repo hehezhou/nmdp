@@ -294,7 +294,6 @@ async function gameInterface(msg) {
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowWidth) continue;
                 cxt.fillRect((i - lineWidth / 2) * SETTINGS.RATIO, (-height - X - lineWidth / 2) * SETTINGS.RATIO, lineWidth * SETTINGS.RATIO, (height + lineWidth) * SETTINGS.RATIO);
             }
-            cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
                 cxt.lineWidth = 0.5 * SETTINGS.RATIO;
