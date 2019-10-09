@@ -152,8 +152,7 @@ const char SPACE[]="　";
 const char*const GAME_END_FORMAT[2]= {"title 原子战役%s (结束！%s赢了)","title 原子战役%s (结束！没有玩家胜利)"};
 const char*const ATOMS_CHAR[21]= {SPACE,"·","‥","∴","∷","⑤","⑥","⑦","⑧","⑨","⑩","⑾","⑿","⒀","⒁","⒂","⒃","⒄","⒅","⒆","⒇"};
 const char*const SPECIAL_CHARS[]= {"●","～","△","□","◆"};
-#else.
-
+#else
 #include<termios.h>
 #include<unistd.h>
 #include<sys/prctl.h>

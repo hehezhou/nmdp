@@ -3,8 +3,8 @@ module.exports=class V{
 		this.x=x;
 		this.y=y;
 	}
-	clone({x,y}){
-		return new V(x,y);
+	clone(){
+		return new V(this.x,this.y);
 	}
 	addM({x,y}){
 		this.x+=x;
@@ -26,6 +26,9 @@ module.exports=class V{
 	}
 	mul(a){
 		return new V(this.x*a,this.y*a);
+	}
+	eq({x,y}){
+		return this.x===x&&this.y===y;
 	}
 	get sqrlen(){
 		return this.x**2+this.y**2;
