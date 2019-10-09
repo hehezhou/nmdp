@@ -200,7 +200,7 @@ async function gameInterface(msg) {
     window.addEventListener('resize', updateSize);
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
-    let X = 0, Y = 0, killTag;
+    let X = 0, Y = 0;
     const playerRadius = 3, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, HPdis = 3, attactTime = 1;
     const lineDis = 100, lineWidth = 4;
     await new Promise(resolve => {
@@ -216,22 +216,19 @@ async function gameInterface(msg) {
             cxt.fillStyle = 'rgb(128, 128, 128)'
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
                 if(i + X > 0 || i + X < -width) continue;
-                cxt.fillRect((0 - Y) * RATIO, i * RATIO, (width + lineWidth) * RATIO, lineWidth * RATIO);
+                if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowHeight) continue;
+                cxt.fillRect((0 - Y - lineWidth / 2) * RATIO, (i - lineWidth / 2) * RATIO, (width + lineWidth) * RATIO, lineWidth * RATIO);
             }
             for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
                 if(i + Y < 0 || i + Y > height) continue;
-                cxt.fillRect(i * RATIO, (-height - X) * RATIO, lineWidth * RATIO, (height + lineWidth) * RATIO);
+                if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowWidth) continue;
+                cxt.fillRect((i - lineWidth / 2) * RATIO, (-height - X - lineWidth / 2) * RATIO, lineWidth * RATIO, (height + lineWidth) * RATIO);
             }
             cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
                 cxt.lineWidth = 0.2 * RATIO;
                 cxt.fillStyle = data.color;
-                if (data.id === playerIndex && killTag) {
-                    killTag--;
-                    cxt.lineWidth = 1 * RATIO;
-                    cxt.strokeStyle = 'white';
-                }
                 cxt.beginPath();
                 cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, playerRadius * RATIO, 0, 2 * Math.PI);
                 cxt.closePath();
@@ -402,8 +399,7 @@ async function gameInterface(msg) {
             }
             else if (data[0] === 'player_lose') {
                 let { killerID, deadID } = data[1];
-                if (killerID === playerIndex) killTag = 20;
-                else if (deadID === playerIndex) {
+                if (deadID === playerIndex) {
                     document.body.className = '';
                     window.removeEventListener('resize', updateSize);
                     io.removeEventListener('message', x);
