@@ -100,14 +100,6 @@ button:hover {
 button.ready:hover {
     background-color: green;
 }
-canvas.map {
-    height: 100vh;
-    width: 100vw;
-    z-index: 0;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
 
 div.settings {
     justify-self: center;
@@ -155,6 +147,9 @@ div.standing {
     text-align: center;
 }
 div.game-interface-ffa {
+    position: absolute;
+    left: 0;
+    top: 0;
     grid-template-rows: 50% 50%;
     grid-template-columns: 100%;
     z-index: 2;

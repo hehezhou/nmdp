@@ -34,7 +34,6 @@ const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
 const SETTINGS = {
-    RATIO: 5,
     PLAYERRADIUS: 3,
     LITTLEMAPSIZE: 300,
 };
@@ -68,8 +67,8 @@ const HTML = {
      */
     create: function (tag, className = '', inner = '') {
         let ele = document.createElement(tag);
-        ele.className = className;
-        ele.innerHTML = inner;
+        if(className) ele.className = className;
+        if(inner) ele.innerHTML = inner;
         return ele;
     },
     setPixelated: function (ele) {
@@ -81,7 +80,6 @@ const HTML = {
 async function settingInterface() {
     HTML.clearBody();
     let nameList = {
-        'RATIO': {text: '画质: ', btnList: [{text: '流畅', value: 1}, {text: '低', value: 2.5}, {text: '中', value: 5}, {text: '高', value: 10}]},
         'PLAYERRADIUS': {text: '人物大小: ', btnList: [{text: '小', value: 1.5}, {text: '中', value: 3}, {text: '大', value: 5}]},
         'LITTLEMAPSIZE': {text: '小地图大小: ', btnList: [{text: '小', value: 150}, {text: '中', value: 300}, {text: '大', value: 500}]},
     };
@@ -228,6 +226,11 @@ async function readyInterface(type) {
         })
     });
 }
+const SVG = {
+    create: function(tag) {
+        return document.createElementNS('http://www.w3.org/2000/svg', tag);
+    }
+};
 async function gameInterface(msg) {
     if (msg === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
@@ -235,17 +238,19 @@ async function gameInterface(msg) {
     let height = data.map_height, width = data.map_width;
     let nowWidth, nowHeight, alive = 1;
     let ratio = Math.min(height / SETTINGS.LITTLEMAPSIZE, width / SETTINGS.LITTLEMAPSIZE);
-    let canvas = HTML.create('canvas', 'map'), frame = HTML.create('div', 'frame game-interface-ffa');
+    let svg = SVG.create('svg'), frame = HTML.create('div', 'frame game-interface-ffa');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('version', '1.1');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
     let littleMap = HTML.create('canvas', 'little-map');
     littleMap.height = Math.ceil(height / ratio), littleMap.width = Math.ceil(width / ratio);
     HTML.setPixelated(littleMap);
     littleMap.style.height = `${SETTINGS.LITTLEMAPSIZE}px`;
     littleMap.style.width = `${SETTINGS.LITTLEMAPSIZE}px`;
-    frame.style.display = 'none';
     let deadMsg = '', deadMsgToTime = 0;
     let standingBox = HTML.create('div', 'standing');
-    let cxt = canvas.getContext('2d');
-    document.body.appendChild(canvas);
+    document.body.appendChild(svg);
     document.body.appendChild(littleMap);
     document.body.appendChild(frame);
     document.body.appendChild(standingBox);
@@ -257,8 +262,6 @@ async function gameInterface(msg) {
         d = d ** 0.5;
         nowWidth = Math.ceil(nowWidth / d);
         nowHeight = Math.ceil(nowHeight / d);
-        canvas.width = nowWidth * SETTINGS.RATIO;
-        canvas.height = nowHeight * SETTINGS.RATIO;
     };
     updateSize();
     window.addEventListener('resize', updateSize);
@@ -267,13 +270,17 @@ async function gameInterface(msg) {
     let X = 0, Y = 0;
     const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
     const lineDis = 100, lineWidth = 4;
+    let svgCircleMap = new Map(), svgAttackMap = new Map(), svgNameMap = new Map(), svgHPMap = new Map();
+    let g = SVG.create('g');
+    svg.appendChild(g);
     return await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
-        requestAnimationFrame(function x() {
+        requestAnimationFrame(async function x() {
+            g.innerHTML = '';
+            let nowFillColor = 'rgb(0, 0, 0)', nowStrokeColor = 'rgb(0, 0, 0)', nowLineWidth = 1;
             let tag = 0;
             let littlecxt = littleMap.getContext('2d');
-            cxt.clearRect(0 * SETTINGS.RATIO, 0 * SETTINGS.RATIO, nowWidth * SETTINGS.RATIO, nowHeight * SETTINGS.RATIO);
             littlecxt.clearRect(0, 0, width, height);
             littlecxt.fillStyle = 'rgba(128, 128, 128, 0.5)';
             littlecxt.fillRect(0, 0, littleMap.width, littleMap.height);
@@ -283,86 +290,172 @@ async function gameInterface(msg) {
                 littlecxt.fillStyle = data.id === playerIndex ? 'red' : 'black';
                 littlecxt.fillRect(Math.floor((data.y) / ratio) - 2.5, Math.floor((width + data.x)) / ratio - 2.5, 5, 5);
             });
-            cxt.fillStyle = 'rgb(128, 128, 128)';
+            function setStyle(ele) {
+                ele.setAttribute('fill', `${nowFillColor}`);
+                ele.setAttribute('stroke-width', `${nowLineWidth}`); 
+                ele.setAttribute('stroke', `${nowStrokeColor}`);
+            }
+            function fix(x) {
+                return x / nowWidth * window.innerWidth;
+            }
+            nowFillColor = nowStrokeColor = 'rgb(128, 128, 128)';
+            nowLineWidth = 0;
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
                 if(i + X > 0 || i + X < -width) continue;
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowHeight) continue;
-                cxt.fillRect((0 - Y - lineWidth / 2) * SETTINGS.RATIO, (i - lineWidth / 2) * SETTINGS.RATIO, (width + lineWidth) * SETTINGS.RATIO, lineWidth * SETTINGS.RATIO);
+                let rect = SVG.create('rect');
+                setStyle(rect);
+                rect.setAttribute('x', `${fix(0 - Y - lineWidth / 2)}`);
+                rect.setAttribute('y', `${fix(i - lineWidth / 2)}`);
+                rect.setAttribute('width', `${fix(width + lineWidth)}`);
+                rect.setAttribute('height', `${fix(lineWidth)}`);
+                g.appendChild(rect);
             }
             for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
                 if(i + Y < 0 || i + Y > height) continue;
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowWidth) continue;
-                cxt.fillRect((i - lineWidth / 2) * SETTINGS.RATIO, (-height - X - lineWidth / 2) * SETTINGS.RATIO, lineWidth * SETTINGS.RATIO, (height + lineWidth) * SETTINGS.RATIO);
+                let rect = SVG.create('rect');
+                setStyle(rect);
+                rect.setAttribute('x', `${fix(i - lineWidth / 2)}`);
+                rect.setAttribute('y', `${fix(-height - X - lineWidth / 2)}`);
+                rect.setAttribute('width', `${fix(lineWidth)}`);
+                rect.setAttribute('height', `${fix(height + lineWidth)}`);
+                g.appendChild(rect);
             }
+            nowStrokeColor = 'black';
+            nowLineWidth = fix(0.5);
+            let tmpSet = new Set();
             players.forEach(data => {
-                cxt.strokeStyle = 'black';
-                cxt.lineWidth = 0.5 * SETTINGS.RATIO;
-                cxt.fillStyle = data.color;
-                cxt.beginPath();
-                cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, 0, 2 * Math.PI);
-                cxt.closePath();
-                cxt.fill();
-                cxt.stroke();
+                tmpSet.add(data.id);
+                nowFillColor = data.color;
+                if(!svgCircleMap.has(data.id)) svgCircleMap.set(data.id, SVG.create('circle')), svg.appendChild(svgCircleMap.get(data.id));
+                let circle = svgCircleMap.get(data.id);
+                setStyle(circle);
+                circle.setAttribute('cx', `${Math.floor(fix(data.y - Y))}`);
+                circle.setAttribute('cy', `${Math.floor(fix(data.x - X))}`);
+                circle.setAttribute('r', `${Math.floor(fix(playerRadius))}`);
             });
+            let deleteList;
+            deleteList = [];
+            for(let i of svgCircleMap) {
+                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            }
+            for(let i of deleteList) svgCircleMap.get(i).remove(), svgCircleMap.delete(i);
+            tmpSet.clear();
             players.forEach(data => {
                 if (data.onattack) {
-                    cxt.strokeStyle = data.attackRestTime <= lastTime ? 
+                    tmpSet.add(data.id);
+                    if(!svgAttackMap.has(data.id)) svgAttackMap.set(data.id, SVG.create('path')), svg.appendChild(svgAttackMap.get(data.id));
+                    let now = svgAttackMap.get(data.id);
+                    nowStrokeColor = data.attackRestTime <= lastTime ? 
                         'rgba(255, 56, 56, 0.8)' 
                         : data.id === playerIndex ? 
                             'rgba(61, 139, 255, 0.8)' 
                             : 'rgba(90, 90, 90, 0.8)';
-                    cxt.fillStyle =
+                    nowFillColor =
                         data.attackRestTime <= lastTime ?
                             'rgba(255, 56, 56, 0.5)'
                             : data.id === playerIndex ?
                                 `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
-                    cxt.lineWidth = 0.5 * SETTINGS.RATIO;
-                    cxt.beginPath();
-                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, -data.attackTheta - theta, -data.attackTheta + theta, false);
-                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, knifeRadius * SETTINGS.RATIO, -data.attackTheta + theta, -data.attackTheta - theta, true);
-                    cxt.closePath();
-                    cxt.fill();
-                    cxt.stroke();
+                    nowLineWidth = fix(0.5);
+                    setStyle(now);
+                    let str = '';
+                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - theta))} `;
+                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta + theta))},${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta + theta))}`;
+                    str += `L${fix(data.y - Y + knifeRadius * Math.cos(-data.attackTheta + theta))} ${fix(data.x - X + knifeRadius * Math.sin(-data.attackTheta + theta))} `;
+                    str += `A${fix(knifeRadius)},${fix(knifeRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + knifeRadius * Math.cos(-data.attackTheta - theta))},${fix(data.x - X + knifeRadius * Math.sin(-data.attackTheta - theta))}`;
+                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - theta))} `;
+                    str += `Z`;
+                    now.setAttribute('d', str);
                     if (data.attackRestTime <= lastTime) {
                         let tag = data.attackRestTime / lastTime;
                         let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
-                        cxt.strokeStyle = 'white';
-                        cxt.lineWidth = 2 * SETTINGS.RATIO;
-                        cxt.beginPath();
-                        cxt.moveTo((data.y - Y + Math.cos(Theta) * playerRadius) * SETTINGS.RATIO, (data.x - X - Math.sin(Theta) * playerRadius) * SETTINGS.RATIO);
-                        cxt.lineTo((data.y - Y + Math.cos(Theta) * knifeRadius) * SETTINGS.RATIO, (data.x - X - Math.sin(Theta) * knifeRadius) * SETTINGS.RATIO);
-                        cxt.closePath();
-                        cxt.stroke();
+                        let line = SVG.create('line');
+                        nowLineWidth = fix(2);
+                        nowFillColor = 'white';
+                        nowStrokeColor = 'white';
+                        setStyle(line);
+                        line.setAttribute('x1', `${fix(data.y - Y + Math.cos(Theta) * playerRadius)}`);
+                        line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * knifeRadius)}`);
+                        line.setAttribute('y1', `${fix(data.x - X - Math.sin(Theta) * playerRadius)}`);
+                        line.setAttribute('y2', `${fix(data.x - X - Math.sin(Theta) * knifeRadius)}`);
+                        g.appendChild(line);
                     }
                 }
                 else if (data.id === playerIndex) {
-                    cxt.lineWidth = 0.5 * SETTINGS.RATIO;
-                    cxt.strokeStyle = 'rgba(79, 194, 230, 0.6)';
-                    cxt.fillStyle = 'rgba(79, 194, 230, 0.3)';
-                    let nowTheta = -Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
-                    cxt.beginPath();
-                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, nowTheta - theta, nowTheta + theta, false);
-                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, knifeRadius * SETTINGS.RATIO, nowTheta + theta, nowTheta - theta, true);
-                    cxt.closePath();
-                    cxt.fill();
-                    cxt.stroke();
+                    tmpSet.add(data.id);
+                    if(!svgAttackMap.has(data.id)) svgAttackMap.set(data.id, SVG.create('path')), svg.appendChild(svgAttackMap.get(data.id));
+                    let now = svgAttackMap.get(data.id);
+                    nowLineWidth = fix(0.5);
+                    nowStrokeColor = 'rgba(79, 194, 230, 0.6)';
+                    nowFillColor = 'rgba(79, 194, 230, 0.3)';
+                    setStyle(now);
+                    let nowTheta = -Math.atan2(nowMouseX - nowHeight / 2, nowMouseY - nowWidth / 2);
+                    let str = '';
+                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - theta))} `;
+                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-nowTheta + theta))},${fix(data.x - X + playerRadius * Math.sin(-nowTheta + theta))}`;
+                    str += `L${fix(data.y - Y + knifeRadius * Math.cos(-nowTheta + theta))} ${fix(data.x - X + knifeRadius * Math.sin(-nowTheta + theta))} `;
+                    str += `A${fix(knifeRadius)},${fix(knifeRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + knifeRadius * Math.cos(-nowTheta - theta))},${fix(data.x - X + knifeRadius * Math.sin(-nowTheta - theta))}`;
+                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - theta))} `;
+                    str += `Z`;
+                    now.setAttribute('d', str);
                 }
                 else return;
             });
-            cxt.lineWidth = 0.4 * SETTINGS.RATIO;
+            deleteList = [];
+            for(let i of svgAttackMap) {
+                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            }
+            for(let i of deleteList) svgAttackMap.get(i).remove(), svgAttackMap.delete(i);
+            tmpSet.clear();
             players.forEach(data => {
-                cxt.fillStyle = 'red';
-                cxt.strokeStyle = 'black';
-                cxt.fillRect((data.y - Y - HPwidth / 2) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius) * SETTINGS.RATIO, Math.max(0, HPwidth * data.HP / data.maxHP * SETTINGS.RATIO), HPheight * SETTINGS.RATIO);
-                cxt.strokeRect((data.y - Y - HPwidth / 2) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius) * SETTINGS.RATIO, HPwidth * SETTINGS.RATIO, HPheight * SETTINGS.RATIO);
-                cxt.fillStyle = 'black';
-                cxt.font = `${fontSize * SETTINGS.RATIO}px 微软雅黑`;
-                cxt.font
-                cxt.textAlign = 'center';
-                cxt.textBaseline = 'top';
-                cxt.fillText(data.id, (data.y - Y) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius + nameDis + HPheight) * SETTINGS.RATIO);
+                tmpSet.add(data.id);
+                if(!svgHPMap.has(data.id)) {
+                    svgHPMap.set(data.id, {inner: SVG.create('rect'), border: SVG.create('rect')});
+                    svg.appendChild(svgHPMap.get(data.id).border);
+                    svg.appendChild(svgHPMap.get(data.id).inner);
+                }
+                let now = svgHPMap.get(data.id);
+                nowLineWidth = 0;
+                nowFillColor = 'red';
+                nowStrokeColor = 'black';
+                setStyle(now.inner);
+                now.inner.setAttribute('x', `${fix(data.y - Y - HPwidth / 2)}`);
+                now.inner.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius)}`);
+                now.inner.setAttribute('width', `${fix(Math.max(0, HPwidth * data.HP / data.maxHP))}`);
+                now.inner.setAttribute('height', `${fix(HPheight)}`);
+                nowLineWidth = fix(0.4);
+                nowFillColor = 'rgba(0, 0, 0, 0)'
+                setStyle(now.border);
+                now.border.setAttribute('x', `${fix(data.y - Y - HPwidth / 2 - 0.2)}`);
+                now.border.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius - 0.2)}`);
+                now.border.setAttribute('width', `${fix(HPwidth + 0.4)}`);
+                now.border.setAttribute('height', `${fix(HPheight + 0.4)}`);
             });
+            deleteList = [];
+            for(let i of svgHPMap) {
+                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            }
+            for(let i of deleteList) svgHPMap.get(i).inner.remove(), svgHPMap.get(i).border.remove(), svgHPMap.delete(i);
+            tmpSet.clear();
+            players.forEach(data => {
+                tmpSet.add(data.id);
+                if(!svgNameMap.has(data.id)) svgNameMap.set(data.id, SVG.create('text')), svg.appendChild(svgNameMap.get(data.id));
+                let now = svgNameMap.get(data.id);
+                nowFillColor = 'black';
+                now.setAttribute('font-size', `${fix(fontSize)}`);
+                now.setAttribute('text-anchor', `middle`);
+                now.setAttribute('dominant-baseline', `middle`);
+                now.setAttribute('x', `${fix(data.y - Y)}`);
+                now.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + nameDis + HPheight + fontSize / 2)}`);
+                now.innerHTML = data.id;
+            });
+            deleteList = [];
+            for(let i of svgNameMap) {
+                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            }
+            for(let i of deleteList) svgNameMap.get(i).remove(), svgNameMap.delete(i);
             standingBox.innerHTML = '';
             for (let i = 0; i < 10; i++) {
                 if (i < standing.length) {
@@ -371,19 +464,19 @@ async function gameInterface(msg) {
                 else break;
             }
             if (alive && tag) {
-                standingBox.innerHTML += `<hr/>${standing.findIndex(data => data.id === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分<br />`;
+                standingBox.innerHTML += `<hr/>${standing.findIndex(data => data === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分<br />`;
                 if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
             }
             if (running) requestAnimationFrame(x);
         });
         function pos({ x, y }) {
-            return { x: x / canvas.offsetHeight * canvas.height / SETTINGS.RATIO, y: y / canvas.offsetWidth * canvas.width / SETTINGS.RATIO };
+            return { x: x / window.innerHeight * nowHeight, y: y / window.innerWidth * nowWidth };
         }
-        canvas.addEventListener('mousemove', ({ offsetX: y, offsetY: x }) => {
+        frame.addEventListener('mousemove', ({ offsetX: y, offsetY: x }) => {
             ({ x, y } = pos({ x, y }));
             nowMouseX = Math.floor(x), nowMouseY = Math.floor(y);
         });
-        canvas.addEventListener('click', ({ offsetX: y, offsetY: x }) => {
+        frame.addEventListener('click', ({ offsetX: y, offsetY: x }) => {
             ({ x, y } = pos({ x, y }));
             x = Math.floor(x), y = Math.floor(y);
             if (alive && FORTY.check(playerIndex)) {
@@ -463,8 +556,8 @@ async function gameInterface(msg) {
                 document.body.className = '';
                 window.removeEventListener('resize', updateSize);
                 io.removeEventListener('message', x);
-                canvas.removeEventListener('keydown', keydownListener);
-                canvas.removeEventListener('keyup', keyupListener);
+                frame.removeEventListener('keydown', keydownListener);
+                frame.removeEventListener('keyup', keyupListener);
                 running = 0;
                 resolve(CONTINUE_TAG);
             }
@@ -477,8 +570,8 @@ async function gameInterface(msg) {
                     document.body.className = '';
                     window.removeEventListener('resize', updateSize);
                     io.removeEventListener('message', x);
-                    canvas.removeEventListener('keydown', keydownListener);
-                    canvas.removeEventListener('keyup', keyupListener);
+                    frame.removeEventListener('keydown', keydownListener);
+                    frame.removeEventListener('keyup', keyupListener);
                     running = 0;
                     alive = 0;
                     send(['leave', null]);
