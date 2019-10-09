@@ -32,6 +32,10 @@ const future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
+const SETTINGS = {
+    RATIO: 5,
+};
+
 let roomId;
 function send(message) {
     io.send(JSON.stringify(message));
@@ -170,7 +174,6 @@ async function readyInterface(type) {
         })
     });
 }
-const RATIO = 5;
 async function gameInterface(msg) {
     if (msg === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
@@ -193,8 +196,8 @@ async function gameInterface(msg) {
         d = d ** 0.5;
         nowWidth = Math.ceil(nowWidth / d);
         nowHeight = Math.ceil(nowHeight / d);
-        canvas.width = nowWidth * RATIO;
-        canvas.height = nowHeight * RATIO;
+        canvas.width = nowWidth * SETTINGS.RATIO;
+        canvas.height = nowHeight * SETTINGS.RATIO;
     };
     updateSize();
     window.addEventListener('resize', updateSize);
@@ -208,7 +211,7 @@ async function gameInterface(msg) {
         let nowMouseX = 0, nowMouseY = 0;
         requestAnimationFrame(function x() {
             let tag = 0;
-            cxt.clearRect(0 * RATIO, 0 * RATIO, nowWidth * RATIO, nowHeight * RATIO);
+            cxt.clearRect(0 * SETTINGS.RATIO, 0 * SETTINGS.RATIO, nowWidth * SETTINGS.RATIO, nowHeight * SETTINGS.RATIO);
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
@@ -217,20 +220,20 @@ async function gameInterface(msg) {
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
                 if(i + X > 0 || i + X < -width) continue;
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowHeight) continue;
-                cxt.fillRect((0 - Y - lineWidth / 2) * RATIO, (i - lineWidth / 2) * RATIO, (width + lineWidth) * RATIO, lineWidth * RATIO);
+                cxt.fillRect((0 - Y - lineWidth / 2) * SETTINGS.RATIO, (i - lineWidth / 2) * SETTINGS.RATIO, (width + lineWidth) * SETTINGS.RATIO, lineWidth * SETTINGS.RATIO);
             }
             for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
                 if(i + Y < 0 || i + Y > height) continue;
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowWidth) continue;
-                cxt.fillRect((i - lineWidth / 2) * RATIO, (-height - X - lineWidth / 2) * RATIO, lineWidth * RATIO, (height + lineWidth) * RATIO);
+                cxt.fillRect((i - lineWidth / 2) * SETTINGS.RATIO, (-height - X - lineWidth / 2) * SETTINGS.RATIO, lineWidth * SETTINGS.RATIO, (height + lineWidth) * SETTINGS.RATIO);
             }
             cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
-                cxt.lineWidth = 0.2 * RATIO;
+                cxt.lineWidth = 0.2 * SETTINGS.RATIO;
                 cxt.fillStyle = data.color;
                 cxt.beginPath();
-                cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, playerRadius * RATIO, 0, 2 * Math.PI);
+                cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, 0, 2 * Math.PI);
                 cxt.closePath();
                 cxt.fill();
                 cxt.stroke();
@@ -248,10 +251,10 @@ async function gameInterface(msg) {
                             : data.id === playerIndex ?
                                 `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
-                    cxt.lineWidth = 0.2 * RATIO;
+                    cxt.lineWidth = 0.2 * SETTINGS.RATIO;
                     cxt.beginPath();
-                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, playerRadius * RATIO, -data.attackTheta - theta, -data.attackTheta + theta, false);
-                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, knifeRadius * RATIO, -data.attackTheta + theta, -data.attackTheta - theta, true);
+                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, -data.attackTheta - theta, -data.attackTheta + theta, false);
+                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, knifeRadius * SETTINGS.RATIO, -data.attackTheta + theta, -data.attackTheta - theta, true);
                     cxt.closePath();
                     cxt.fill();
                     cxt.stroke();
@@ -259,22 +262,22 @@ async function gameInterface(msg) {
                         let tag = data.attackRestTime / lastTime;
                         let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
                         cxt.strokeStyle = 'white';
-                        cxt.lineWidth = 1 * RATIO;
+                        cxt.lineWidth = 1 * SETTINGS.RATIO;
                         cxt.beginPath();
-                        cxt.moveTo((data.y - Y + Math.cos(Theta) * playerRadius) * RATIO, (data.x - X - Math.sin(Theta) * playerRadius) * RATIO);
-                        cxt.lineTo((data.y - Y + Math.cos(Theta) * knifeRadius) * RATIO, (data.x - X - Math.sin(Theta) * knifeRadius) * RATIO);
+                        cxt.moveTo((data.y - Y + Math.cos(Theta) * playerRadius) * SETTINGS.RATIO, (data.x - X - Math.sin(Theta) * playerRadius) * SETTINGS.RATIO);
+                        cxt.lineTo((data.y - Y + Math.cos(Theta) * knifeRadius) * SETTINGS.RATIO, (data.x - X - Math.sin(Theta) * knifeRadius) * SETTINGS.RATIO);
                         cxt.closePath();
                         cxt.stroke();
                     }
                 }
                 else if (data.id === playerIndex) {
-                    cxt.lineWidth = 0.4 * RATIO;
+                    cxt.lineWidth = 0.4 * SETTINGS.RATIO;
                     cxt.strokeStyle = 'rgba(79, 194, 230, 0.6)';
                     cxt.fillStyle = 'rgba(79, 194, 230, 0.3)';
                     let nowTheta = -Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
                     cxt.beginPath();
-                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, playerRadius * RATIO, nowTheta - theta, nowTheta + theta, false);
-                    cxt.arc((data.y - Y) * RATIO, (data.x - X) * RATIO, knifeRadius * RATIO, nowTheta + theta, nowTheta - theta, true);
+                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, nowTheta - theta, nowTheta + theta, false);
+                    cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, knifeRadius * SETTINGS.RATIO, nowTheta + theta, nowTheta - theta, true);
                     cxt.closePath();
                     cxt.fill();
                     cxt.stroke();
@@ -285,8 +288,8 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 cxt.fillStyle = 'red';
                 cxt.strokeStyle = 'black';
-                cxt.fillRect((data.y - Y - HPwidth / 2) * RATIO, (data.x - X + HPdis + playerRadius) * RATIO, Math.max(0, HPwidth * data.HP / data.maxHP * RATIO), HPheight * RATIO);
-                cxt.strokeRect((data.y - Y - HPwidth / 2) * RATIO, (data.x - X + HPdis + playerRadius) * RATIO, HPwidth * RATIO, HPheight * RATIO);
+                cxt.fillRect((data.y - Y - HPwidth / 2) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius) * SETTINGS.RATIO, Math.max(0, HPwidth * data.HP / data.maxHP * SETTINGS.RATIO), HPheight * SETTINGS.RATIO);
+                cxt.strokeRect((data.y - Y - HPwidth / 2) * SETTINGS.RATIO, (data.x - X + HPdis + playerRadius) * SETTINGS.RATIO, HPwidth * SETTINGS.RATIO, HPheight * SETTINGS.RATIO);
             });
             standingBox.innerHTML = '';
             for (let i = 0; i < 10; i++) {
@@ -303,7 +306,7 @@ async function gameInterface(msg) {
             if (running) requestAnimationFrame(x);
         });
         function pos({ x, y }) {
-            return { x: x / canvas.offsetHeight * canvas.height / RATIO, y: y / canvas.offsetWidth * canvas.width / RATIO };
+            return { x: x / canvas.offsetHeight * canvas.height / SETTINGS.RATIO, y: y / canvas.offsetWidth * canvas.width / SETTINGS.RATIO };
         }
         canvas.addEventListener('mousemove', ({ offsetX: y, offsetY: x }) => {
             ({ x, y } = pos({ x, y }));
