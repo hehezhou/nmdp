@@ -36,6 +36,7 @@ const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 const SETTINGS = {
     RATIO: 5,
     PLAYERRADIUS: 3,
+    LITTLEMAPSIZE: 300,
 };
 
 let roomId;
@@ -71,6 +72,10 @@ const HTML = {
         ele.innerHTML = inner;
         return ele;
     },
+    setPixelated: function (ele) {
+        if(window.navigator.appVersion.indexOf('firefox') != -1) ele.style.imageRendering = 'crisp-edges';
+        else ele.style.imageRendering = 'pixelated';
+    }
 };
 
 async function settingInterface() {
@@ -78,6 +83,7 @@ async function settingInterface() {
     let nameList = {
         'RATIO': {text: '画质: ', btnList: [{text: '流畅', value: 1}, {text: '低', value: 2.5}, {text: '中', value: 5}, {text: '高', value: 10}]},
         'PLAYERRADIUS': {text: '人物大小: ', btnList: [{text: '小', value: 1.5}, {text: '中', value: 3}, {text: '大', value: 5}]},
+        'LITTLEMAPSIZE': {text: '小地图大小: ', btnList: [{text: '小', value: 150}, {text: '中', value: 300}, {text: '大', value: 500}]},
     };
     function update() {
         for(let i in SETTINGS) {
@@ -228,12 +234,19 @@ async function gameInterface(msg) {
     let { data, type } = msg;
     let height = data.map_height, width = data.map_width;
     let nowWidth, nowHeight, alive = 1;
-    let canvas = HTML.create('canvas'), frame = HTML.create('div', 'frame game-interface-ffa');
+    let ratio = Math.min(height / SETTINGS.LITTLEMAPSIZE, width / SETTINGS.LITTLEMAPSIZE);
+    let canvas = HTML.create('canvas', 'map'), frame = HTML.create('div', 'frame game-interface-ffa');
+    let littleMap = HTML.create('canvas', 'little-map');
+    littleMap.height = Math.ceil(height / ratio), littleMap.width = Math.ceil(width / ratio);
+    HTML.setPixelated(littleMap);
+    littleMap.style.height = `${SETTINGS.LITTLEMAPSIZE}px`;
+    littleMap.style.width = `${SETTINGS.LITTLEMAPSIZE}px`;
     frame.style.display = 'none';
     let deadMsg = '', deadMsgToTime = 0;
     let standingBox = HTML.create('div', 'standing');
     let cxt = canvas.getContext('2d');
     document.body.appendChild(canvas);
+    document.body.appendChild(littleMap);
     document.body.appendChild(frame);
     document.body.appendChild(standingBox);
     document.body.className = 'game';
@@ -259,10 +272,16 @@ async function gameInterface(msg) {
         let nowMouseX = 0, nowMouseY = 0;
         requestAnimationFrame(function x() {
             let tag = 0;
+            let littlecxt = littleMap.getContext('2d');
             cxt.clearRect(0 * SETTINGS.RATIO, 0 * SETTINGS.RATIO, nowWidth * SETTINGS.RATIO, nowHeight * SETTINGS.RATIO);
+            littlecxt.clearRect(0, 0, width, height);
+            littlecxt.fillStyle = 'rgba(128, 128, 128, 0.5)';
+            littlecxt.fillRect(0, 0, littleMap.width, littleMap.height);
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
+                littlecxt.fillStyle = data.id === playerIndex ? 'red' : 'black';
+                littlecxt.fillRect(Math.floor((data.y) / ratio) - 2.5, Math.floor((width + data.x)) / ratio - 2.5, 5, 5);
             });
             cxt.fillStyle = 'rgb(128, 128, 128)';
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {

@@ -1,5 +1,4 @@
 * {
-    background-color: rgb(221, 221, 221);
     box-sizing: border-box;
     overflow: auto;
     font-family: Microsoft Yahei;
@@ -31,6 +30,7 @@ p.ready-state {
     margin: 0;
 }
 body {
+    background-color: rgb(221, 221, 221);
     margin: 0;
 }
 body.game {
@@ -100,7 +100,7 @@ button:hover {
 button.ready:hover {
     background-color: green;
 }
-canvas {
+canvas.map {
     height: 100vh;
     width: 100vw;
     z-index: 0;
@@ -140,6 +140,7 @@ button.settings-chosen:hover {
 }
 
 div.standing {
+    pointer-events: none;
     background-color: rgba(128, 128, 128, 0.5);
     border: 0;
     border-radius: 2px;
@@ -185,4 +186,11 @@ button.restart-die {
     justify-self: center;
     width: 130px;
     height: 50px;
+}
+canvas.little-map {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    z-index: 3;
+    pointer-events: none;
 }
