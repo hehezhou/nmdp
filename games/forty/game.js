@@ -31,6 +31,7 @@ module.exports = class Forty extends Game {
 		let players = new Map();
 		this.players = players;
 		this.time = -Infinity;
+		let game = this;
 		this.Player = class Player {
 			constructor({
 				pos = new V(),
@@ -105,7 +106,7 @@ module.exports = class Forty extends Game {
 					if (this.attackState.time <= 0) {
 						this.attack();
 						this.attackState = new Waiting();
-						this.needUpdate = true;
+						game.needUpdate = true;
 					}
 				}
 				this.health = Math.max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * s);
