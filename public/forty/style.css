@@ -74,6 +74,13 @@ div.choose-interface {
     grid-template-rows: 40% repeat(auto-fill, 60px);
     grid-template-columns: 100%;
 }
+div.setting-interface {
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+    gap: 10px;
+    align-content: center;
+    justify-content: center;
+}
 div.join-interface {
     grid-template-rows: 150px;
     grid-template-columns: 100%;
@@ -101,6 +108,37 @@ canvas {
     top: 0;
     left: 0;
 }
+
+div.settings {
+    justify-self: center;
+    align-self: center;
+    text-align: center;
+}
+p.settings {
+    display: block;
+    height: 60px;
+    font-size: 40px;
+    margin: 0 15px;
+}
+button.settings {
+    display: inline-block;
+    margin: 0 15px;
+    font-size: 30px;
+    height: 60px;
+    width: 150px;
+}
+button.settings-chosen {
+    display: inline-block;
+    margin: 0 15px;
+    font-size: 30px;
+    height: 60px;
+    width: 150px;
+    background-color: rgb(128, 128, 128);
+}
+button.settings-chosen:hover {
+    background-color: rgb(96, 96, 96);
+}
+
 div.standing {
     background-color: rgba(128, 128, 128, 0.5);
     border: 0;
@@ -121,14 +159,17 @@ div.game-interface-ffa {
     z-index: 2;
 }
 h1.restart {
-    align-self: bottom;
+    z-index: 3;
+    align-self: end;
     justify-self: center;
     text-align: center;
-    font-size: 40px;
+    font-size: 60px;
 }
 button.restart {
-    align-self: top;
+    font-size: 1.5em;
+    z-index: 3;
+    align-self: start;
     justify-self: center;
-    width: 100px;
-    height: 40px;
+    width: 130px;
+    height: 50px;
 }

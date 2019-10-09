@@ -27,13 +27,14 @@
  * 5  6  7
  */
 const io = new WebSocket(`ws://${location.hostname}:1926`);
-const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa');
+const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), SET_SETTINGS = Symbol('set_settings');
 const future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
 const SETTINGS = {
     RATIO: 5,
+    PLAYERRADIUS: 3,
 };
 
 let roomId;
@@ -71,9 +72,51 @@ const HTML = {
     },
 };
 
+async function settingInterface() {
+    HTML.clearBody();
+    let nameList = {
+        'RATIO': {text: '画质: ', btnList: [{text: '流畅', value: 1}, {text: '低', value: 2.5}, {text: '中', value: 5}, {text: '高', value: 10}]},
+        'PLAYERRADIUS': {text: '人物大小: ', btnList: [{text: '小', value: 1.5}, {text: '中', value: 3}, {text: '大', value: 5}]},
+    };
+    function update() {
+        for(let i in SETTINGS) {
+            for(let j of nameList[i].btnList) {
+                if(j.value === SETTINGS[i]) j.btn.className = 'settings-chosen';
+                else j.btn.className = 'settings';
+            }
+        }
+        localStorage.fortySettings = JSON.stringify(SETTINGS);
+    }
+    let frame = HTML.create('div', 'frame settting-interface');
+    document.body.appendChild(frame);
+    let cnt = 0;
+    for(let i in SETTINGS) cnt++;
+    frame.style.gridTemplateRows = `repeat(135px, ${cnt + 1})`;
+    for(let i in SETTINGS) {
+        let div = HTML.create('div', 'settings');
+        div.appendChild(HTML.create('p', 'settings', nameList[i].text));
+        for(let j of nameList[i].btnList) {
+            j.btn = HTML.create('button', 'settings', j.text);
+            j.btn.addEventListener('click', () => {
+                SETTINGS[i] = j.value;
+                update();
+            });
+            div.appendChild(j.btn);
+        }
+        frame.appendChild(div);
+    }
+    update();
+    await new Promise(resolve => {
+        let btn = HTML.create('button', 'settings', '完成'), div = HTML.create('div', 'settings');
+        div.appendChild(btn);
+        frame.appendChild(div);
+        btn.addEventListener('click', resolve);
+    })
+}
 async function chooseInterface(tag) {
     const typeList = {
         '经典 FFA': { check: () => true, type: JOIN_AUTO_FFA, },
+        '设置': {check:() => true, type: SET_SETTINGS},
     };
     HTML.clearBody();
     let frame = HTML.create('div', 'frame choose-interface');
@@ -82,8 +125,12 @@ async function chooseInterface(tag) {
         for (let i in typeList) {
             if (typeList[i].check()) {
                 let btn = HTML.create('button', 'choose', i);
-                btn.addEventListener('click', () => {
-                    resolve(typeList[i].type);
+                btn.addEventListener('click', async () => {
+                    if(typeList[i].type === SET_SETTINGS) {
+                        await settingInterface();
+                        resolve(await chooseInterface(tag));
+                    }
+                    else resolve(typeList[i].type);
                 });
                 frame.appendChild(btn);
             }
@@ -204,7 +251,7 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
     let X = 0, Y = 0;
-    const playerRadius = 3, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, HPdis = 3, attactTime = 1;
+    const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, HPdis = 3, attactTime = 1;
     const lineDis = 100, lineWidth = 4;
     await new Promise(resolve => {
         let running = 1;
@@ -230,7 +277,7 @@ async function gameInterface(msg) {
             cxt.fillStyle = 'red';
             players.forEach(data => {
                 cxt.strokeStyle = 'black';
-                cxt.lineWidth = 0.2 * SETTINGS.RATIO;
+                cxt.lineWidth = 0.5 * SETTINGS.RATIO;
                 cxt.fillStyle = data.color;
                 cxt.beginPath();
                 cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, 0, 2 * Math.PI);
@@ -251,7 +298,7 @@ async function gameInterface(msg) {
                             : data.id === playerIndex ?
                                 `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
-                    cxt.lineWidth = 0.2 * SETTINGS.RATIO;
+                    cxt.lineWidth = 0.5 * SETTINGS.RATIO;
                     cxt.beginPath();
                     cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, playerRadius * SETTINGS.RATIO, -data.attackTheta - theta, -data.attackTheta + theta, false);
                     cxt.arc((data.y - Y) * SETTINGS.RATIO, (data.x - X) * SETTINGS.RATIO, knifeRadius * SETTINGS.RATIO, -data.attackTheta + theta, -data.attackTheta - theta, true);
@@ -262,7 +309,7 @@ async function gameInterface(msg) {
                         let tag = data.attackRestTime / lastTime;
                         let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
                         cxt.strokeStyle = 'white';
-                        cxt.lineWidth = 1 * SETTINGS.RATIO;
+                        cxt.lineWidth = 2 * SETTINGS.RATIO;
                         cxt.beginPath();
                         cxt.moveTo((data.y - Y + Math.cos(Theta) * playerRadius) * SETTINGS.RATIO, (data.x - X - Math.sin(Theta) * playerRadius) * SETTINGS.RATIO);
                         cxt.lineTo((data.y - Y + Math.cos(Theta) * knifeRadius) * SETTINGS.RATIO, (data.x - X - Math.sin(Theta) * knifeRadius) * SETTINGS.RATIO);
@@ -271,7 +318,7 @@ async function gameInterface(msg) {
                     }
                 }
                 else if (data.id === playerIndex) {
-                    cxt.lineWidth = 0.4 * SETTINGS.RATIO;
+                    cxt.lineWidth = 0.5 * SETTINGS.RATIO;
                     cxt.strokeStyle = 'rgba(79, 194, 230, 0.6)';
                     cxt.fillStyle = 'rgba(79, 194, 230, 0.3)';
                     let nowTheta = -Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
@@ -284,7 +331,7 @@ async function gameInterface(msg) {
                 }
                 else return;
             });
-            cxt.lineWidth = 1;
+            cxt.lineWidth = 0.4 * SETTINGS.RATIO;
             players.forEach(data => {
                 cxt.fillStyle = 'red';
                 cxt.strokeStyle = 'black';
@@ -427,6 +474,11 @@ async function gameInterface(msg) {
         });
     });
 }
+function loadSettings() {
+    if(localStorage.fortySettings === undefined) return;
+    let data = JSON.parse(localStorage.fortySettings);
+    for(let i in data) if(i in SETTINGS) SETTINGS[i] = data[i];
+}
 function endInterface(data) {
     if (data === CONTINUE_TAG) return null;
 }
@@ -441,4 +493,5 @@ async function run() {
         await endInterface(await gameInterface(await readyInterface(await joinInterface(await chooseInterface(null)))));
     }
 }
+loadSettings();
 run();
