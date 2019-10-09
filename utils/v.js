@@ -27,6 +27,9 @@ module.exports=class V{
 	mul(a){
 		return new V(this.x*a,this.y*a);
 	}
+	eq({x,y}){
+		return this.x===x&&this.y===y;
+	}
 	get sqrlen(){
 		return this.x**2+this.y**2;
 	}
