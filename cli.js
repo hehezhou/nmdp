@@ -59,10 +59,10 @@ module.exports = function CLI(gameServer) {
 		save() {
 			cli.emit('save');
 		},
-		create_game(id, type, settings = {}) {
+		create_game(id, type = id, settings = {}) {
 			gameServer.createGame(id, type, settings, false);
 		},
-		create_match(id, type, settings = {}) {
+		create_match(id, type = id, settings = {}) {
 			gameServer.createMatch(id, type, settings);
 		},
 		help: '(NO HELP!)',
