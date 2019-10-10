@@ -195,3 +195,9 @@ hr {
 br {
     height: 0.5vh;
 }
+text {
+    pointer-events: none;
+}
+svg {
+    pointer-events: none;
+}

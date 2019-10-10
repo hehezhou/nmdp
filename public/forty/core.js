@@ -83,9 +83,17 @@ const GAME = (() => {
     }
     function getColor(id) {
         let hash = 0, base = 12;
-        const mod = 1 << 24;
+        const mod = 0b1011010010100110100010110;
+        function Mod(x) {
+            for(let i = 31; i >= 24; i--) {
+                if(x & (1 << i)) x ^= mod << (i - 24);
+            }
+            return x;
+        }
         id = id.split('');
-        id.forEach(data => hash = (hash * base + data.charCodeAt() * data.charCodeAt()) % mod);
+        id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
+        id.reverse();
+        id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
         return '#' + hash.toString(16).padStart(6, '0');
     }
     return class {
