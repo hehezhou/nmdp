@@ -29,6 +29,7 @@ const colorList = [
     { r: 255, g: 0, b: 128 },
     { r: 128, g: 0, b: 64 },
     { r: 64, g: 0, b: 0 },
+    { r: 252, g: 259, b: 227 },
 ];
 const maxDelta = 5;
 const initColor = 0;
@@ -113,14 +114,14 @@ async function work() {
             canvas.width = width;
             box.style.overflow = 'hidden';
             canvas.style.position = 'relative';
-            if(navigator.userAgent.indexOf('Firefox') > -1) canvas.style.imageRendering = 'crisp-edges';
+            if (navigator.userAgent.indexOf('Firefox') > -1) canvas.style.imageRendering = 'crisp-edges';
             else canvas.style.imageRendering = 'pixelated';
             const RATIO = 2;
             function limit(min, value, max) {
                 return value < min ? min
                     : (value > max ? max
                         : value);
-                    }
+            }
             let control = {
                 _ratio: 1,
                 _x: 0,
