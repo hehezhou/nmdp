@@ -1,6 +1,6 @@
 function hashGetColor(id) {
     let hash = 0, base = 12;
-    const mod = 0b1011010010100110100010110;
+    const mod = 0b1011001010100110010010110;
     function Mod(x) {
         for(let i = 31; i >= 24; i--) {
             if(x & (1 << i)) x ^= mod << (i - 24);
