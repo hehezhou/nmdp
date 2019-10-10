@@ -23,6 +23,7 @@
  */
 
 /** send
+ * ['set_skills', {passive: Number}];
  * ['attack', theta]
  * ['set_direction', -1 ~ 7];
  */
@@ -107,7 +108,7 @@ async function settingInterface() {
         }
         localStorage.fortySettings = JSON.stringify(SETTINGS);
     }
-    let frame = HTML.create('div', 'frame settting-interface');
+    let frame = HTML.create('div', 'frame setting-interface');
     document.body.appendChild(frame);
     let cnt = 0;
     for (let i in SETTINGS) cnt++;
@@ -133,6 +134,42 @@ async function settingInterface() {
         btn.addEventListener('click', resolve);
     })
 }
+async function skillsInterface() {
+    HTML.clearBody();
+    let nameList = {
+        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 0 }, { text: '匕首', value: 1 }, { text: '重刃', value: 2 }, { text: '熔炉', value: 3 }] },
+    };
+    let frame = HTML.create('div', 'frame skills-interface');
+    document.body.appendChild(frame);
+    let cnt = 0;
+    for (let i in nameList) cnt++;
+    frame.style.gridTemplateRows = `repeat(135px, ${cnt})`;
+    let promiseList = [];
+    for (let i in nameList) {
+        let now = nameList[i];
+        promiseList.push(new Promise(resolve => {
+            let div = HTML.create('div', 'skills');
+            let running = 1;
+            div.appendChild(HTML.create('p', 'skills', now.text));
+            for (let j of now.btnList) {
+                j.btn = HTML.create('button', 'skills', j.text);
+                j.btn.addEventListener('click', () => {
+                    if(running === 0) return;
+                    j.btn.className = 'skills-chosen';
+                    running = 0;
+                    resolve({name: i, value: j.value});
+                });
+                div.appendChild(j.btn);
+            }
+            frame.appendChild(div);
+        }));
+    }
+    let list = await Promise.all(promiseList);
+    let ans = {};
+    list.forEach(data => ans[data.name] = data.value);
+    return ans;
+}
+
 async function chooseInterface(tag) {
     const typeList = {
         '经典 FFA': { check: () => true, type: JOIN_AUTO_FFA, },
@@ -151,7 +188,9 @@ async function chooseInterface(tag) {
                         await settingInterface();
                         resolve(await chooseInterface(tag));
                     }
-                    else resolve(typeList[i].type);
+                    else {
+                        resolve({type: typeList[i].type, skills: await skillsInterface()});
+                    }
                 });
                 frame.appendChild(btn);
             }
@@ -159,7 +198,7 @@ async function chooseInterface(tag) {
         document.body.appendChild(frame);
     });
 }
-async function joinInterface(type) {
+async function joinInterface({type, skills}) {
     if (type === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
     let frame = HTML.create('div', 'frame join-interface');
@@ -185,6 +224,7 @@ async function joinInterface(type) {
             if (type === JOIN_AUTO_FFA) roomName = 'forty';
             else if (type === JOIN_AUTO_TEAM) roomName = 'forty-team';
             send(['join_auto', roomName]);
+            send(['set_skills', skills]);
             io.addEventListener('message', function x(msg) {
                 let data = JSON.parse(msg.data);
                 if (data[0] === 'join_success') {
