@@ -291,7 +291,7 @@ async function gameInterface(msg) {
     let X = 0, Y = 0;
     const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 3, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
     const lineDis = 100, lineWidth = 4;
-    let svgCircleMap = new Map(), svgAttackMap = new Map(), svgNameMap = new Map(), svgHPMap = new Map();
+    let rectList = [], svgCircleMap = new Map(), svgAttackMap = new Map(), svgNameMap = new Map(), svgHPMap = new Map();
     let g = SVG.create('g');
     svg.appendChild(g);
     return await new Promise(resolve => {
@@ -324,27 +324,41 @@ async function gameInterface(msg) {
             }
             nowFillColor = nowStrokeColor = 'rgb(128, 128, 128)';
             nowLineWidth = 0;
+            let cnt = 0;
             for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
                 if(i + X > 0 || i + X < -width) continue;
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowHeight) continue;
-                let rect = SVG.create('rect');
-                setStyle(rect);
+                if(cnt === rectList.length) {
+                    let rect = SVG.create('rect');
+                    setStyle(rect);
+                    rectList.push(rect);
+                    svg.appendChild(rect);
+                }
+                let rect = rectList[cnt++];
                 rect.setAttribute('x', `${fix(0 - Y - lineWidth / 2)}`);
                 rect.setAttribute('y', `${fix(i - lineWidth / 2)}`);
                 rect.setAttribute('width', `${fix(width + lineWidth)}`);
                 rect.setAttribute('height', `${fix(lineWidth)}`);
-                g.appendChild(rect);
             }
             for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
                 if(i + Y < 0 || i + Y > height) continue;
                 if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowWidth) continue;
-                let rect = SVG.create('rect');
-                setStyle(rect);
+                if(cnt === rectList.length) {
+                    let rect = SVG.create('rect');
+                    setStyle(rect);
+                    rectList.push(rect);
+                    svg.appendChild(rect);
+                }
+                let rect = rectList[cnt++];
                 rect.setAttribute('x', `${fix(i - lineWidth / 2)}`);
                 rect.setAttribute('y', `${fix(-height - X - lineWidth / 2)}`);
                 rect.setAttribute('width', `${fix(lineWidth)}`);
                 rect.setAttribute('height', `${fix(height + lineWidth)}`);
-                g.appendChild(rect);
+            }
+            while(rectList.length > cnt) {
+                let now = rectList[rectList.length - 1];
+                now.remove();
+                rectList.pop();
             }
             nowStrokeColor = 'black';
             nowLineWidth = fix(0.5);
@@ -466,7 +480,12 @@ async function gameInterface(msg) {
             tmpSet.clear();
             players.forEach(data => {
                 tmpSet.add(data.id);
-                if(!svgNameMap.has(data.id)) svgNameMap.set(data.id, SVG.create('text')), svg.appendChild(svgNameMap.get(data.id));
+                if(!svgNameMap.has(data.id)) {
+                    let tmp = SVG.create('text');
+                    svgNameMap.set(data.id, tmp);
+                    tmp.innerHTML = data.id;
+                    svg.appendChild(tmp);
+                }
                 let now = svgNameMap.get(data.id);
                 nowFillColor = 'black';
                 now.setAttribute('font-size', `${fix(fontSize)}`);
@@ -474,7 +493,6 @@ async function gameInterface(msg) {
                 now.setAttribute('dominant-baseline', `middle`);
                 now.setAttribute('x', `${fix(data.y - Y)}`);
                 now.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + nameDis + HPheight + fontSize / 2)}`);
-                now.innerHTML = data.id;
             });
             deleteList = [];
             for(let i of svgNameMap) {

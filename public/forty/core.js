@@ -23,9 +23,7 @@ const GAME = (() => {
         PLAYER_ATTACK_ANGLE = Math.PI / 6,
         PLAYER_ATTACK_DAMAGE = 75,
         PLAYER_ATTACK_HEAL = 25,
-        PLAYER_HURT_PER_SEC = 100,
-        ARENA_HEIGHT = 1000,
-        ARENA_WIDTH = 1000;
+        PLAYER_HURT_PER_SEC = 100;
     class vector {
         constructor(x, y) {
             if (typeof x === 'number') {
