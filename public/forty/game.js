@@ -268,7 +268,7 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data });
     let playerIndex = data.id;
     let X = 0, Y = 0;
-    const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 4, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
+    const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 3, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
     const lineDis = 100, lineWidth = 4;
     let svgCircleMap = new Map(), svgAttackMap = new Map(), svgNameMap = new Map(), svgHPMap = new Map();
     let g = SVG.create('g');
@@ -287,7 +287,7 @@ async function gameInterface(msg) {
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
-                littlecxt.fillStyle = data.id === playerIndex ? 'red' : 'black';
+                littlecxt.fillStyle = data.id === playerIndex ? 'blue' : 'black';
                 littlecxt.fillRect(Math.floor((data.y) / ratio) - 2.5, Math.floor((width + data.x)) / ratio - 2.5, 5, 5);
             });
             function setStyle(ele) {
@@ -476,7 +476,9 @@ async function gameInterface(msg) {
             ({ x, y } = pos({ x, y }));
             nowMouseX = Math.floor(x), nowMouseY = Math.floor(y);
         });
-        frame.addEventListener('click', ({ offsetX: y, offsetY: x }) => {
+        frame.addEventListener('mousedown', (event) => {
+            let { offsetX: y, offsetY: x } = event;
+            event.preventDefault();
             ({ x, y } = pos({ x, y }));
             x = Math.floor(x), y = Math.floor(y);
             if (alive && FORTY.check(playerIndex)) {
