@@ -30,6 +30,17 @@ module.exports = class Forty extends Game {
 			id: 'forty',
 		};
 		this.settings = settings;
+		const { teamCount = null } = settings;
+		this.teamCount = vaild.integer(teamCount, { hint: 'teamCount', min: 2, allows:[null] });
+		if (this.teamCount !== null) {
+			this.teams = [];
+			for (let i = 1; i <= this.teamCount; i++) {
+				let team = {
+					id: `Orz Siyu${'a'.repeat(i)}n`,
+				};
+				this.teams.push(team);
+			}
+		}
 		let players = new Map();
 		this.players = players;
 		this.time = -Infinity;
@@ -44,6 +55,7 @@ module.exports = class Forty extends Game {
 				targetHealth = PLAYER_MAX_HEALTH,
 				lastDamager = null,
 				score = 0,
+				teamID,
 				id,
 				callback,
 			}) {
@@ -55,6 +67,7 @@ module.exports = class Forty extends Game {
 				this.targetHealth = targetHealth;
 				this.lastDamager = lastDamager;
 				this.score = score;
+				this.teamID = teamID;
 				this.id = id;
 				this.callback = callback;
 				game.needUpdate = false;
@@ -73,6 +86,9 @@ module.exports = class Forty extends Game {
 				this.targetSpeed = targetSpeed;
 			}
 			canAttack(player, angle) {
+				if (player.teamID === this.teamID) {
+					return false;
+				}
 				let distance = player.pos.sub(this.pos);
 				let len = distance.len;
 				if (len === 0 || len > PLAYER_ATTACK_RANGE) {
@@ -122,6 +138,9 @@ module.exports = class Forty extends Game {
 	canJoin(id) {
 		return true;
 	}
+	getTeamID(teamIndex) {
+		return `team ${teamIndex}`;
+	}
 	join(id, callback) {
 		let player;
 		if (!this.players.has(id)) {
@@ -131,6 +150,21 @@ module.exports = class Forty extends Game {
 					randomReal(0, ARENA_HEIGHT),
 				),
 				callback,
+				teamID: this.teamCount === null ? id : (() => {
+					let count = new Map(this.teams.map(team => [team.id, 0]));
+					this.players.forEach(player => {
+						count.set(player.teamID, count.get(player.teamID) + 1);
+					});
+					let minTeamID;
+					let min = Infinity;
+					count.forEach((playerCount, teamID) => {
+						if (playerCount < min) {
+							min = playerCount;
+							minTeamID = teamID;
+						}
+					});
+					return minTeamID;
+				})(),
 				id,
 			});
 			this.players.set(id, player);
@@ -194,6 +228,7 @@ module.exports = class Forty extends Game {
 				attack_state: player.attackState instanceof BeforeAttack
 					? player.attackState
 					: null,
+				teamID: player.teamID,
 				score: player.score,
 			}]);
 		}
