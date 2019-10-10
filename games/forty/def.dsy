@@ -2,9 +2,11 @@ import {sqrt,sin,cos,atan2,max,min,PI,mid} from Math;
 import {randomReal} from Random;
 import {Set} from DataStructre;
 import {assert} from Assert;
+
 FFA:{};
 Teams:{teamCount:Int};
 gameType:FFA|Teams;
+
 PLAYER_TIME_BEFORE_ATTACK:Real=1;
 PLAYER_MAX_SPEED:Real=60;
 PLAYER_ACC:Real=200;
@@ -16,8 +18,10 @@ PLAYER_ATTACK_HEAL:Real=25;
 PLAYER_HURT_PER_SEC:Real=100;
 PLAYER_KILL_STEAL:Real=0.5;
 PLAYER_KILL_SCORE:Real=100;
+
 ARENA_HEIGHT:Real=1000;
 ARENA_WIDTH:Real=1000;
+
 V:{
 	x:Real;
 	y:Real;
@@ -30,12 +34,15 @@ V{x,y}.len:Real=sqrt(x*x+y*y);
 //atan2(x:Real,y:Real):Real;(>=0 <2*PI)
 V{x,y}.angle:Real=atan2(x,y);
 angleToV(angle:Real):V=V{cos(angle),sin(angle)};
+
 Waiting:{};
 BeforeAttack:{
 	time:Real;
 	angle:Real;
 };
+
 players:Set<Player>;
+
 Player:{
 	pos:V;
 	speed:V;
@@ -103,14 +110,17 @@ Player:{
 		health=max(targetHealth,health-PLAYER_HURT_PER_SEC*t);
 	}
 };
+
 getDirection:Int=>v=[
 	-1=>V{0,0};
 	i:Int=>angleToV(i*PI/4);
 ];
+
 Interface:{
 	attack:()=>();
 	setDirection:Int=>();
 };
+
 export join(id:String):Interface{
 	player:Player=Player{
 		pos:V{randomReal(0,ARENA_WIDTH),randomReal(0,ARENA_HEIGHT)};
@@ -135,6 +145,7 @@ export join(id:String):Interface{
 		setDirection:i:Int=>player.move(getDirection(i));
 	};
 }
+
 export time(t:Real){
 	for(player:Player in players){
 		player.time(t);
