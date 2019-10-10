@@ -91,7 +91,7 @@ const GAME = (() => {
             if (this.pos.y > height) this.pos.y = height;
             if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
-                if (this.attackState.time < 0) this.attackState = Waiting;
+                if (this.attackState.time <= 0) this.attackState = Waiting;
             }
             this.health = Math.max(this.targetHealth, this.health - BASE.PLAYER_HURT_PER_SEC * t);
         }
