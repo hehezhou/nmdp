@@ -3,7 +3,7 @@ const Game = require('../game-base.js');
 const { cut } = require('../../utils/two_dim.js');
 const MIN_SIZE = 1;
 const MAX_SIZE = 2000;
-const COLORS = 26;
+const COLORS = 27;
 const PAINT_COOLDOWN = 300;
 module.exports = class PrintBoard extends Game {
 	constructor(settings) {
