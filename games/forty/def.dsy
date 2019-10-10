@@ -1,3 +1,4 @@
+module class Forty(gameType:FFA|Teams);
 import {sqrt,sin,cos,atan2,max,min,PI,mid} from Math;
 import {randomReal} from Random;
 import {Set} from DataStructre;
@@ -5,7 +6,6 @@ import {assert} from Assert;
 
 FFA:{};
 Teams:{teamCount:Int};
-gameType:FFA|Teams;
 
 PLAYER_TIME_BEFORE_ATTACK:Real=1;
 PLAYER_MAX_SPEED:Real=60;
@@ -121,7 +121,7 @@ Interface:{
 	setDirection:Int=>();
 };
 
-export join(id:String):Interface{
+join(id:String):Interface{
 	player:Player=Player{
 		pos:V{randomReal(0,ARENA_WIDTH),randomReal(0,ARENA_HEIGHT)};
 		speed:V{0,0};
@@ -146,7 +146,7 @@ export join(id:String):Interface{
 	};
 }
 
-export time(t:Real){
+time(t:Real){
 	for(player:Player in players){
 		player.time(t);
 	}
