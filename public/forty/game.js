@@ -525,7 +525,7 @@ async function gameInterface(msg) {
                 now.score.setAttribute('x', `${fix(data.y - Y)}`);
                 now.name.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + nameDis + HPheight + fontSize / 2)}`);
                 now.score.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + nameDis + HPheight + 3 * fontSize / 2)}`);
-                now.score.innerHTML = `${data.score}分`;
+                now.score.innerHTML = `${Math.floor(data.score)}分`;
             });
             deleteList = [];
             for(let i of svgTextMap) {
