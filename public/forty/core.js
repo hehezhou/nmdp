@@ -14,16 +14,17 @@ function hashGetColor(id) {
     return '#' + hash.toString(16).padStart(6, '0');
 }
 const GAME = (() => {
-    const
-        PLAYER_TIME_BEFORE_ATTACK = 1,
-        PLAYER_MAX_SPEED = 60,
-        PLAYER_ACC = 200,
-        PLAYER_MAX_HEALTH = 100,
-        PLAYER_ATTACK_RANGE = 40,
-        PLAYER_ATTACK_ANGLE = Math.PI / 6,
-        PLAYER_ATTACK_DAMAGE = 75,
-        PLAYER_ATTACK_HEAL = 25,
-        PLAYER_HURT_PER_SEC = 100;
+    const BASE = {
+        PLAYER_TIME_BEFORE_ATTACK: 1,
+        PLAYER_MAX_SPEED: 60,
+        PLAYER_ACC: 200,
+        PLAYER_MAX_HEALTH: 100,
+        PLAYER_ATTACK_RANGE: 40,
+        PLAYER_ATTACK_ANGLE: Math.PI / 6,
+        PLAYER_ATTACK_DAMAGE: 75,
+        PLAYER_ATTACK_HEAL: 25,
+        PLAYER_HURT_PER_SEC: 100,
+    }
     class vector {
         constructor(x, y) {
             if (typeof x === 'number') {
@@ -80,9 +81,9 @@ const GAME = (() => {
         time(t, height, width) {
             let deltaSpeed = sub(this.targetSpeed, this.speed);
             let dl = deltaSpeed.len();
-            let p = Math.min(dl / PLAYER_ACC, t);
+            let p = Math.min(dl / BASE.PLAYER_ACC, t);
             this.pos = plus(this.pos, mult(this.speed, p / 2));
-            if(deltaSpeed.len() > 1e-5) this.speed = plus(this.speed, mult(deltaSpeed, PLAYER_ACC * p / deltaSpeed.len()));
+            if(deltaSpeed.len() > 1e-5) this.speed = plus(this.speed, mult(deltaSpeed, BASE.PLAYER_ACC * p / deltaSpeed.len()));
             this.pos = plus(this.pos, mult(this.speed, (t - p / 2)));
             if (this.pos.x < 0) this.pos.x = 0;
             if (this.pos.y < 0) this.pos.y = 0;
@@ -92,7 +93,7 @@ const GAME = (() => {
                 this.attackState.time -= t;
                 if (this.attackState.time < 0) this.attackState = Waiting;
             }
-            this.health = Math.max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * t);
+            this.health = Math.max(this.targetHealth, this.health - BASE.PLAYER_HURT_PER_SEC * t);
         }
     }
     return class {
@@ -113,12 +114,12 @@ const GAME = (() => {
                 data.x = -i[1].pos.y;
                 data.y = i[1].pos.x;
                 data.HP = i[1].health;
-                data.maxHP = PLAYER_MAX_HEALTH;
+                data.maxHP = BASE.PLAYER_MAX_HEALTH;
                 data.score = i[1].score;
                 data.color = hashGetColor(i[0]);
-                data.knifeRadius = PLAYER_ATTACK_RANGE;
-                data.attackSumTime = PLAYER_TIME_BEFORE_ATTACK;
-                data.theta = PLAYER_ATTACK_ANGLE;
+                data.knifeRadius = BASE.PLAYER_ATTACK_RANGE;
+                data.attackSumTime = BASE.PLAYER_TIME_BEFORE_ATTACK;
+                data.theta = BASE.PLAYER_ATTACK_ANGLE;
                 switch (this.type) {
                     case GAME_TYPE.FFA: {
                         data.team = data.id;
