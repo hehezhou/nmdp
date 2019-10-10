@@ -116,6 +116,9 @@ const GAME = (() => {
                 data.maxHP = PLAYER_MAX_HEALTH;
                 data.score = i[1].score;
                 data.color = hashGetColor(i[0]);
+                data.knifeRadius = PLAYER_ATTACK_RANGE;
+                data.attackSumTime = PLAYER_TIME_BEFORE_ATTACK;
+                data.theta = PLAYER_ATTACK_ANGLE;
                 switch (this.type) {
                     case GAME_TYPE.FFA: {
                         data.team = data.id;

@@ -289,7 +289,7 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data, type });
     let playerIndex = data.id;
     let X = 0, Y = 0;
-    const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 3, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
+    const playerRadius = SETTINGS.PLAYERRADIUS, lastTime = 0.1, HPheight = 3, HPwidth = 20, fontSize = 6, HPdis = 3, nameDis = 3;
     const lineDis = 100, lineWidth = 4;
     let rectList = [], svgCircleMap = new Map(), svgAttackMap = new Map(), svgTextMap = new Map(), svgHPMap = new Map();
     let g_knife = SVG.create('g'), 
@@ -412,21 +412,21 @@ async function gameInterface(msg) {
                         data.attackRestTime <= lastTime ?
                             'rgba(255, 56, 56, 0.5)'
                             : data.team === myTeam ?
-                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
-                                : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
+                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`
+                                : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`;
                     nowLineWidth = fix(0.5);
                     setStyle(now);
                     let str = '';
-                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - theta))} `;
-                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta + theta))},${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta + theta))}`;
-                    str += `L${fix(data.y - Y + knifeRadius * Math.cos(-data.attackTheta + theta))} ${fix(data.x - X + knifeRadius * Math.sin(-data.attackTheta + theta))} `;
-                    str += `A${fix(knifeRadius)},${fix(knifeRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + knifeRadius * Math.cos(-data.attackTheta - theta))},${fix(data.x - X + knifeRadius * Math.sin(-data.attackTheta - theta))}`;
-                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - theta))} `;
+                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
+                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta + data.theta))},${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta + data.theta))}`;
+                    str += `L${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta + data.theta))} ${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta + data.theta))} `;
+                    str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta - data.theta))},${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta - data.theta))}`;
+                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
                     str += `Z`;
                     now.setAttribute('d', str);
                     if (data.attackRestTime <= lastTime) {
                         let tag = data.attackRestTime / lastTime;
-                        let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
+                        let Theta = (data.attackTheta - data.theta) * tag + (data.attackTheta + data.theta) * (1 - tag);
                         let line = SVG.create('line');
                         nowLineWidth = fix(2);
                         nowFillColor = 'white';
@@ -434,9 +434,9 @@ async function gameInterface(msg) {
                         if(data.passive === PASSIVE.BLOOD) nowFillColor = nowStrokeColor = 'red';
                         setStyle(line);
                         line.setAttribute('x1', `${fix(data.y - Y + Math.cos(Theta) * playerRadius)}`);
-                        line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * knifeRadius)}`);
+                        line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * data.knifeRadius)}`);
                         line.setAttribute('y1', `${fix(data.x - X - Math.sin(Theta) * playerRadius)}`);
-                        line.setAttribute('y2', `${fix(data.x - X - Math.sin(Theta) * knifeRadius)}`);
+                        line.setAttribute('y2', `${fix(data.x - X - Math.sin(Theta) * data.knifeRadius)}`);
                         g_knife.appendChild(line);
                     }
                 }
@@ -454,11 +454,11 @@ async function gameInterface(msg) {
                     setStyle(now);
                     let nowTheta = -Math.atan2(nowMouseX - nowHeight / 2, nowMouseY - nowWidth / 2);
                     let str = '';
-                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - theta))} `;
-                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-nowTheta + theta))},${fix(data.x - X + playerRadius * Math.sin(-nowTheta + theta))}`;
-                    str += `L${fix(data.y - Y + knifeRadius * Math.cos(-nowTheta + theta))} ${fix(data.x - X + knifeRadius * Math.sin(-nowTheta + theta))} `;
-                    str += `A${fix(knifeRadius)},${fix(knifeRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + knifeRadius * Math.cos(-nowTheta - theta))},${fix(data.x - X + knifeRadius * Math.sin(-nowTheta - theta))}`;
-                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - theta))} `;
+                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - data.theta))} `;
+                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-nowTheta + data.theta))},${fix(data.x - X + playerRadius * Math.sin(-nowTheta + data.theta))}`;
+                    str += `L${fix(data.y - Y + data.knifeRadius * Math.cos(-nowTheta + data.theta))} ${fix(data.x - X + data.knifeRadius * Math.sin(-nowTheta + data.theta))} `;
+                    str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + data.knifeRadius * Math.cos(-nowTheta - data.theta))},${fix(data.x - X + data.knifeRadius * Math.sin(-nowTheta - data.theta))}`;
+                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - data.theta))} `;
                     str += `Z`;
                     now.setAttribute('d', str);
                 }
