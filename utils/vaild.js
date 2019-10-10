@@ -11,10 +11,10 @@ module.exports.integer = function integer(input, options = {}) {
 	if (typeof input === 'string') {
 		input = Number(input);
 	}
-	if (typeof input === 'number'
-		&& (Number.isInteger(input)
-			&& input >= min
-			&& input <= max) || allows.includes(input)) {
+	if ((typeof input === 'number'
+		&& Number.isInteger(input)
+		&& input >= min
+		&& input <= max) || allows.includes(input)) {
 		return input;
 	}
 	else {
@@ -26,10 +26,10 @@ module.exports.real = function real(input, options = {}) {
 	if (typeof input === 'string') {
 		input = Number(input);
 	}
-	if (typeof input === 'number'
-		&& (!Number.isNaN(input)
-			&& input >= min
-			&& input <= max) || allows.includes(input)) {
+	if ((typeof input === 'number'
+		&& !Number.isNaN(input)
+		&& input >= min
+		&& input <= max) || allows.includes(input)) {
 		return input;
 	}
 	else {
