@@ -41,7 +41,7 @@ const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 var PASSIVE = {
     BLOOD: 0,
     DAGGER: 1,
-    BIG: 2,
+    BROADSWORD: 2,
     SMELTING: 3,
 }
 
