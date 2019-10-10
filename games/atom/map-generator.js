@@ -210,5 +210,5 @@ class WildGen extends MapGenerator {
 	}
 }
 
-const mapGens = [WildGen];
+const mapGens = [ArenaGen,WildGen];
 module.exports = mapGens;
