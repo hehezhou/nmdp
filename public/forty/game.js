@@ -28,10 +28,21 @@
  * 5  6  7
  */
 const io = new WebSocket(`ws://${location.hostname}:1926`);
-const CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), SET_SETTINGS = Symbol('set_settings'), DIE = Symbol('die');
-const future = Symbol('future');
+var GAME_TYPE = {
+    FFA: Symbol('ffa'),
+    TEAM: Symbol('team'),
+}
+var CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), SET_SETTINGS = Symbol('set_settings'), DIE = Symbol('die'), JOIN_AUTO_TEAM = Symbol('join_auto_team');
+var future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
+
+var PASSIVE = {
+    BLOOD: 0,
+    DAGGER: 1,
+    BIG: 2,
+    SMELTING: 3,
+}
 
 const SETTINGS = {
     PLAYERRADIUS: 3,
@@ -121,6 +132,7 @@ async function settingInterface() {
 async function chooseInterface(tag) {
     const typeList = {
         '经典 FFA': { check: () => true, type: JOIN_AUTO_FFA, },
+        '团队': { check: () => true, type: JOIN_AUTO_TEAM, },
         '设置': {check:() => true, type: SET_SETTINGS},
     };
     HTML.clearBody();
@@ -159,16 +171,24 @@ async function joinInterface(type) {
             if (now++ === max) now = 0;
         }, 600);
     }
-    async function joinAutoFFA() {
+    async function joinAuto() {
         let p = HTML.create('p', 'join')
         frame.appendChild(p);
         document.body.appendChild(frame);
         return await new Promise(resolve => {
             let tmp = addWait(p, '正在匹配');
-            send(['join_auto', 'forty']);
+            let roomName;
+            if(type === JOIN_AUTO_FFA) roomName = 'forty';
+            else if(type === JOIN_AUTO_TEAM) roomName = 'forty-team';
+            send(['join_auto', roomName]);
             io.addEventListener('message', function x(msg) {
                 let data = JSON.parse(msg.data);
-                if (data[0] === 'join_success') localStorage.fortyLastRoomId = roomId = data[1], resolve(type);
+                if (data[0] === 'join_success') {
+                    localStorage.fortyLastRoomId = roomId = data[1];
+                    if(type === JOIN_AUTO_FFA) resolve(GAME_TYPE.FFA);
+                    if(type === JOIN_AUTO_TEAM) resolve(GAME_TYPE.TEAM);
+                    resolve(CONTINUE_TAG);
+                }
                 else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
                 else return;
                 clearInterval(tmp);
@@ -176,7 +196,7 @@ async function joinInterface(type) {
             });
         });
     }
-    if (type === JOIN_AUTO_FFA) return await joinAutoFFA();
+    if (type === JOIN_AUTO_FFA || type === JOIN_AUTO_TEAM) return await joinAuto();
     else return console.error(`unknown type ${type}`), CONTINUE_TAG;
 }
 async function readyInterface(type) {
@@ -265,7 +285,7 @@ async function gameInterface(msg) {
     };
     updateSize();
     window.addEventListener('resize', updateSize);
-    let FORTY = new GAME({ data });
+    let FORTY = new GAME({ data, type });
     let playerIndex = data.id;
     let X = 0, Y = 0;
     const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 3, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
@@ -285,9 +305,12 @@ async function gameInterface(msg) {
             littlecxt.fillStyle = 'rgba(128, 128, 128, 0.5)';
             littlecxt.fillRect(0, 0, littleMap.width, littleMap.height);
             let { players, standing } = FORTY.getNowMap();
+            let myTeam;
             players.forEach(data => {
-                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1;
-                littlecxt.fillStyle = data.id === playerIndex ? 'blue' : 'black';
+                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1, myTeam = data.team;
+            });
+            players.forEach(data => {
+                littlecxt.fillStyle = data.team === myTeam ? 'blue' : 'red';
                 littlecxt.fillRect(Math.floor((data.y) / ratio) - 2.5, Math.floor((width + data.x)) / ratio - 2.5, 5, 5);
             });
             function setStyle(ele) {
@@ -349,13 +372,13 @@ async function gameInterface(msg) {
                     let now = svgAttackMap.get(data.id);
                     nowStrokeColor = data.attackRestTime <= lastTime ? 
                         'rgba(255, 56, 56, 0.8)' 
-                        : data.id === playerIndex ? 
+                        : data.team === myTeam ? 
                             'rgba(61, 139, 255, 0.8)' 
                             : 'rgba(90, 90, 90, 0.8)';
                     nowFillColor =
                         data.attackRestTime <= lastTime ?
                             'rgba(255, 56, 56, 0.5)'
-                            : data.id === playerIndex ?
+                            : data.team === myTeam ?
                                 `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
                                 : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
                     nowLineWidth = fix(0.5);
@@ -375,6 +398,7 @@ async function gameInterface(msg) {
                         nowLineWidth = fix(2);
                         nowFillColor = 'white';
                         nowStrokeColor = 'white';
+                        if(data.passive === PASSIVE.BLOOD) nowFillColor = nowStrokeColor = 'red';
                         setStyle(line);
                         line.setAttribute('x1', `${fix(data.y - Y + Math.cos(Theta) * playerRadius)}`);
                         line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * knifeRadius)}`);
@@ -418,7 +442,7 @@ async function gameInterface(msg) {
                 }
                 let now = svgHPMap.get(data.id);
                 nowLineWidth = 0;
-                nowFillColor = 'red';
+                nowFillColor = data.team === myTeam ? 'blue' : 'red';
                 nowStrokeColor = 'black';
                 setStyle(now.inner);
                 now.inner.setAttribute('x', `${fix(data.y - Y - HPwidth / 2)}`);
