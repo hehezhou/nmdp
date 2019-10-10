@@ -1,3 +1,18 @@
+function hashGetColor(id) {
+    let hash = 0, base = 12;
+    const mod = 0b1011010010100110100010110;
+    function Mod(x) {
+        for(let i = 31; i >= 24; i--) {
+            if(x & (1 << i)) x ^= mod << (i - 24);
+        }
+        return x;
+    }
+    id = id.split('');
+    id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
+    id.reverse();
+    id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
+    return '#' + hash.toString(16).padStart(6, '0');
+}
 const GAME = (() => {
     const
         PLAYER_TIME_BEFORE_ATTACK = 1,
@@ -82,21 +97,6 @@ const GAME = (() => {
             this.health = Math.max(this.targetHealth, this.health - PLAYER_HURT_PER_SEC * t);
         }
     }
-    function getColor(id) {
-        let hash = 0, base = 12;
-        const mod = 0b1011010010100110100010110;
-        function Mod(x) {
-            for(let i = 31; i >= 24; i--) {
-                if(x & (1 << i)) x ^= mod << (i - 24);
-            }
-            return x;
-        }
-        id = id.split('');
-        id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
-        id.reverse();
-        id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
-        return '#' + hash.toString(16).padStart(6, '0');
-    }
     return class {
         constructor({ data, type }) {
             this.type = type;
@@ -117,7 +117,7 @@ const GAME = (() => {
                 data.HP = i[1].health;
                 data.maxHP = PLAYER_MAX_HEALTH;
                 data.score = i[1].score;
-                data.color = getColor(i[0]);
+                data.color = hashGetColor(i[0]);
                 switch (this.type) {
                     case GAME_TYPE.FFA: {
                         data.team = data.id;
@@ -133,9 +133,21 @@ const GAME = (() => {
             return ans;
         }
         ranking() {
-            let ans = Array.from(this.players);
-            ans.sort((a, b) => b[1].score - a[1].score);
-            return ans.map(a => a[0]);
+            if(this.type === GAME_TYPE.FFA) {
+                let ans = Array.from(this.players);
+                ans.sort((a, b) => b[1].score - a[1].score);
+                return ans;
+            }
+            if(this.type === GAME_TYPE.TEAM) {
+                let ans = new Map();
+                for(let i of this.players) {
+                    if(!ans.has(i[1].team)) ans.set(i[1].team, 0);
+                    ans.set(i[1].team, ans.get(i[1].team) + i[1].score);
+                }
+                ans = Array.from(ans);
+                ans.sort((a, b) => b[1] - a[1]);
+                return ans;
+            }
         }
         update(data) {
             this.players.clear();
@@ -148,10 +160,7 @@ const GAME = (() => {
                     health: i[1].health,
                     targetHealth: i[1].target_health,
                     score: typeof i[1].score === 'number' ? i[1].score : 0,
-                    team: (() => {
-                        if(this.type === GAME_TYPE.FFA) return undefined;
-                        else if(this.type === GAME_TYPE.TEAM) return i[1].team;
-                    })(),
+                    team: i[1].teamID,
                 }));
             }
         }

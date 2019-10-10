@@ -13,6 +13,7 @@
  *     target_health: Number;
  *     attack_state:{time: Number, angle: Number}|null;
  *     score: Number;
+ *     teamID: String;
  * }
  * ['game_update', {map:{players: Map<ID, PlayerData>}}]
  * ['player_lose', {deadID, killerID}]
@@ -442,7 +443,7 @@ async function gameInterface(msg) {
                 }
                 let now = svgHPMap.get(data.id);
                 nowLineWidth = 0;
-                nowFillColor = data.team === myTeam ? 'blue' : 'red';
+                nowFillColor = data.team === myTeam ? 'blue' : hashGetColor(data.team);
                 nowStrokeColor = 'black';
                 setStyle(now.inner);
                 now.inner.setAttribute('x', `${fix(data.y - Y - HPwidth / 2)}`);
@@ -481,15 +482,35 @@ async function gameInterface(msg) {
             }
             for(let i of deleteList) svgNameMap.get(i).remove(), svgNameMap.delete(i);
             standingBox.innerHTML = '';
-            for (let i = 0; i < 10; i++) {
-                if (i < standing.length) {
-                    standingBox.innerHTML += `${i + 1}.${standing[i]} ${Math.floor(players[players.findIndex(data => data.id === standing[i])].score)}分<br/>`;
+
+            if(type === GAME_TYPE.FFA) {
+                for (let i = 0; i < 10; i++) {
+                    if (i < standing.length) {
+                        standingBox.innerHTML += `${i + 1}.${standing[i][0]} ${Math.floor(standing[i][1].score)}分<br/>`;
+                    }
+                    else break;
                 }
-                else break;
+                if (alive && tag) {
+                    let ID = standing.findIndex(data => data[0] === playerIndex);
+                    standingBox.innerHTML += `<hr/>${ID + 1}.${playerIndex} ${Math.floor(standing[ID][1].score)}分<br />`;
+                    if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
+                }
             }
-            if (alive && tag) {
-                standingBox.innerHTML += `<hr/>${standing.findIndex(data => data === playerIndex) + 1}.${playerIndex} ${Math.floor(players[players.findIndex(data => data.id === playerIndex)].score)}分<br />`;
-                if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
+            else {
+                for (let i = 0; i < 10; i++) {
+                    if (i < standing.length) {
+                        standingBox.innerHTML += 
+                            `${i + 1}.
+                            <span style="color: ${standing[i][0] === myTeam ? 'blue' : hashGetColor(standing[i][0])};">${standing[i][0]}</span>
+                            ${Math.floor(standing[i][1])}分<br/>`;
+                    }
+                    else break;
+                }
+                if (alive && tag) {
+                    let ID = standing.findIndex(data => data[0] === myTeam);
+                    standingBox.innerHTML += `<hr/>${ID + 1}.<span style="color: blue;">${myTeam}</span> ${Math.floor(standing[ID][1])}分<br />`;
+                    if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
+                }
             }
             if (running) requestAnimationFrame(x);
         });
