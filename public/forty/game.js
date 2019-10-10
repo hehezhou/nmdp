@@ -11,7 +11,10 @@
  *     target_speed: Vector;
  *     health: Number;
  *     target_health: Number;
- *     attack_state:{time: Number, angle: Number}|null;
+ *     attack_state:{time?: Number, angle?: Number, type: Number};
+ *         0: waiting
+ *         1: before_attack
+ *         2: after_attack
  *     score: Number;
  *     teamID: String;
  * }
@@ -20,6 +23,7 @@
  */
 
 /** send
+ * ['set_skills', {passive: Number}];
  * ['attack', theta]
  * ['set_direction', -1 ~ 7];
  */
@@ -38,12 +42,12 @@ var future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
-var PASSIVE = {
+var EFFECT = {
     BLOOD: 0,
     DAGGER: 1,
-    BIG: 2,
+    BROADSWORD: 2,
     SMELTING: 3,
-}
+};
 
 const SETTINGS = {
     PLAYERRADIUS: 3,
@@ -79,12 +83,12 @@ const HTML = {
      */
     create: function (tag, className = '', inner = '') {
         let ele = document.createElement(tag);
-        if(className) ele.className = className;
-        if(inner) ele.innerHTML = inner;
+        if (className) ele.className = className;
+        if (inner) ele.innerHTML = inner;
         return ele;
     },
     setPixelated: function (ele) {
-        if(window.navigator.appVersion.indexOf('firefox') != -1) ele.style.imageRendering = 'crisp-edges';
+        if (window.navigator.appVersion.indexOf('firefox') != -1) ele.style.imageRendering = 'crisp-edges';
         else ele.style.imageRendering = 'pixelated';
     }
 };
@@ -92,27 +96,27 @@ const HTML = {
 async function settingInterface() {
     HTML.clearBody();
     let nameList = {
-        'PLAYERRADIUS': {text: '人物大小: ', btnList: [{text: '小', value: 1.5}, {text: '中', value: 3}, {text: '大', value: 5}]},
-        'LITTLEMAPSIZE': {text: '小地图大小: ', btnList: [{text: '小', value: 20}, {text: '中', value: 40}, {text: '大', value: 60}]},
+        'PLAYERRADIUS': { text: '人物大小: ', btnList: [{ text: '小', value: 1.5 }, { text: '中', value: 3 }, { text: '大', value: 5 }] },
+        'LITTLEMAPSIZE': { text: '小地图大小: ', btnList: [{ text: '小', value: 20 }, { text: '中', value: 40 }, { text: '大', value: 60 }] },
     };
     function update() {
-        for(let i in SETTINGS) {
-            for(let j of nameList[i].btnList) {
-                if(j.value === SETTINGS[i]) j.btn.className = 'settings-chosen';
+        for (let i in SETTINGS) {
+            for (let j of nameList[i].btnList) {
+                if (j.value === SETTINGS[i]) j.btn.className = 'settings-chosen';
                 else j.btn.className = 'settings';
             }
         }
         localStorage.fortySettings = JSON.stringify(SETTINGS);
     }
-    let frame = HTML.create('div', 'frame settting-interface');
+    let frame = HTML.create('div', 'frame setting-interface');
     document.body.appendChild(frame);
     let cnt = 0;
-    for(let i in SETTINGS) cnt++;
+    for (let i in SETTINGS) cnt++;
     frame.style.gridTemplateRows = `repeat(135px, ${cnt + 1})`;
-    for(let i in SETTINGS) {
+    for (let i in SETTINGS) {
         let div = HTML.create('div', 'settings');
         div.appendChild(HTML.create('p', 'settings', nameList[i].text));
-        for(let j of nameList[i].btnList) {
+        for (let j of nameList[i].btnList) {
             j.btn = HTML.create('button', 'settings', j.text);
             j.btn.addEventListener('click', () => {
                 SETTINGS[i] = j.value;
@@ -130,11 +134,47 @@ async function settingInterface() {
         btn.addEventListener('click', resolve);
     })
 }
+async function skillsInterface() {
+    HTML.clearBody();
+    let nameList = {
+        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 0 }, { text: '匕首', value: 1 }, { text: '重刃', value: 2 }, { text: '熔炉', value: 3 }] },
+    };
+    let frame = HTML.create('div', 'frame skills-interface');
+    document.body.appendChild(frame);
+    let cnt = 0;
+    for (let i in nameList) cnt++;
+    frame.style.gridTemplateRows = `repeat(135px, ${cnt})`;
+    let promiseList = [];
+    for (let i in nameList) {
+        let now = nameList[i];
+        promiseList.push(new Promise(resolve => {
+            let div = HTML.create('div', 'skills');
+            let running = 1;
+            div.appendChild(HTML.create('p', 'skills', now.text));
+            for (let j of now.btnList) {
+                j.btn = HTML.create('button', 'skills', j.text);
+                j.btn.addEventListener('click', () => {
+                    if(running === 0) return;
+                    j.btn.className = 'skills-chosen';
+                    running = 0;
+                    resolve({name: i, value: j.value});
+                });
+                div.appendChild(j.btn);
+            }
+            frame.appendChild(div);
+        }));
+    }
+    let list = await Promise.all(promiseList);
+    let ans = {};
+    list.forEach(data => ans[data.name] = data.value);
+    return ans;
+}
+
 async function chooseInterface(tag) {
     const typeList = {
         '经典 FFA': { check: () => true, type: JOIN_AUTO_FFA, },
         '团队': { check: () => true, type: JOIN_AUTO_TEAM, },
-        '设置': {check:() => true, type: SET_SETTINGS},
+        '设置': { check: () => true, type: SET_SETTINGS },
     };
     HTML.clearBody();
     let frame = HTML.create('div', 'frame choose-interface');
@@ -144,11 +184,13 @@ async function chooseInterface(tag) {
             if (typeList[i].check()) {
                 let btn = HTML.create('button', 'choose', i);
                 btn.addEventListener('click', async () => {
-                    if(typeList[i].type === SET_SETTINGS) {
+                    if (typeList[i].type === SET_SETTINGS) {
                         await settingInterface();
                         resolve(await chooseInterface(tag));
                     }
-                    else resolve(typeList[i].type);
+                    else {
+                        resolve({type: typeList[i].type, skills: await skillsInterface()});
+                    }
                 });
                 frame.appendChild(btn);
             }
@@ -156,7 +198,7 @@ async function chooseInterface(tag) {
         document.body.appendChild(frame);
     });
 }
-async function joinInterface(type) {
+async function joinInterface({type, skills}) {
     if (type === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
     let frame = HTML.create('div', 'frame join-interface');
@@ -179,15 +221,16 @@ async function joinInterface(type) {
         return await new Promise(resolve => {
             let tmp = addWait(p, '正在匹配');
             let roomName;
-            if(type === JOIN_AUTO_FFA) roomName = 'forty';
-            else if(type === JOIN_AUTO_TEAM) roomName = 'forty-team';
+            if (type === JOIN_AUTO_FFA) roomName = 'forty';
+            else if (type === JOIN_AUTO_TEAM) roomName = 'forty-team';
             send(['join_auto', roomName]);
+            send(['set_skills', skills]);
             io.addEventListener('message', function x(msg) {
                 let data = JSON.parse(msg.data);
                 if (data[0] === 'join_success') {
                     localStorage.fortyLastRoomId = roomId = data[1];
-                    if(type === JOIN_AUTO_FFA) resolve(GAME_TYPE.FFA);
-                    if(type === JOIN_AUTO_TEAM) resolve(GAME_TYPE.TEAM);
+                    if (type === JOIN_AUTO_FFA) resolve(GAME_TYPE.FFA);
+                    if (type === JOIN_AUTO_TEAM) resolve(GAME_TYPE.TEAM);
                     resolve(CONTINUE_TAG);
                 }
                 else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
@@ -248,7 +291,7 @@ async function readyInterface(type) {
     });
 }
 const SVG = {
-    create: function(tag) {
+    create: function (tag) {
         return document.createElementNS('http://www.w3.org/2000/svg', tag);
     }
 };
@@ -289,16 +332,26 @@ async function gameInterface(msg) {
     let FORTY = new GAME({ data, type });
     let playerIndex = data.id;
     let X = 0, Y = 0;
-    const playerRadius = SETTINGS.PLAYERRADIUS, knifeRadius = 40, theta = Math.PI / 6, lastTime = 0.1, HPheight = 3, HPwidth = 20, fontSize = 6, HPdis = 3, attactTime = 1, nameDis = 3;
+    const playerRadius = SETTINGS.PLAYERRADIUS, lastTime = 0.1, HPheight = 3, HPwidth = 20, fontSize = 6, HPdis = 3, textDis = 3;
     const lineDis = 100, lineWidth = 4;
-    let svgCircleMap = new Map(), svgAttackMap = new Map(), svgNameMap = new Map(), svgHPMap = new Map();
-    let g = SVG.create('g');
-    svg.appendChild(g);
+    let rectList = [], svgCircleMap = new Map(), svgAttackMap = new Map(), svgTextMap = new Map(), svgHPMap = new Map();
+    let g_knife = SVG.create('g'),
+        g_backgroundLine = SVG.create('g'),
+        g_HP = SVG.create('g'),
+        g_text = SVG.create('g'),
+        g_body = SVG.create('g'),
+        g_attack = SVG.create('g');
+    svg.appendChild(g_backgroundLine);
+    svg.appendChild(g_body);
+    svg.appendChild(g_attack);
+    svg.appendChild(g_knife);
+    svg.appendChild(g_HP);
+    svg.appendChild(g_text);
     return await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
         requestAnimationFrame(async function x() {
-            g.innerHTML = '';
+            g_knife.innerHTML = '';
             let nowFillColor = 'rgb(0, 0, 0)', nowStrokeColor = 'rgb(0, 0, 0)', nowLineWidth = 1;
             let tag = 0;
             let littlecxt = littleMap.getContext('2d');
@@ -316,7 +369,7 @@ async function gameInterface(msg) {
             });
             function setStyle(ele) {
                 ele.setAttribute('fill', `${nowFillColor}`);
-                ele.setAttribute('stroke-width', `${nowLineWidth}`); 
+                ele.setAttribute('stroke-width', `${nowLineWidth}`);
                 ele.setAttribute('stroke', `${nowStrokeColor}`);
             }
             function fix(x) {
@@ -324,27 +377,41 @@ async function gameInterface(msg) {
             }
             nowFillColor = nowStrokeColor = 'rgb(128, 128, 128)';
             nowLineWidth = 0;
-            for(let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
-                if(i + X > 0 || i + X < -width) continue;
-                if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowHeight) continue;
-                let rect = SVG.create('rect');
-                setStyle(rect);
+            let cnt = 0;
+            for (let i = Math.floor(X / lineDis) * lineDis - X; i < nowHeight; i += lineDis) {
+                if (i + X > 0 || i + X < -width) continue;
+                if (i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowHeight) continue;
+                if (cnt === rectList.length) {
+                    let rect = SVG.create('rect');
+                    setStyle(rect);
+                    rectList.push(rect);
+                    g_backgroundLine.appendChild(rect);
+                }
+                let rect = rectList[cnt++];
                 rect.setAttribute('x', `${fix(0 - Y - lineWidth / 2)}`);
                 rect.setAttribute('y', `${fix(i - lineWidth / 2)}`);
                 rect.setAttribute('width', `${fix(width + lineWidth)}`);
                 rect.setAttribute('height', `${fix(lineWidth)}`);
-                g.appendChild(rect);
             }
-            for(let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
-                if(i + Y < 0 || i + Y > height) continue;
-                if(i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowWidth) continue;
-                let rect = SVG.create('rect');
-                setStyle(rect);
+            for (let i = Math.floor(Y / lineDis) * lineDis - Y; i < nowWidth; i += lineDis) {
+                if (i + Y < 0 || i + Y > height) continue;
+                if (i + lineWidth / 2 <= 0 || i - lineWidth / 2 >= nowWidth) continue;
+                if (cnt === rectList.length) {
+                    let rect = SVG.create('rect');
+                    setStyle(rect);
+                    rectList.push(rect);
+                    g_backgroundLine.appendChild(rect);
+                }
+                let rect = rectList[cnt++];
                 rect.setAttribute('x', `${fix(i - lineWidth / 2)}`);
                 rect.setAttribute('y', `${fix(-height - X - lineWidth / 2)}`);
                 rect.setAttribute('width', `${fix(lineWidth)}`);
                 rect.setAttribute('height', `${fix(height + lineWidth)}`);
-                g.appendChild(rect);
+            }
+            while (rectList.length > cnt) {
+                let now = rectList[rectList.length - 1];
+                now.remove();
+                rectList.pop();
             }
             nowStrokeColor = 'black';
             nowLineWidth = fix(0.5);
@@ -352,7 +419,11 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 tmpSet.add(data.id);
                 nowFillColor = data.color;
-                if(!svgCircleMap.has(data.id)) svgCircleMap.set(data.id, SVG.create('circle')), svg.appendChild(svgCircleMap.get(data.id));
+                if (!svgCircleMap.has(data.id)) {
+                    let tmp = SVG.create('circle');
+                    svgCircleMap.set(data.id, tmp);
+                    g_body.appendChild(tmp);
+                }
                 let circle = svgCircleMap.get(data.id);
                 setStyle(circle);
                 circle.setAttribute('cx', `${Math.floor(fix(data.y - Y))}`);
@@ -361,56 +432,112 @@ async function gameInterface(msg) {
             });
             let deleteList;
             deleteList = [];
-            for(let i of svgCircleMap) {
-                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            for (let i of svgCircleMap) {
+                if (!tmpSet.has(i[0])) deleteList.push(i[0]);
             }
-            for(let i of deleteList) svgCircleMap.get(i).remove(), svgCircleMap.delete(i);
+            for (let i of deleteList) svgCircleMap.get(i).remove(), svgCircleMap.delete(i);
             tmpSet.clear();
             players.forEach(data => {
                 if (data.onattack) {
+                    if (data.attackRestTime < 0) return;
                     tmpSet.add(data.id);
-                    if(!svgAttackMap.has(data.id)) svgAttackMap.set(data.id, SVG.create('path')), svg.appendChild(svgAttackMap.get(data.id));
+                    if (data.smelting) {
+                        if (!svgAttackMap.has(data.id)) {
+                            let tmp1 = SVG.create('circle'),
+                                tmp2 = SVG.create('circle'),
+                                tmp3 = SVG.create('path'),
+                                tmp4 = SVG.create('g');
+                            svgAttackMap.set(data.id, tmp4);
+                            g_attack.appendChild(tmp4);
+                            tmp4.appendChild(tmp1);
+                            tmp4.appendChild(tmp2);
+                            tmp4.appendChild(tmp3);
+                        }
+                        let now = svgAttackMap.get(data.id);
+                        let [circle1, circle2, path] = now.children;
+                        nowStrokeColor = data.attackRestTime <= lastTime ?
+                            'rgba(255, 56, 56, 0.8)'
+                            : data.team === myTeam ?
+                                'rgba(61, 139, 255, 0.8)'
+                                : 'rgba(90, 90, 90, 0.8)';
+                        nowFillColor = 'rgba(0, 0, 0, 0)';
+                        nowLineWidth = fix(0.5);
+                        setStyle(circle1), setStyle(circle2);
+                        circle1.setAttribute('cx', `${fix(data.y - Y)}`);
+                        circle1.setAttribute('cy', `${fix(data.x - X)}`);
+                        circle1.setAttribute('r', `${fix(playerRadius)}`);
+                        circle2.setAttribute('cx', `${fix(data.y - Y)}`);
+                        circle2.setAttribute('cy', `${fix(data.x - X)}`);
+                        circle2.setAttribute('r', `${fix(data.knifeRadius)}`);
+                        nowFillColor =
+                            data.attackRestTime <= lastTime ?
+                                'rgba(255, 56, 56, 0.5)'
+                                : data.team === myTeam ?
+                                    `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`
+                                    : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`;
+                        nowStrokeColor = 'rgba(0, 0, 0, 0)';
+                        nowLineWidth = 0;
+                        setStyle(path);
+                        let str = '';
+                        str += `M${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
+                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y)},${fix(data.x - X + playerRadius - 0.001)}`;
+                        str += `L${fix(data.y - Y)} ${fix(data.x - X + data.knifeRadius)} `;
+                        str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 1,0 ${fix(data.y - Y + data.knifeRadius)},${fix(data.x - X - data.knifeRadius)}`;
+                        str += `L${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
+                        str += `Z`;
+                        path.setAttribute('d', str);
+                        return;
+                    }
+                    if (!svgAttackMap.has(data.id)) {
+                        let tmp = SVG.create('path');
+                        svgAttackMap.set(data.id, tmp);
+                        g_attack.appendChild(tmp);
+                    }
                     let now = svgAttackMap.get(data.id);
-                    nowStrokeColor = data.attackRestTime <= lastTime ? 
-                        'rgba(255, 56, 56, 0.8)' 
-                        : data.team === myTeam ? 
-                            'rgba(61, 139, 255, 0.8)' 
+                    nowStrokeColor = data.attackRestTime <= lastTime ?
+                        'rgba(255, 56, 56, 0.8)'
+                        : data.team === myTeam ?
+                            'rgba(61, 139, 255, 0.8)'
                             : 'rgba(90, 90, 90, 0.8)';
                     nowFillColor =
                         data.attackRestTime <= lastTime ?
                             'rgba(255, 56, 56, 0.5)'
                             : data.team === myTeam ?
-                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`
-                                : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / attactTime)})`;
+                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`
+                                : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`;
                     nowLineWidth = fix(0.5);
                     setStyle(now);
                     let str = '';
-                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - theta))} `;
-                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta + theta))},${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta + theta))}`;
-                    str += `L${fix(data.y - Y + knifeRadius * Math.cos(-data.attackTheta + theta))} ${fix(data.x - X + knifeRadius * Math.sin(-data.attackTheta + theta))} `;
-                    str += `A${fix(knifeRadius)},${fix(knifeRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + knifeRadius * Math.cos(-data.attackTheta - theta))},${fix(data.x - X + knifeRadius * Math.sin(-data.attackTheta - theta))}`;
-                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - theta))} `;
+                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
+                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta + data.theta))},${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta + data.theta))}`;
+                    str += `L${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta + data.theta))} ${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta + data.theta))} `;
+                    str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta - data.theta))},${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta - data.theta))}`;
+                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
                     str += `Z`;
                     now.setAttribute('d', str);
                     if (data.attackRestTime <= lastTime) {
                         let tag = data.attackRestTime / lastTime;
-                        let Theta = (data.attackTheta - theta) * tag + (data.attackTheta + theta) * (1 - tag);
+                        let Theta = (data.attackTheta - data.theta) * tag + (data.attackTheta + data.theta) * (1 - tag);
                         let line = SVG.create('line');
                         nowLineWidth = fix(2);
                         nowFillColor = 'white';
                         nowStrokeColor = 'white';
-                        if(data.passive === PASSIVE.BLOOD) nowFillColor = nowStrokeColor = 'red';
+                        if (data.blood) nowFillColor = nowStrokeColor = 'red';
                         setStyle(line);
                         line.setAttribute('x1', `${fix(data.y - Y + Math.cos(Theta) * playerRadius)}`);
-                        line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * knifeRadius)}`);
+                        line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * data.knifeRadius)}`);
                         line.setAttribute('y1', `${fix(data.x - X - Math.sin(Theta) * playerRadius)}`);
-                        line.setAttribute('y2', `${fix(data.x - X - Math.sin(Theta) * knifeRadius)}`);
-                        g.appendChild(line);
+                        line.setAttribute('y2', `${fix(data.x - X - Math.sin(Theta) * data.knifeRadius)}`);
+                        g_knife.appendChild(line);
                     }
                 }
                 else if (data.id === playerIndex) {
                     tmpSet.add(data.id);
-                    if(!svgAttackMap.has(data.id)) svgAttackMap.set(data.id, SVG.create('path')), svg.appendChild(svgAttackMap.get(data.id));
+                    if (!svgAttackMap.has(data.id)) {
+                        let tmp = SVG.create('path');
+                        svgAttackMap.set(data.id, tmp);
+                        g_attack.appendChild(tmp);
+                    }
                     let now = svgAttackMap.get(data.id);
                     nowLineWidth = fix(0.5);
                     nowStrokeColor = 'rgba(79, 194, 230, 0.6)';
@@ -418,32 +545,37 @@ async function gameInterface(msg) {
                     setStyle(now);
                     let nowTheta = -Math.atan2(nowMouseX - nowHeight / 2, nowMouseY - nowWidth / 2);
                     let str = '';
-                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - theta))} `;
-                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-nowTheta + theta))},${fix(data.x - X + playerRadius * Math.sin(-nowTheta + theta))}`;
-                    str += `L${fix(data.y - Y + knifeRadius * Math.cos(-nowTheta + theta))} ${fix(data.x - X + knifeRadius * Math.sin(-nowTheta + theta))} `;
-                    str += `A${fix(knifeRadius)},${fix(knifeRadius)} 0 ${theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + knifeRadius * Math.cos(-nowTheta - theta))},${fix(data.x - X + knifeRadius * Math.sin(-nowTheta - theta))}`;
-                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - theta))} `;
+                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - data.theta))} `;
+                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-nowTheta + data.theta))},${fix(data.x - X + playerRadius * Math.sin(-nowTheta + data.theta))}`;
+                    str += `L${fix(data.y - Y + data.knifeRadius * Math.cos(-nowTheta + data.theta))} ${fix(data.x - X + data.knifeRadius * Math.sin(-nowTheta + data.theta))} `;
+                    str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + data.knifeRadius * Math.cos(-nowTheta - data.theta))},${fix(data.x - X + data.knifeRadius * Math.sin(-nowTheta - data.theta))}`;
+                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - data.theta))} `;
                     str += `Z`;
                     now.setAttribute('d', str);
                 }
                 else return;
             });
             deleteList = [];
-            for(let i of svgAttackMap) {
-                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            for (let i of svgAttackMap) {
+                if (!tmpSet.has(i[0])) deleteList.push(i[0]);
             }
-            for(let i of deleteList) svgAttackMap.get(i).remove(), svgAttackMap.delete(i);
+            for (let i of deleteList) svgAttackMap.get(i).remove(), svgAttackMap.delete(i);
             tmpSet.clear();
             players.forEach(data => {
                 tmpSet.add(data.id);
-                if(!svgHPMap.has(data.id)) {
-                    svgHPMap.set(data.id, {inner: SVG.create('rect'), border: SVG.create('rect')});
-                    svg.appendChild(svgHPMap.get(data.id).border);
-                    svg.appendChild(svgHPMap.get(data.id).inner);
+                if (!svgHPMap.has(data.id)) {
+                    svgHPMap.set(data.id, { inner: SVG.create('rect'), border: SVG.create('rect') });
+                    g_HP.appendChild(svgHPMap.get(data.id).inner);
+                    g_HP.appendChild(svgHPMap.get(data.id).border);
                 }
                 let now = svgHPMap.get(data.id);
                 nowLineWidth = 0;
-                nowFillColor = data.team === myTeam ? 'blue' : hashGetColor(data.team);
+                nowFillColor =
+                    data.team === myTeam
+                        ? 'blue'
+                        : type === GAME_TYPE.FFA
+                            ? 'red'
+                            : hashGetColor(data.team);
                 nowStrokeColor = 'black';
                 setStyle(now.inner);
                 now.inner.setAttribute('x', `${fix(data.y - Y - HPwidth / 2)}`);
@@ -459,31 +591,61 @@ async function gameInterface(msg) {
                 now.border.setAttribute('height', `${fix(HPheight + 0.4)}`);
             });
             deleteList = [];
-            for(let i of svgHPMap) {
-                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            for (let i of svgHPMap) {
+                if (!tmpSet.has(i[0])) deleteList.push(i[0]);
             }
-            for(let i of deleteList) svgHPMap.get(i).inner.remove(), svgHPMap.get(i).border.remove(), svgHPMap.delete(i);
+            for (let i of deleteList) svgHPMap.get(i).inner.remove(), svgHPMap.get(i).border.remove(), svgHPMap.delete(i);
             tmpSet.clear();
             players.forEach(data => {
                 tmpSet.add(data.id);
-                if(!svgNameMap.has(data.id)) svgNameMap.set(data.id, SVG.create('text')), svg.appendChild(svgNameMap.get(data.id));
-                let now = svgNameMap.get(data.id);
-                nowFillColor = 'black';
-                now.setAttribute('font-size', `${fix(fontSize)}`);
-                now.setAttribute('text-anchor', `middle`);
-                now.setAttribute('dominant-baseline', `middle`);
-                now.setAttribute('x', `${fix(data.y - Y)}`);
-                now.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + nameDis + HPheight + fontSize / 2)}`);
-                now.innerHTML = data.id;
+                if (!svgTextMap.has(data.id)) {
+                    let tmp1 = SVG.create('text'), tmp2 = SVG.create('text'), tmp3 = SVG.create('text');
+                    tmp1.innerHTML = `${data.id}`;
+                    tmp1.setAttribute('font-size', `${fix(fontSize)}`);
+                    tmp2.setAttribute('font-size', `${fix(fontSize)}`);
+                    tmp3.setAttribute('font-size', `${fix(fontSize)}`);
+                    svgTextMap.set(data.id, { name: tmp1, score: tmp2, cool: tmp3 });
+                    g_text.appendChild(tmp1);
+                    g_text.appendChild(tmp2);
+                    g_text.appendChild(tmp3);
+                    tmp1.setAttribute('text-anchor', `middle`);
+                    tmp1.setAttribute('dominant-baseline', `middle`);
+                    tmp2.setAttribute('text-anchor', `middle`);
+                    tmp2.setAttribute('dominant-baseline', `middle`);
+                    tmp3.setAttribute('text-anchor', `middle`);
+                    tmp3.setAttribute('dominant-baseline', `middle`);
+                }
+                let now = svgTextMap.get(data.id);
+                nowFillColor = nowStrokeColor = 'black';
+                nowLineWidth = 0;
+                setStyle(now.name);
+                setStyle(now.score);
+                now.name.setAttribute('x', `${fix(data.y - Y)}`);
+                now.score.setAttribute('x', `${fix(data.y - Y)}`);
+                now.cool.setAttribute('x', `${fix(data.y - Y)}`);
+                now.name.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + textDis + HPheight + fontSize / 2)}`);
+                now.score.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + textDis + HPheight + 3 * fontSize / 2)}`);
+                now.cool.setAttribute('y', `${fix(data.x - X - playerRadius - textDis - fontSize / 2)}`);
+                now.score.innerHTML = `${Math.floor(data.score)}分`;
+                if (data.onattack) {
+                    nowFillColor = nowStrokeColor = data.attackRestTime < 0 ? 'red' : 'black';
+                    setStyle(now.cool);
+                    now.cool.innerHTML = `${(Math.ceil(Math.abs(data.attackRestTime * 10)) / 10).toFixed(1)}`;
+                }
+                else setStyle(now.cool), now.cool.innerHTML = '';
             });
             deleteList = [];
-            for(let i of svgNameMap) {
-                if(!tmpSet.has(i[0])) deleteList.push(i[0]);
+            for (let i of svgTextMap) {
+                if (!tmpSet.has(i[0])) deleteList.push(i[0]);
             }
-            for(let i of deleteList) svgNameMap.get(i).remove(), svgNameMap.delete(i);
+            for (let i of deleteList) {
+                svgTextMap.get(i).score.remove();
+                svgTextMap.get(i).name.remove();
+                svgTextMap.delete(i);
+            }
             standingBox.innerHTML = '';
 
-            if(type === GAME_TYPE.FFA) {
+            if (type === GAME_TYPE.FFA) {
                 for (let i = 0; i < 10; i++) {
                     if (i < standing.length) {
                         standingBox.innerHTML += `${i + 1}.${standing[i][0]} ${Math.floor(standing[i][1].score)}分<br/>`;
@@ -493,13 +655,13 @@ async function gameInterface(msg) {
                 if (alive && tag) {
                     let ID = standing.findIndex(data => data[0] === playerIndex);
                     standingBox.innerHTML += `<hr/>${ID + 1}.${playerIndex} ${Math.floor(standing[ID][1].score)}分<br />`;
-                    if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
+                    if (Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
                 }
             }
             else {
                 for (let i = 0; i < 10; i++) {
                     if (i < standing.length) {
-                        standingBox.innerHTML += 
+                        standingBox.innerHTML +=
                             `${i + 1}.
                             <span style="color: ${standing[i][0] === myTeam ? 'blue' : hashGetColor(standing[i][0])};">${standing[i][0]}</span>
                             ${Math.floor(standing[i][1])}分<br/>`;
@@ -509,7 +671,7 @@ async function gameInterface(msg) {
                 if (alive && tag) {
                     let ID = standing.findIndex(data => data[0] === myTeam);
                     standingBox.innerHTML += `<hr/>${ID + 1}.<span style="color: blue;">${myTeam}</span> ${Math.floor(standing[ID][1])}分<br />`;
-                    if(Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
+                    if (Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
                 }
             }
             if (running) requestAnimationFrame(x);
@@ -544,10 +706,10 @@ async function gameInterface(msg) {
             return {
                 keydownListener: function (data) {
                     let key = data.key.toLowerCase();
-                    if(key === 'arrowup') key = 'w';
-                    if(key === 'arrowdown') key = 's';
-                    if(key === 'arrowleft') key = 'a';
-                    if(key === 'arrowright') key = 'd';
+                    if (key === 'arrowup') key = 'w';
+                    if (key === 'arrowdown') key = 's';
+                    if (key === 'arrowleft') key = 'a';
+                    if (key === 'arrowright') key = 'd';
                     if (key === 'w') {
                         w = 1;
                         updatedirect();
@@ -564,15 +726,22 @@ async function gameInterface(msg) {
                         d = 1;
                         updatedirect();
                     }
+                    else if (key === ' ') {
+                        event.preventDefault();
+                        if (alive && FORTY.check(playerIndex)) {
+                            let tmp = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
+                            send(['attack', tmp < 0 ? tmp + 2 * Math.PI : tmp]);
+                        }
+                    }
                     else return;
                     data.preventDefault();
                 },
                 keyupListener: function (data) {
                     let key = data.key.toLowerCase();
-                    if(key === 'arrowup') key = 'w';
-                    if(key === 'arrowdown') key = 's';
-                    if(key === 'arrowleft') key = 'a';
-                    if(key === 'arrowright') key = 'd';
+                    if (key === 'arrowup') key = 'w';
+                    if (key === 'arrowdown') key = 's';
+                    if (key === 'arrowleft') key = 'a';
+                    if (key === 'arrowright') key = 'd';
                     if (key === 'w') {
                         w = 0;
                         updatedirect();
@@ -622,7 +791,7 @@ async function gameInterface(msg) {
                     running = 0;
                     alive = 0;
                     send(['leave', null]);
-                    resolve({type: DIE, data: killerID});
+                    resolve({ type: DIE, data: killerID });
                     return;
                     frame.style.display = 'grid';
                     frame.innerHTML = '';
@@ -634,7 +803,7 @@ async function gameInterface(msg) {
                     frame.style.display = 'none';
                     alive = 1;
                 }
-                else if(killerID === playerIndex) {
+                else if (killerID === playerIndex) {
                     deadMsg = `<strong>你击杀了${deadID}!</strong>`;
                     deadMsgToTime = Date.now() + 2000;
                 }
@@ -644,7 +813,7 @@ async function gameInterface(msg) {
 }
 async function endInterface(data) {
     if (data === CONTINUE_TAG) return null;
-    else if(data.type === DIE) {
+    else if (data.type === DIE) {
         HTML.clearBody();
         let frame = HTML.create('div', 'frame end-interface-die');
         frame.appendChild(HTML.create('h1', 'killer', `你被${data.data}击杀了`));
@@ -656,9 +825,9 @@ async function endInterface(data) {
     else return;
 }
 function loadSettings() {
-    if(localStorage.fortySettings === undefined) return;
+    if (localStorage.fortySettings === undefined) return;
     let data = JSON.parse(localStorage.fortySettings);
-    for(let i in data) if(i in SETTINGS) SETTINGS[i] = data[i];
+    for (let i in data) if (i in SETTINGS) SETTINGS[i] = data[i];
 }
 async function run() {
     let tag = 0;

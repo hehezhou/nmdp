@@ -233,6 +233,7 @@ const CANVAS = {
         let fill;
         if (terrain === MOUNTAIN) fill = this.COLOR.mountainColor;
         else if (terrain === WATER) fill = this.COLOR.waterColor;
+        else if (building === BRIDGE);
         else if (terrain === NONE) fill = owner === -1 ? this.COLOR.emptyColor : this.COLOR.colorList[owner];
         else throw new Error('error type');
         this.ctx1.fillStyle = this.COLOR.toRGBString(fill);
