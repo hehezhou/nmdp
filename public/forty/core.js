@@ -54,7 +54,7 @@ const GAME = (() => {
         /**
          * @param {{pos: vector, speed: vector, targetSpeed: vector, attackState: Waiting|BeforeAttack, health: number, targetHealth: number}} param0 
          */
-        constructor({ pos, speed, targetSpeed, attackState, health, targetHealth, score }) {
+        constructor({ pos, speed, targetSpeed, attackState, health, targetHealth, score, team }) {
             this.pos = pos;
             this.speed = speed;
             this.targetSpeed = targetSpeed;
@@ -62,6 +62,7 @@ const GAME = (() => {
             this.health = health;
             this.targetHealth = targetHealth;
             this.score = score;
+            this.team = team;
         }
         time(t, height, width) {
             let deltaSpeed = sub(this.targetSpeed, this.speed);
@@ -97,7 +98,8 @@ const GAME = (() => {
         return '#' + hash.toString(16).padStart(6, '0');
     }
     return class {
-        constructor({ data }) {
+        constructor({ data, type }) {
+            this.type = type;
             this.players = new Map();
             this.width = data.map_width;
             this.height = data.map_height;
@@ -116,6 +118,16 @@ const GAME = (() => {
                 data.maxHP = PLAYER_MAX_HEALTH;
                 data.score = i[1].score;
                 data.color = getColor(i[0]);
+                switch (this.type) {
+                    case GAME_TYPE.FFA: {
+                        data.team = data.id;
+                        break;
+                    }
+                    case GAME_TYPE.TEAM: {
+                        data.team = i[1].team;
+                        break;
+                    }
+                }
                 ans.push(data);
             }
             return ans;
@@ -136,6 +148,10 @@ const GAME = (() => {
                     health: i[1].health,
                     targetHealth: i[1].target_health,
                     score: typeof i[1].score === 'number' ? i[1].score : 0,
+                    team: (() => {
+                        if(this.type === GAME_TYPE.FFA) return undefined;
+                        else if(this.type === GAME_TYPE.TEAM) return i[1].team;
+                    })(),
                 }));
             }
         }
