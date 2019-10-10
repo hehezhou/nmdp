@@ -13,21 +13,26 @@ function hashGetColor(id) {
     id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
     return '#' + hash.toString(16).padStart(6, '0');
 }
-const transferPassive = [
-    (data) => { },
+const transferEffect = [
+    (data) => {
+        data.blood = true;
+    },
     (data) => {
         data.attackSumTime -= 0.4;
         data.knifeRadius *= 0.75;
+        data.dagger = true;
     },
     (data) => {
         data.knifeRadius *= 1.5;
         data.attackSumTime += 1.2;
         data.theta *= 1.5;
+        data.broadsword = true;
     },
-    () => {
+    (data) => {
         data.knifeRadius *= 0.75;
         data.attackSumTime += 1.2;
         data.attackTheta = null;
+        data.smelting = true;
     },
 ]
 const GAME = (() => {
@@ -115,7 +120,7 @@ const GAME = (() => {
             if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if (this.attackState.time <= 0) {
-                    if (this.passive === PASSIVE.BROADSWORD) this.attackState = new AfterAttack({ time: 1.5 });
+                    if (this.passive === EFFECT.BROADSWORD) this.attackState = new AfterAttack({ time: 1.5 });
                     else this.attackState = Waiting;
                 }
             }
@@ -175,8 +180,9 @@ const GAME = (() => {
                         break;
                     }
                 }
-                data.passive = i[1].passive;
-                transferPassive[data.passive](data);
+                for(let i of this.effects) {
+                    transferEffect[i](data);
+                }
                 ans.push(data);
             }
             return ans;
@@ -220,6 +226,7 @@ const GAME = (() => {
                     targetHealth: i[1].target_health,
                     score: typeof i[1].score === 'number' ? i[1].score : 0,
                     team: i[1].teamID,
+                    effects: i[1].effects,
                 }));
             }
         }
@@ -235,7 +242,7 @@ const GAME = (() => {
             return { players: this.output(), standing: this.ranking() };
         }
         check(playerIndex) {
-            return this.players.has(playerIndex) && this.players.get(playerIndex).passive !== PASSIVE.SMELTING && this.players.get(playerIndex).attackState === Waiting;
+            return this.players.has(playerIndex) && this.players.get(playerIndex).passive !== EFFECT.SMELTING && this.players.get(playerIndex).attackState === Waiting;
         }
     }
 })();

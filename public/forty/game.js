@@ -41,12 +41,12 @@ var future = Symbol('future');
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
-var PASSIVE = {
+var EFFECT = {
     BLOOD: 0,
     DAGGER: 1,
     BROADSWORD: 2,
     SMELTING: 3,
-}
+};
 
 const SETTINGS = {
     PLAYERRADIUS: 3,
@@ -401,7 +401,7 @@ async function gameInterface(msg) {
                 if (data.onattack) {
                     if (data.attackRestTime < 0) return;
                     tmpSet.add(data.id);
-                    if (data.passive === PASSIVE.SMELTING) {
+                    if (data.smelting) {
                         if (!svgAttackMap.has(data.id)) {
                             let tmp1 = SVG.create('circle'),
                                 tmp2 = SVG.create('circle'),
@@ -440,7 +440,7 @@ async function gameInterface(msg) {
                         setStyle(path);
                         let str = '';
                         str += `M${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
-                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y)},${fix(data.x - X + playerRadius)}`;
+                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y)},${fix(data.x - X + playerRadius - 0.001)}`;
                         str += `L${fix(data.y - Y)} ${fix(data.x - X + data.knifeRadius)} `;
                         str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 1,0 ${fix(data.y - Y + data.knifeRadius)},${fix(data.x - X - data.knifeRadius)}`;
                         str += `L${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
@@ -482,7 +482,7 @@ async function gameInterface(msg) {
                         nowLineWidth = fix(2);
                         nowFillColor = 'white';
                         nowStrokeColor = 'white';
-                        if (data.passive === PASSIVE.BLOOD) nowFillColor = nowStrokeColor = 'red';
+                        if (data.blood) nowFillColor = nowStrokeColor = 'red';
                         setStyle(line);
                         line.setAttribute('x1', `${fix(data.y - Y + Math.cos(Theta) * playerRadius)}`);
                         line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * data.knifeRadius)}`);
