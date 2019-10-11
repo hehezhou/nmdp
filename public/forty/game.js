@@ -155,10 +155,10 @@ async function skillsInterface() {
             for (let j of now.btnList) {
                 j.btn = HTML.create('button', 'skills', j.text);
                 j.btn.addEventListener('click', () => {
-                    if(running === 0) return;
+                    if (running === 0) return;
                     j.btn.className = 'skills-chosen';
                     running = 0;
-                    resolve({name: i, value: j.value});
+                    resolve({ name: i, value: j.value });
                 });
                 div.appendChild(j.btn);
             }
@@ -225,7 +225,6 @@ async function joinInterface(type) {
             if (type === JOIN_AUTO_FFA) roomName = 'forty';
             else if (type === JOIN_AUTO_TEAM) roomName = 'forty-team';
             send(['join_auto', roomName]);
-            send(['set_skills', skills]);
             io.addEventListener('message', async function x(msg) {
                 let data = JSON.parse(msg.data);
                 if (data[0] === 'join_success') {
@@ -235,16 +234,6 @@ async function joinInterface(type) {
                     resolve(CONTINUE_TAG);
                 }
                 else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
-                else if(data[0] === 'request_state') {
-                    clearInterval(tmp);
-                    if(data[1].type === 'skills') send(['set_skills', await skillsInterface()]);
-                    HTML.clearBody();
-                    let frame = HTML.create('div', 'frame join-interface');
-                    let p = HTML.create('p', 'join');
-                    frame.appendChild(p);
-                    document.body.appendChild(frame);
-                    tmp = addWait(p, '正在匹配');
-                }
                 else return;
                 clearInterval(tmp);
                 io.removeEventListener('message', x);
@@ -284,7 +273,7 @@ async function readyInterface(type) {
         send(['set_ready_state', btn.className === 'ready']);
     });
     return await new Promise(resolve => {
-        io.addEventListener('message', function x(msg) {
+        io.addEventListener('message', async function x(msg) {
             let data = JSON.parse(msg.data);
             if (data[0] === 'game_start') {
                 resolve({ data: data[1], type });
@@ -297,6 +286,9 @@ async function readyInterface(type) {
                 startTime = data[1].start_time === null ? null : Date.now() + data[1].start_time;
                 if (flag) flag = 0, send(['set_ready_state', btn.className === 'ready']);
                 readyMsg.innerHTML = `提前开始: ${readyCnt} / ${playerCnt}`;
+            }
+            else if (data[0] === 'request_choice') {
+                if (data[1].type === 'skills') send(['set_skills', await skillsInterface()]);
             }
         })
     });
@@ -473,10 +465,7 @@ async function gameInterface(msg) {
                                 : 'rgba(90, 90, 90, 0.8)';
                         nowFillColor = 'rgba(0, 0, 0, 0)';
                         nowLineWidth = fix(0.5);
-                        setStyle(circle1), setStyle(circle2);
-                        circle1.setAttribute('cx', `${fix(data.y - Y)}`);
-                        circle1.setAttribute('cy', `${fix(data.x - X)}`);
-                        circle1.setAttribute('r', `${fix(playerRadius)}`);
+                        setStyle(circle2);
                         circle2.setAttribute('cx', `${fix(data.y - Y)}`);
                         circle2.setAttribute('cy', `${fix(data.x - X)}`);
                         circle2.setAttribute('r', `${fix(data.knifeRadius)}`);
@@ -487,13 +476,17 @@ async function gameInterface(msg) {
                                     `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`
                                     : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`;
                         nowStrokeColor = 'rgba(0, 0, 0, 0)';
+                        setStyle(circle1);
+                        circle1.setAttribute('cx', `${fix(data.y - Y)}`);
+                        circle1.setAttribute('cy', `${fix(data.x - X)}`);
+                        circle1.setAttribute('r', `${fix(playerRadius)}`);
                         nowLineWidth = 0;
                         setStyle(path);
                         let str = '';
                         str += `M${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
-                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y)},${fix(data.x - X + playerRadius - 0.001)}`;
-                        str += `L${fix(data.y - Y)} ${fix(data.x - X + data.knifeRadius)} `;
-                        str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 1,0 ${fix(data.y - Y + data.knifeRadius)},${fix(data.x - X - data.knifeRadius)}`;
+                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y - 0.001)},${fix(data.x - X - playerRadius)}`;
+                        str += `L${fix(data.y - Y - 0.001)} ${fix(data.x - X - data.knifeRadius)} `;
+                        str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 1,0 ${fix(data.y - Y)},${fix(data.x - X - data.knifeRadius)}`;
                         str += `L${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
                         str += `Z`;
                         path.setAttribute('d', str);

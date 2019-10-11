@@ -93,9 +93,9 @@ const GAME = (() => {
     }
     class Player {
         /**
-         * @param {{pos: vector, speed: vector, targetSpeed: vector, attackState: Waiting|BeforeAttack, health: number, targetHealth: number}} param0 
+         * @param {{pos: vector, speed: vector, targetSpeed: vector, attackState: Waiting|BeforeAttack, health: number, targetHealth: number, team: String, effects: Array<{id: Number, time: Number}>} param0 
          */
-        constructor({ pos, speed, targetSpeed, attackState, health, targetHealth, score, team, passive }) {
+        constructor({ pos, speed, targetSpeed, attackState, health, targetHealth, score, team, effects }) {
             this.pos = pos;
             this.speed = speed;
             this.targetSpeed = targetSpeed;
@@ -104,7 +104,7 @@ const GAME = (() => {
             this.targetHealth = targetHealth;
             this.score = score;
             this.team = team;
-            this.passive = passive;
+            this.effects = effects;
         }
         time(t, height, width) {
             let deltaSpeed = sub(this.targetSpeed, this.speed);
@@ -120,19 +120,17 @@ const GAME = (() => {
             if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if (this.attackState.time <= 0) {
-                    if (this.passive === EFFECT.BROADSWORD) this.attackState = new AfterAttack({ time: 1.5 });
+                    if(this.effects.some(data => data.id === EFFECT.SMELTING)) {
+                        this.attackState.time = 2;
+                    }
+                    else if (this.effects.some(data => data.id === EFFECT.BROADSWORD)) this.attackState = new AfterAttack({ time: 1.5 });
                     else this.attackState = Waiting;
                 }
             }
-            if (this.attackState instanceof AfterAttack) {
+            else if (this.attackState instanceof AfterAttack) {
                 this.attackState.time -= t;
                 if (this.attackState.time <= 0) {
-                    if(this.passive === SMELTING) {
-                        this.attackState.time = 2;
-                    }
-                    else {
-                        this.attackState = Waiting;
-                    }
+                    this.attackState = Waiting;
                 }
             }
             this.health = Math.max(this.targetHealth, this.health - BASE.PLAYER_HURT_PER_SEC * t);
@@ -180,8 +178,8 @@ const GAME = (() => {
                         break;
                     }
                 }
-                for(let i of this.effects) {
-                    transferEffect[i](data);
+                for(let j of i[1].effects) {
+                    transferEffect[j.id](data);
                 }
                 ans.push(data);
             }
@@ -211,17 +209,17 @@ const GAME = (() => {
                     pos: new vector(i[1].pos),
                     speed: new vector(i[1].speed),
                     targetSpeed: new vector(i[1].target_speed),
-                    attackState: (() => {
-                        if(i[1].type === 0) {
+                    attackState: ((data) => {
+                        if(data.type === 0) {
                             return Waiting;
                         }
-                        else if(i[1].type === 1) {
-                            return new BeforeAttack(i[1]);
+                        else if(data.type === 1) {
+                            return new BeforeAttack(data);
                         }
-                        else if(i[1].type === 2) {
-                            return new AfterAttack(i[1]);
+                        else if(data.type === 2) {
+                            return new AfterAttack(data);
                         }
-                    }),
+                    })(i[1].attack_state),
                     health: i[1].health,
                     targetHealth: i[1].target_health,
                     score: typeof i[1].score === 'number' ? i[1].score : 0,
