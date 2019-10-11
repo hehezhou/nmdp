@@ -603,21 +603,25 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 tmpSet.add(data.id);
                 if (!svgTextMap.has(data.id)) {
-                    let tmp1 = SVG.create('text'), tmp2 = SVG.create('text'), tmp3 = SVG.create('text');
+                    let tmp1 = SVG.create('text'), tmp2 = SVG.create('text');
                     tmp1.innerHTML = `${data.id}`;
                     tmp1.setAttribute('font-size', `${fix(fontSize)}`);
                     tmp2.setAttribute('font-size', `${fix(fontSize)}`);
-                    tmp3.setAttribute('font-size', `${fix(fontSize)}`);
-                    svgTextMap.set(data.id, { name: tmp1, score: tmp2, cool: tmp3 });
                     g_text.appendChild(tmp1);
                     g_text.appendChild(tmp2);
-                    g_text.appendChild(tmp3);
                     tmp1.setAttribute('text-anchor', `middle`);
                     tmp1.setAttribute('dominant-baseline', `middle`);
                     tmp2.setAttribute('text-anchor', `middle`);
                     tmp2.setAttribute('dominant-baseline', `middle`);
-                    tmp3.setAttribute('text-anchor', `middle`);
-                    tmp3.setAttribute('dominant-baseline', `middle`);
+                    if(data.id === playerIndex) {
+                        let tmp3 = SVG.create('text');
+                        tmp3.setAttribute('font-size', `${fix(fontSize)}`);
+                        tmp3.setAttribute('text-anchor', `middle`);
+                        tmp3.setAttribute('dominant-baseline', `middle`);
+                        svgTextMap.set(data.id, { name: tmp1, score: tmp2, cool: tmp3 });
+                        g_text.appendChild(tmp3);
+                    }
+                    else svgTextMap.set(data.id, { name: tmp1, score: tmp2 });
                 }
                 let now = svgTextMap.get(data.id);
                 nowFillColor = nowStrokeColor = 'black';
@@ -626,17 +630,19 @@ async function gameInterface(msg) {
                 setStyle(now.score);
                 now.name.setAttribute('x', `${fix(data.y - Y)}`);
                 now.score.setAttribute('x', `${fix(data.y - Y)}`);
-                now.cool.setAttribute('x', `${fix(data.y - Y)}`);
                 now.name.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + textDis + HPheight + fontSize / 2)}`);
                 now.score.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + textDis + HPheight + 3 * fontSize / 2)}`);
-                now.cool.setAttribute('y', `${fix(data.x - X - playerRadius - textDis - fontSize / 2)}`);
                 now.score.innerHTML = `${Math.floor(data.score)}分`;
-                if (data.onattack) {
-                    nowFillColor = nowStrokeColor = data.attackRestTime < 0 ? 'red' : 'black';
-                    setStyle(now.cool);
-                    now.cool.innerHTML = `${(Math.ceil(Math.abs(data.attackRestTime * 10)) / 10).toFixed(1)}`;
+                if(playerIndex === data.id) {
+                    if (data.onattack) {
+                        nowFillColor = nowStrokeColor = data.attackRestTime < 0 ? 'red' : 'black';
+                        setStyle(now.cool);
+                        now.cool.setAttribute('x', `${fix(data.y - Y)}`);
+                        now.cool.setAttribute('y', `${fix(data.x - X - playerRadius - textDis - fontSize / 2)}`);
+                        now.cool.innerHTML = `${(Math.ceil(Math.abs(data.attackRestTime * 10)) / 10).toFixed(1)}`;
+                    }
+                    else setStyle(now.cool), now.cool.innerHTML = '';
                 }
-                else setStyle(now.cool), now.cool.innerHTML = '';
             });
             deleteList = [];
             for (let i of svgTextMap) {
@@ -645,7 +651,7 @@ async function gameInterface(msg) {
             for (let i of deleteList) {
                 svgTextMap.get(i).score.remove();
                 svgTextMap.get(i).name.remove();
-                svgTextMap.get(i).cool.remove();
+                if(i === playerIndex) svgTextMap.get(i).cool.remove();
                 svgTextMap.delete(i);
             }
             standingBox.innerHTML = '';

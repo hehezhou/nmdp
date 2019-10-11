@@ -29,7 +29,7 @@ const colorList = [
     { r: 255, g: 0, b: 128 },
     { r: 128, g: 0, b: 64 },
     { r: 64, g: 0, b: 0 },
-    { r: 252, g: 259, b: 227 },
+    { r: 252, g: 239, b: 227 },
 ];
 const maxDelta = 5;
 const initColor = 0;
