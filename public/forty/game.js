@@ -226,7 +226,7 @@ async function joinInterface(type) {
             else if (type === JOIN_AUTO_TEAM) roomName = 'forty-team';
             send(['join_auto', roomName]);
             send(['set_skills', skills]);
-            io.addEventListener('message', function x(msg) {
+            io.addEventListener('message', async function x(msg) {
                 let data = JSON.parse(msg.data);
                 if (data[0] === 'join_success') {
                     localStorage.fortyLastRoomId = roomId = data[1];
@@ -237,7 +237,7 @@ async function joinInterface(type) {
                 else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
                 else if(data[0] === 'request_state') {
                     clearInterval(tmp);
-                    if(data[1].type === 'skills') send(await skillsInterface());
+                    if(data[1].type === 'skills') send(['set_skills', await skillsInterface()]);
                     HTML.clearBody();
                     let frame = HTML.create('div', 'frame join-interface');
                     let p = HTML.create('p', 'join');
