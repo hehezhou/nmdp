@@ -209,7 +209,7 @@ button.restart-die {
     align-self: start;
     justify-self: center;
     width: 130px;
-    height: 50px;
+    height: 60px;
 }
 canvas.little-map {
     position: absolute;
