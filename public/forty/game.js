@@ -33,7 +33,7 @@
  * 4 -1  0
  * 5  6  7
  */
-const io = new WebSocket(`ws://${location.hostname}:1926`);
+const io = new WebSocket(`ws://${location.hostname}:817`);
 var GAME_TYPE = {
     FFA: Symbol('ffa'),
     TEAM: Symbol('team'),
