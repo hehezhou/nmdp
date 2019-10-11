@@ -39,12 +39,16 @@ const Poet = makeEffect(p => {
 	p.bloodSucking *= 2;
 });
 const Knive = makeEffect(p => {
+	p.maxSpeed += 10;
 	(a => {
+		a.damage *= 0.75;
 		a.range *= 0.75;
 		a.prepareTime -= 0.4;
 	})(p.attack);
 });
 const Broadsward = makeEffect(p => {
+	p.maxSpeed -= 10;
+	p.bloodSucking *= 0.75;
 	(a => {
 		a.range *= 1.5;
 		a.prepareTime += 1.2;
@@ -55,7 +59,7 @@ const Broadsward = makeEffect(p => {
 	p.defense += 0.2;
 });
 const Furnace = makeEffect(p => {
-	p.maxSpeed += 10;
+	p.maxSpeed += 25;
 	p.bloodSucking *= 1.25;
 	(a => {
 		a.range *= 0.75;

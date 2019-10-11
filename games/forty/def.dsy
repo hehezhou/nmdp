@@ -42,12 +42,16 @@ Poet:makeEffect{
 	bloodSucking*=2;
 };
 Knive:makeEffect{
+	maxSpeed+=10;
 	with(attack){
+		damage*=0.75;
 		range*=0.75;
 		prepareTime-=0.4;
 	}
 };
 Broadsward:makeEffect{
+	maxSpeed-=10;
+	bloodSucking*=0.75;
 	with(attack){
 		range*=1.5;
 		prepareTime+=1.2;
@@ -58,7 +62,7 @@ Broadsward:makeEffect{
 	defense+=0.2;
 };
 Furnace:makeEffect{
-	maxSpeed+=10;
+	maxSpeed+=25;
 	bloodSucking*=1.25;
 	with(attack){
 		range*=0.75;
