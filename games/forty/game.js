@@ -306,6 +306,7 @@ module.exports = class Forty extends Game {
 				})(),
 				id,
 			});
+			callback(['request_choice', { type: 'skills' }])
 			this.waitingPlayers.set(id, player);
 		}
 		switch (player.state) {
