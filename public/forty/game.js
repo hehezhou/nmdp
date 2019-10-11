@@ -20,6 +20,7 @@
  * }
  * ['game_update', {map:{players: Map<ID, PlayerData>}}]
  * ['player_lose', {deadID, killerID}]
+ * ['request_choice', {type: 'skills'}]
  */
 
 /** send
@@ -189,7 +190,7 @@ async function chooseInterface(tag) {
                         resolve(await chooseInterface(tag));
                     }
                     else {
-                        resolve({type: typeList[i].type, skills: await skillsInterface()});
+                        resolve(typeList[i].type);
                     }
                 });
                 frame.appendChild(btn);
@@ -198,7 +199,7 @@ async function chooseInterface(tag) {
         document.body.appendChild(frame);
     });
 }
-async function joinInterface({type, skills}) {
+async function joinInterface(type) {
     if (type === CONTINUE_TAG) return CONTINUE_TAG;
     HTML.clearBody();
     let frame = HTML.create('div', 'frame join-interface');
@@ -215,7 +216,7 @@ async function joinInterface({type, skills}) {
         }, 600);
     }
     async function joinAuto() {
-        let p = HTML.create('p', 'join')
+        let p = HTML.create('p', 'join');
         frame.appendChild(p);
         document.body.appendChild(frame);
         return await new Promise(resolve => {
@@ -234,6 +235,13 @@ async function joinInterface({type, skills}) {
                     resolve(CONTINUE_TAG);
                 }
                 else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
+                else if(data[0] === 'request_state') {
+                    if(data[1].type === 'skills') send(await skillsInterface());
+                    HTML.clearBody();
+                    let frame = HTML.create('div', 'frame join-interface');
+                    let tmp = addWait(p, '正在匹配');
+                    let roomName;
+                }
                 else return;
                 clearInterval(tmp);
                 io.removeEventListener('message', x);
