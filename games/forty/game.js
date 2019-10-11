@@ -112,6 +112,7 @@ module.exports = class Forty extends Game {
 		this.players = players;
 		this.waitingPlayers = new Map();
 		this.time = -Infinity;
+		let game = this;
 		this.Player = class Player {
 			constructor({
 				state = PLAYER_STATE_SELECTING_PASSIVE_SKILL,
@@ -166,7 +167,7 @@ module.exports = class Forty extends Game {
 				let distance = player.pos.sub(this.pos);
 				let len = distance.len;
 				let angle = this.prop.attack.angle;
-				if (len === 0 || len > angle) {
+				if (len === 0 || len > this.prop.attack.range) {
 					return false;
 				}
 				let theta = distance.angle - this.attackState.angle;
@@ -204,7 +205,7 @@ module.exports = class Forty extends Game {
 				for (let [, player] of players) {
 					if (this.canDamage(player) && this.canAttackReach(player)) {
 						this.dealDamage(player, this.prop.attack.damage);
-						// game.needUpdate = true;
+						game.needUpdate = true;
 					}
 				}
 			}
@@ -244,7 +245,7 @@ module.exports = class Forty extends Game {
 					});
 					if (this.attackState instanceof Waiting) {
 						if (this.prop.attack.auto) {
-							this.attackState = new BeforeAttack(this.prop.attack.prepareTime, this.facing);
+							this.attackState = new BeforeAttack(this.prop.attack.prepareTime, this.facing.angle);
 						}
 						else {
 							break;
@@ -433,7 +434,7 @@ module.exports = class Forty extends Game {
 				deaths.push({ deadID: id, killerID: (player.lastDamager || { id: null }).id });
 				let killer = player.lastDamager;
 				if (killer !== null) {
-					killer.score += player.score * killer.killSteal + killer.prop.KillScore;
+					killer.score += player.score * killer.prop.killSteal + killer.prop.KillScore;
 				}
 				player.score = 0;
 			}
