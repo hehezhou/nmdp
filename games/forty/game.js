@@ -64,7 +64,7 @@ const Furnace = makeEffect(p => {
 	(a => {
 		a.range *= 0.75;
 		a.angle = Math.PI;
-		a.damage *= 0.4;
+		a.damage *= 0.6;
 		a.prepareTime += 1.2;
 		a.auto = true;
 	})(p.attack);
