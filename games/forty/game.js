@@ -162,7 +162,7 @@ module.exports = class Forty extends Game {
 			canDamage(player) {
 				return player.teamID !== this.teamID;
 			}
-			canAttackReach(player, angle) {
+			canAttackReach(player) {
 				let distance = player.pos.sub(this.pos);
 				let len = distance.len;
 				let angle = this.prop.attack.angle;
@@ -202,7 +202,7 @@ module.exports = class Forty extends Game {
 			}
 			attack() {
 				for (let [, player] of players) {
-					if (this.canDamage(player) && this.canAttack(player, this.attackState.angle)) {
+					if (this.canDamage(player) && this.canAttackReach(player)) {
 						this.dealDamage(player, this.prop.attack.damage);
 						// game.needUpdate = true;
 					}
@@ -306,6 +306,7 @@ module.exports = class Forty extends Game {
 				})(),
 				id,
 			});
+			callback(['request_choice', { type: 'skills' }])
 			this.waitingPlayers.set(id, player);
 		}
 		switch (player.state) {
