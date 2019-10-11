@@ -236,11 +236,12 @@ async function joinInterface(type) {
                 }
                 else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
                 else if(data[0] === 'request_state') {
+                    clearInterval(tmp);
                     if(data[1].type === 'skills') send(await skillsInterface());
                     HTML.clearBody();
                     let frame = HTML.create('div', 'frame join-interface');
-                    let tmp = addWait(p, '正在匹配');
-                    let roomName;
+                    document.body.appendChild(frame);
+                    tmp = addWait(p, '正在匹配');
                 }
                 else return;
                 clearInterval(tmp);
