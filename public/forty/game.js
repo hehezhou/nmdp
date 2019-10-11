@@ -645,6 +645,7 @@ async function gameInterface(msg) {
             for (let i of deleteList) {
                 svgTextMap.get(i).score.remove();
                 svgTextMap.get(i).name.remove();
+                svgTextMap.get(i).cool.remove();
                 svgTextMap.delete(i);
             }
             standingBox.innerHTML = '';
