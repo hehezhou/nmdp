@@ -169,7 +169,7 @@ module.exports = class Forty extends Game {
 				if (len === 0 || len > angle) {
 					return false;
 				}
-				let theta = distance.angle - angle;
+				let theta = distance.angle - this.attackState.angle;
 				if (theta < 0) {
 					theta += 2 * Math.PI;
 				}
