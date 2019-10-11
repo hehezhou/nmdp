@@ -1,23 +1,73 @@
 module class Forty(gameType:FFA|Teams);
-import {sqrt,sin,cos,atan2,max,min,PI,mid} from Math;
+import {sqrt,sin,cos,atan2,max,min,PI,mid,Infinity} from Math;
 import {randomReal} from Random;
 import {Set} from DataStructre;
 import {assert} from Assert;
+import {Refence,with} from SiyuanMagic;
 
 FFA:{};
 Teams:{teamCount:Int};
 
-PLAYER_TIME_BEFORE_ATTACK:Real=1;
-PLAYER_MAX_SPEED:Real=60;
-PLAYER_ACC:Real=200;
-PLAYER_MAX_HEALTH:Real=100;
-PLAYER_ATTACK_RANGE:Real=40;
-PLAYER_ATTACK_ANGLE:Real=PI/6;
-PLAYER_ATTACK_DAMAGE:Real=75;
-PLAYER_ATTACK_HEAL:Real=25;
-PLAYER_HURT_PER_SEC:Real=100;
-PLAYER_KILL_STEAL:Real=0.5;
-PLAYER_KILL_SCORE:Real=100;
+PlayerProp:{
+	maxSpeed:Real=60;
+	acc:Real=200;
+	maxHealth:Real=100;
+	attack:{
+		range:Real=40;
+		angle:Real=PI/6;
+		damage:Real=40;
+		prepareTime:Real=0.8;
+		cooldownTime:Real=0;
+		auto:false,
+	};
+	bloodSucking:Real=0.4;
+	defense:Real=0;
+	hurtRate:Real=100;
+	killSteal:Real=0.5;
+	killScore:Real=100;
+};
+defaultProp:PlayerProp;
+
+Effect:{
+	apply(playerProp:Refence<PlayerProp>);
+	time:Real=Infinity;
+};
+makeEffect<apply:Refence<PlayerProp>=>()>:Effect in{
+	apply(playerProp:Refence<PlayerProp>){
+		with(playerProp,apply);
+	}
+	time:Real=Infinity;
+};
+Poet:makeEffect{
+	bloodSucking*=2;
+};
+Knive:makeEffect{
+	with(attack){
+		range*=0.75;
+		prepareTime-=0.4;
+	}
+};
+Broadsward:makeEffect{
+	with(attack){
+		range*=1.5;
+		prepareTime+=1.2;
+		cooldownTime+=1.5;
+		damage*=2;
+		angle*=1.5;
+	};
+	defense+=0.2;
+};
+Furnace:makeEffect{
+	maxSpeed+=10;
+	bloodSucking*=1.25;
+	with(attack){
+		range*=0.75;
+		angle=PI;
+		damage*=0.4;
+		prepareTime+=1.2;
+		auto=true;
+	}
+};
 
 ARENA_HEIGHT:Real=1000;
 ARENA_WIDTH:Real=1000;
@@ -40,6 +90,9 @@ BeforeAttack:{
 	time:Real;
 	angle:Real;
 };
+AfterAttack:{
+	time:Real;
+};
 
 players:Set<Player>;
 
@@ -47,67 +100,109 @@ Player:{
 	pos:V;
 	speed:V;
 	targetSpeed:V;
+	facing:V;
 	attackState:Waiting|BeforeAttack;
 	health:Real;
 	targetHealth:Real;
 	lastDamager:Player|null;
+	effects:Effect[];
+	prop:PlayerProp;
 	score:Real;
 	teamID:String;
 	startAttack(angle:Real){
 		assert(attackState is Waiting);
-		attackState=BeforeAttack{PLAYER_TIME_BEFORE_ATTACK,angle};
+		attackState=BeforeAttack{prop.attack.prepareTime,angle};
 	}
 	startMove(newTargetSpeed:V){
-		if(newTargetSpeed!=V{0,0}){
-			newTargetSpeed*=PLAYER_MAX_SPEED/newTargetSpeed.len;
+		if(newTargetSpeed isnot V{0,0}){
+			newTargetSpeed*=prop.maxSpeed/newTargetSpeed.len;
 		}
 		targetSpeed=newTargetSpeed;
 	}
-	canAttack(p:Player,angle:Real):Boolean{
-		if(p.teamID==teamID){
-			return false;
-		}
+	canDamage(p:Player)=p.teamID isnot teamID;
+	canAttackReach(p:Player):Boolean{
 		dis:V=p.pos-pos;
-		if(dis.len==0||dis.len>PLAYER_ATTACK_RANGE){
+		if(dis.len is 0||dis.len>prop.attack.angle){
 			return false;
 		}
-		delta:Real=dis.angle-angle;
+		delta:Real=dis.angle-attackState.angle;
 		if(delta<0){
 			delta+=2*PI;
 		}
-		return delta<=PLAYER_ATTACK_ANGLE||delta>=2*PI-PLAYER_ATTACK_ANGLE;
+		return delta<=prop.attack.angle||delta>=2*PI-prop.attack.angle;
 	}
 	move(t:Real){
 		deltaSpeed:V=targetSpeed-speed;
 		dl:Real=deltaSpeed.len;
-		p:Real=min(dl/PLAYER_ACC,t);
+		p:Real=min(dl/prop.acc,t);
 		pos+=speed*p/2;
-		if(deltaSpeed!==V{0,0}){
-			speed+=p*PLAYER_ACC*deltaSpeed/deltaSpeed.len;
+		if(deltaSpeed isnot V{0,0}){
+			speed+=p*prop.acc*deltaSpeed/deltaSpeed.len;
 		}
 		pos+=speed*(t-p/2);
 		pos.x=mid(0,pos.x,ARENA_WIDTH);
 		pos.y=mid(0,pos.y,ARENA_HEIGHT);
+		if(speed isnot V{0,0}){
+			facing=speed/speed.len;
+		}
+	}
+	dealDamage(target:Player,value:Real){
+		damage:Real=max((1-target.prop.defense)*value,0);
+		target.targetHealth-=damage;
+		target.lastDamager=$;
+		targetHealth+=damage*prop.bloodSucking;
+		targetHealth=min(targetHealth,prop.maxHealth);
 	}
 	attack{
 		for(player:Player in players){
-			if(canAttack(player,attackState.angle)){
-				player.targetHealth-=PLAYER_ATTACK_DAMAGE;
-				player.lastDamager=$;
-				targetHealth=min(PLAYER_MAX_HEALTH,targetHealth+PLAYER_ATTACK_HEAL);
+			if(canDamage(player)&&canAttackReach(player)){
+				dealDamage(player,prop.attack.damage);
 			}
+		}
+	}
+	updateEffect{
+		prop=defaultProp;
+		for(effect:Effect in effects){
+			effect.apply(prop);
 		}
 	}
 	time(t:Real){
 		move(t);
-		if(attackState is BeforeAttack){
-			attackState.time-=t;
-			if(attackState.time<=0){
+
+		attackTime:Real=t;
+		updateAttackState<attackStateType>(done:()=>()){
+			if(attackState is attackStateType){
+				if(attackState.time<=attackTime){
+					attackTime-=min(attackState.time,0);
+					done;
+				}
+				else{
+					attackState.time-=attackTime;
+					attackTime=0;
+				}
+			}
+		};
+		do{
+			updateAttackState<BeforeAttack>{
 				attack;
+				attackState=AfterAttack{prop.attack.cooldownTime};
+			};
+			updateAttackState<AfterAttack>{
 				attackState=Waiting;
 			}
-		}
-		health=max(targetHealth,health-PLAYER_HURT_PER_SEC*t);
+			if(attackState is Waiting){
+				if(prop.attack.auto){
+					attackState=BeforeAttack{prop.attack.prepareTime,facing};
+				}
+				else{
+					break;
+				}
+			}
+		}while(attackTime>0);
+
+		health=max(targetHealth,health-prop.hurtRate*t);
+
+		// TODO: effect expire
 	}
 };
 
@@ -138,6 +233,8 @@ join(id:String):Interface{
 			});
 			return count.minIndex.string;
 		})();
+		facing:angleToV(randomReal(0,2*PI));
+		effects:[],
 	};
 	players.insert(player);
 	return Interface{
