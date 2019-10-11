@@ -60,11 +60,11 @@ const Broadsward = makeEffect(p => {
 });
 const Furnace = makeEffect(p => {
 	p.maxSpeed += 25;
-	p.bloodSucking *= 1.25;
+	p.bloodSucking *= 1.5;
 	(a => {
 		a.range *= 0.75;
 		a.angle = Math.PI;
-		a.damage *= 0.6;
+		a.damage *= 0.625;
 		a.prepareTime += 1.2;
 		a.auto = true;
 	})(p.attack);

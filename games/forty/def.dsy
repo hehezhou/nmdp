@@ -63,11 +63,11 @@ Broadsward:makeEffect{
 };
 Furnace:makeEffect{
 	maxSpeed+=25;
-	bloodSucking*=1.25;
+	bloodSucking*=1.5;
 	with(attack){
 		range*=0.75;
 		angle=PI;
-		damage*=0.6;
+		damage*=0.625;
 		prepareTime+=1.2;
 		auto=true;
 	}
