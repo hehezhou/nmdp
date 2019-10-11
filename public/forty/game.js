@@ -240,6 +240,8 @@ async function joinInterface(type) {
                     if(data[1].type === 'skills') send(await skillsInterface());
                     HTML.clearBody();
                     let frame = HTML.create('div', 'frame join-interface');
+                    let p = HTML.create('p', 'join');
+                    frame.appendChild(p);
                     document.body.appendChild(frame);
                     tmp = addWait(p, '正在匹配');
                 }
