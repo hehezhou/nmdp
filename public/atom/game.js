@@ -340,7 +340,7 @@ const WORK = {
                 send(['join_auto', 'atom']);
                 io.addEventListener('message', function x(msg) {
                     let data = JSON.parse(msg.data);
-                    if (data[0] === 'join_success') localStorage.atomLastRoomId = roomId = data[1], resolve(type);
+                    if (data[0] === 'join_success') roomId = data[1], resolve(type);
                     else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
                     else return;
                     clearInterval(tmp);
@@ -358,7 +358,7 @@ const WORK = {
                 localStorage.removeItem('atomLastRoomId');
                 io.addEventListener('message', function x(msg) {
                     let data = JSON.parse(msg.data);
-                    if (data[0] === 'join_success') localStorage.atomLastRoomId = roomId = data[1], resolve(type);
+                    if (data[0] === 'join_success') roomId = data[1], resolve(type);
                     else if (data[0] === 'join_fail') alert('重新连接失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
                     else return;
                     clearInterval(tmp);
@@ -403,6 +403,7 @@ const WORK = {
             io.addEventListener('message', function x(msg) {
                 let data = JSON.parse(msg.data);
                 if (data[0] === 'game_start') {
+                    localStorage.atomLastRoomId = roomId;
                     resolve({ data: data[1], type });
                     io.removeEventListener('message', x);
                     clearInterval(tmp);
