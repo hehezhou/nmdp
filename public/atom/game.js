@@ -34,7 +34,7 @@
  * ['decide', {x, y}|null]
  */
 
-const io = new WebSocket(`ws://${location.hostname}:817`);
+const io = new WebSocket(`wss://${location.hostname}:817`);
 const JOIN_AUTO_FFA = Symbol('joinAutoFFA'), GAME_CONTINUE = Symbol('gameContinue'), future = {}, CONTINUE_TAG = Symbol('continueTag');
 const MOUNTAIN = -2, NONE = -1, WATER = -3;
 const TOWER = -3, BORN = -4, BRIDGE = -2;

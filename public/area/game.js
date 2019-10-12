@@ -39,7 +39,7 @@
  * ['queue_pop', cnt]
  */
 (() => {
-    const io = new WebSocket(`ws://${location.hostname}:817`);
+    const io = new WebSocket(`wss://${location.hostname}:817`);
     const SUCCESS = 1, LOST = 0, gameType = 'area';
     const GRID_EMPTY = -1, GRID_BLOCK = -2, GRID_MIST = -3, maxQueueLen = 5, Ratio = 20;
     const JOIN_AUTO_FFA = Symbol('joinAutoFFA'), GAME_CONTINUE = Symbol('gameContinue'), SINGLE = Symbol('single');

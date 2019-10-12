@@ -1,4 +1,11 @@
 const WS = require('ws');
+const https = require('https');
+const fs = require('fs');
+const paths = JSON.parse(fs.readFileSync('./paths.JSON').toString());
+const options = {
+	cert: fs.readFileSync(paths.certPath),
+	key: fs.readFileSync(paths.keyPath),
+};
 const vaild = require('./utils/vaild.js');
 const loadGame = (cache => name => {
 	if (cache.has(name)) {
@@ -41,7 +48,9 @@ module.exports = class GameServer {
 		}, 0);
 	}
 	listen(port) {
-		this.webSocketServer = new WS.Server({ port });
+		const server = https.createServer(options, () => {});
+		server.listen(port);
+		this.webSocketServer = new WS.Server({ server: server });
 		this.webSocketServer.on('connection', (webSocket, request) => {
 			this.playerConnect(webSocket, request);
 		});
