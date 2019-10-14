@@ -1,4 +1,4 @@
 {
-    "keyPath": "/www/server/panel/vhost/cert/oj.orzsiyuan.com/test.key",
-    "certPath": "/www/server/panel/vhost/cert/oj.orzsiyuan.com/fullchain.pem"
+    "keyPath": "../ssl/private.pem",
+    "certPath": "../ssl/file.crt"
 }

@@ -1,7 +1,7 @@
 const WS = require('ws');
 const https = require('https');
 const fs = require('fs');
-const paths = JSON.parse(fs.readFileSync('./paths.JSON').toString());
+const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
 const options = {
 	cert: fs.readFileSync(paths.certPath),
 	key: fs.readFileSync(paths.keyPath),
