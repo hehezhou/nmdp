@@ -4,6 +4,16 @@
         <base href="/login/">
         <meta charset="utf-8">
         <title>登录</title>
+        <style>
+            button {
+                background-color: whitesmoke;
+                border: 1px solid black;
+                border-radius: 2px;
+            }
+            button:hover {
+                background-color: rgb(196, 196, 196);
+            }
+        </style>
     </head>
     <body style="margin: 0;">
         <div style="display: grid; align-content: center; justify-content: center; height: 100vh; width: 100vw;">
@@ -19,7 +29,81 @@
             <div id="submit-box" style="justify-self: center; margin: 1vh;">
                 <button id="submit" style="font-size: 18px; height: 30px; width: 65px;">登录</button>
             </div>
-            <div style="height: 15vh;">
-            </div>
+            <div style="height: 15vh; text-align: center; font-size: 17px;" id="msg"></div>
+        </div>
+        <script>
+            function createAjax() {
+                let ans;
+                try {
+                    ans = new XMLHttpRequest();
+                }
+                catch (e) {
+                    try {
+                        ans = new ActiveXObject('Msxml2.XMLHTTP');
+                    }
+                    catch (e) {
+                        try {
+                            ans = new ActiveXObject('Microsoft.XMLHTTP');
+                        }
+                        catch (e) {
+                            alert('请更新浏览器');
+                            return false;
+                        }
+                    }
+                }
+                return ans;
+            }
+            function ajaxPost({url, data, fnSucceed = () => {}, fnFail = () => {}, fnLoading = () => {}}) {
+                let ajax = createAjax();
+                if(!ajax) return;
+                ajax.open('post', url, true);
+                ajax.onreadystatechange = function () {
+                    if (ajax.readyState == 4) {
+                        if (ajax.status == 200) {
+                            fnSucceed(ajax.responseText);
+                        }
+                        else {
+                            fnFail('请求错误! 错误码: ' + ajax.status);
+                        }
+                    }
+                    else {
+                        fnLoading();
+                    }
+                }
+                ajax.send(data);
+            }
+            let btn = document.getElementById('submit'), userName = document.getElementById('user-name'), key = document.getElementById('key'), msg = document.getElementById('msg');
+            btn.addEventListener('click', async () => {
+                let userNameData = userName.value, keyData = key.value;
+                if(userNameData === "") msg.innerText = '请输入用户名';
+                else if(keyData === "") msg.innerText = '请输入密码';
+                else {
+                    try {
+                        await new Promise((resolve, reject) => {
+                            ajaxPost({
+                                url: `https://${location.host}/api/auth/login`, data: JSON.stringify({username: userNameData, password: keyData}),
+                                fnSucceed: (data) => {
+                                    if(data === '') msg.innerText = '登录成功', history.go(-1), resolve(true);
+                                    else msg.innerText = data, resolve(false);
+                                },
+                                fnFail: (data) => {
+                                    msg.innerText = data;
+                                    reject(data);
+                                },
+                                fnLoading: () => {
+                                    btn.disabled = true;
+                                    btn.innerText = '正在登录';
+                                }
+                            });
+                        });
+                    }
+                    catch(e) {
+                        msg.innerText = e;
+                    }
+                    btn.innerText = '登录';
+                    btn.disabled = false;
+                }
+            })
+        </script>
     </body>
 </html>
