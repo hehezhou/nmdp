@@ -3,8 +3,8 @@ const https = require('https');
 const User = require('./user/user.js');
 const querystring = require('querystring');
 const fs = require('fs');
-const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
 const vaild = require('./utils/vaild.js');
+const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
 
 const options = {
 	cert: fs.readFileSync(paths.certPath),
