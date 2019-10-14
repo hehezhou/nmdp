@@ -1,5 +1,5 @@
 const isError = result => result instanceof Error;
-module.exports = function promisify(f,thisArg) {
+function promisify(f,thisArg) {
 	return (...args) => new Promise((resolve, reject) => {
 		const callback=(...results)=>{
 			if (results.some(isError)) {
@@ -10,3 +10,4 @@ module.exports = function promisify(f,thisArg) {
 		f.call(thisArg,...args,callback);
 	});
 };
+module.exports=promisify;

@@ -1,3 +1,5 @@
 *.dat
-web-server.js
 paths.json
+key
+key/*
+web-server.js

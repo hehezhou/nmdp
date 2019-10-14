@@ -93,7 +93,7 @@ async function loadGameServer(saveUrl) {
 module.exports = class Server {
 	constructor() {
 		this.port=null;
-		loadGameServer(process.argv[2])
+		loadGameServer()
 		.then(gameServer=>{
 			if(this.port){
 				gameServer.listen(this.port);

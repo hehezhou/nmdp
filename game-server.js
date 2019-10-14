@@ -1,12 +1,16 @@
 const WS = require('ws');
 const https = require('https');
+const User = require('./user/user.js');
+const querystring = require('querystring');
 const fs = require('fs');
 const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
+const vaild = require('./utils/vaild.js');
+
 const options = {
 	cert: fs.readFileSync(paths.certPath),
 	key: fs.readFileSync(paths.keyPath),
 };
-const vaild = require('./utils/vaild.js');
+
 const loadGame = (cache => name => {
 	if (cache.has(name)) {
 		return cache.get(name);
@@ -24,13 +28,12 @@ module.exports = class GameServer {
 	constructor(gameData) {
 		this.games = Object.create(null);
 		this.matchs = Object.create(null);
-		this.playerIPToID = new Map();
+		this.user = new User();
 		if (gameData !== undefined) {
 			for (let id in gameData.games) {
 				let { type, data } = gameData.games[id];
 				this.createGame(id, type, data, true);
 			}
-			this.playerIPToID = new Map(gameData.playerIPToID);
 			this.matchs = vaild.object(gameData.matchs, { hint: 'matchs' });
 			for (let id in this.matchs) {
 				let gameID = this.matchs[id].gameID;
@@ -48,20 +51,61 @@ module.exports = class GameServer {
 		}, 0);
 	}
 	listen(port) {
-		const server = https.createServer(options, () => {});
-		server.listen(port);
-		this.webSocketServer = new WS.Server({ server: server });
-		this.webSocketServer.on('connection', (webSocket, request) => {
-			this.playerConnect(webSocket, request);
+		this.user.init().then(()=>{
+			const server = https.createServer(options, (req,res) => {
+				if(req.method==='POST'){
+					let data='';
+					req.on('data',chunk=>{
+						data+=chunk;
+					});
+					req.on('end',()=>{
+						const {username,password}=querystring.parse(data);
+						try{
+							let token=this.user.login(username,password);
+							res.writeHead(200,{'Set-Cookie':`g:${token};HttpOnly;secure`})
+						}
+						catch(e){
+							res.writeHead(401);
+							res.write(e.message);
+							res.end();
+						}
+					});
+				}
+			});
+			server.listen(port);
+			this.webSocketServer = new WS.Server({ server: server });
+			this.webSocketServer.on('connection', (webSocket, request) => {
+				let cookies=request.headers.cookie;
+				try{
+					if(cookies===undefined){
+						throw new Error('Why?');
+					}
+					let token;
+					cookies.split(';').forEach(str=>{
+						let [key,value]=str.split('=',2);
+						if(key==='g'){
+							token=value;
+						}
+					});
+					if(token===undefined){
+						throw new Error('Why?');
+					}
+					let playerID = this.user.getUsername(token);
+					this.user.stopExpire(token);
+					webSocket.on('close',()=>{
+						this.user.startExpire(token);
+					})
+					this.playerConnect(playerID, webSocket, request);
+				}
+				catch(e){
+					webSocket.send(JSON.stringify(['force_quit','login first']))
+					webSocket.close();
+				}
+			});
 		});
 		return this;
 	}
-	playerConnect(webSocket, request) {
-		let playerIP = request.connection.remoteAddress;
-		if (!this.playerIPToID.has(playerIP)) {
-			this.playerIPToID.set(playerIP, `tourist #${this.playerIPToID.size + 1}`);
-		}
-		let playerID = this.playerIPToID.get(playerIP);
+	playerConnect(playerID, webSocket, request) {
 		if (playerID in this.players) {
 			this.playerDisconnect(playerID, 'a player with same id connected');
 		}
@@ -266,7 +310,6 @@ module.exports = class GameServer {
 		let result = {
 			games: {},
 			matchs: this.matchs,
-			playerIPToID: Array.from(this.playerIPToID),
 		};
 		for (let id in this.games) {
 			let game = this.games[id];
