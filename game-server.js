@@ -51,20 +51,20 @@ module.exports = class GameServer {
 		}, 0);
 	}
 	listen(port) {
-		this.user.init().then(()=>{
-			const server = https.createServer(options, (req,res) => {
-				if(req.method==='POST'){
-					let data='';
-					req.on('data',chunk=>{
-						data+=chunk;
+		this.user.init().then(() => {
+			const server = https.createServer(options, (req, res) => {
+				if (req.method === 'POST') {
+					let data = '';
+					req.on('data', chunk => {
+						data += chunk;
 					});
-					req.on('end',()=>{
-						const {username,password}=querystring.parse(data);
-						try{
-							let token=this.user.login(username,password);
-							res.writeHead(200,{'Set-Cookie':`g:${token};HttpOnly;secure`})
+					req.on('end', () => {
+						const { username, password } = JSON.parse(data);
+						try {
+							let token = this.user.login(username, password);
+							res.writeHead(200, { 'Set-Cookie': `g:${token};HttpOnly;secure` })
 						}
-						catch(e){
+						catch (e) {
 							res.writeHead(401);
 							res.write(e.message);
 							res.end();
@@ -75,30 +75,30 @@ module.exports = class GameServer {
 			server.listen(port);
 			this.webSocketServer = new WS.Server({ server: server });
 			this.webSocketServer.on('connection', (webSocket, request) => {
-				let cookies=request.headers.cookie;
-				try{
-					if(cookies===undefined){
+				let cookies = request.headers.cookie;
+				try {
+					if (cookies === undefined) {
 						throw new Error('Why?');
 					}
 					let token;
-					cookies.split(';').forEach(str=>{
-						let [key,value]=str.split('=',2);
-						if(key==='g'){
-							token=value;
+					cookies.split(';').forEach(str => {
+						let [key, value] = str.split('=', 2);
+						if (key === 'g') {
+							token = value;
 						}
 					});
-					if(token===undefined){
+					if (token === undefined) {
 						throw new Error('Why?');
 					}
 					let playerID = this.user.getUsername(token);
 					this.user.stopExpire(token);
-					webSocket.on('close',()=>{
+					webSocket.on('close', () => {
 						this.user.startExpire(token);
 					})
 					this.playerConnect(playerID, webSocket, request);
 				}
-				catch(e){
-					webSocket.send(JSON.stringify(['force_quit','login first']))
+				catch (e) {
+					webSocket.send(JSON.stringify(['force_quit', 'login first']))
 					webSocket.close();
 				}
 			});
@@ -297,10 +297,10 @@ module.exports = class GameServer {
 			gameID: null,
 			index: 0,
 		};
-		try{
+		try {
 			this.createGameForMatch(id);
 		}
-		catch(error){
+		catch (error) {
 			delete (this.matchs)[id];
 			throw error;
 		}

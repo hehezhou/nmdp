@@ -3,3 +3,5 @@ paths.json
 key
 key/*
 web-server.js
+test*.*
+.*
