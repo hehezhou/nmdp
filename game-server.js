@@ -52,30 +52,77 @@ module.exports = class GameServer {
 	listen(port) {
 		this.user.init().then(() => {
 			const server = https.createServer(options, (req, res) => {
-				if (req.method === 'POST') {
-					let data = '';
-					req.on('data', chunk => {
-						data += chunk;
-					});
-					req.on('end', () => {
-						const { username, password } = JSON.parse(data);
-						let n=this.user.checkUsername(username);
+				let data = '';
+				req.on('data', chunk => {
+					data += chunk;
+				});
+				req.on('end', () => {
+					if (req.method === 'POST') {
 						try {
-							let token = this.user.login(n, password);
-							res.setHeader('Set-Cookie', [
-								`g=${token}; Path=/; HttpOnly; Secure`,
-								`n=${n}; Path=/; Secure`,
-							]);
-							res.writeHead(200);
-							res.end();
+							let url = req.url.endsWith('/') ? req.url.slice(0, -1) : req.url;
+							let inputToken;
+							(req.headers.cookie || '').split(';').forEach(str => {
+								let [key, value] = str.split('=', 2);
+								if (key === 'g') {
+									inputToken = value;
+								}
+							});
+							switch (url) {
+								case '/api/auth/login': {
+									const { username, password } = JSON.parse(data);
+									let n = this.user.checkUsername(username);
+									let token = this.user.login(n, password);
+									res.setHeader('Set-Cookie', [
+										`g=${token}; Path=/; HttpOnly; Secure`,
+										`n=${n}; Path=/; Secure`,
+									]);
+									res.writeHead(200);
+									res.end();
+									break;
+								}
+								case '/api/auth/change-password': {
+									const { oldPassword, newPassword } = JSON.parse(data);
+									if (inputToken === undefined) {
+										throw new Error('login first');
+									}
+									let session = this.user.getSession(inputToken);
+									if (session === undefined) {
+										throw new Error('login first');
+									}
+									this.user.changePassword(session.username, oldPassword, newPassword);
+									res.setHeader('Set-Cookie', [
+										`g=SiyuanAKIOI; Max-Age=-1 Path=/; HttpOnly; Secure`,
+										`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
+									]);
+									res.writeHead(200);
+									res.end();
+									break;
+								}
+								case '/api/auth/refresh': {
+									let session = inputToken ? this.user.getSession(inputToken) : undefined;
+									if (session === undefined) {
+										res.setHeader('Set-Cookie', [
+											`g=SiyuanAKIOI; Max-Age=-1 Path=/; HttpOnly; Secure`,
+											`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
+										]);
+									}
+									else{
+										res.setHeader('Set-Cookie', [
+											`g=${session.token}; Path=/; HttpOnly; Secure`,
+											`n=${session.username}; Path=/; Secure`,
+										]);
+									}
+									break;
+								}
+							}
 						}
 						catch (e) {
 							res.writeHead(401);
 							res.write(e.message);
 							res.end();
 						}
-					});
-				}
+					}
+				});
 			});
 			server.listen(port);
 			this.webSocketServer = new WS.Server({ server: server });
@@ -96,10 +143,10 @@ module.exports = class GameServer {
 						throw new Error('Why?');
 					}
 					let session = this.user.getSession(token);
-					if(session===undefined){
+					if (session === undefined) {
 						throw new Error('Why?');
 					}
-					session.on('remove',()=>{
+					session.on('remove', () => {
 						this.playerDisconnect(session.username, 'session removed');
 					});
 					this.user.stopExpire(token);
