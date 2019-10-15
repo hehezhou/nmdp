@@ -18,7 +18,7 @@
         <script src="../sources/js/post.js"></script>
         <script src="../sources/js/get-name.js"></script>
         <script>
-            if(getName() === '') location.href = `${location.origin}/login`;
+            (async () => {if(await getName() === '') location.href = `${location.origin}/login`;})();
         </script>
         <button id="logout" style="font-size: 17px; height: 35px; width: 80px;">注销</button>
         <h1>安全设置</h1>
@@ -39,14 +39,16 @@
         <div id="submitResetPassword-box" style="justify-self: center; margin: 1vh;">
             <button id="submitResetPassword" style="font-size: 17px; height: 35px; width: 80px;">修改</button>
         </div>
-        <div id="change-password-msg" style="width: 200px;"></div>
-        <script src="../sources/js/post.js"></script>
+        <div id="change-password-msg" style="width: 200px; margin: 1vh;"></div>
         <script>
             (() => {
-                let inputOld = document.getElementById('oldKey'), inputNew = document.getElementById('newKey'), repeatKey = document.getElementById('repeatKey');
+                let oldKey = document.getElementById('oldKey'), newKey = document.getElementById('newKey'), repeatKey = document.getElementById('repeatKey');
                 let btn = document.getElementById('submitResetPassword'), msg = document.getElementById('change-password-msg');
                 btn.addEventListener('click', () => {
-                    ajaxPost({
+                    if(oldKey.value === '') msg.innerText = '请输入旧密码';
+                    else if(newKey.value === '') msg.innerText = '请输入新密码';
+                    else if(newKey.value !== repeatKey.value) msg.innerText = '请输入相同的密码';
+                    else ajaxPost({
                         url: `https://${location.host}/api/auth/change-password`,
                         data: JSON.stringify({oldPassword: oldKey.value, newPassword: newKey.value}),
                         fnSucceed: () => location.href = location.origin,
