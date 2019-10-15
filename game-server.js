@@ -86,8 +86,8 @@ module.exports = class GameServer {
 									}
 									this.user.changePassword(session.username, oldPassword, newPassword);
 									res.setHeader('Set-Cookie', [
-										`g=SiyuanAKIOI; Max-Age=-1 Path=/; HttpOnly; Secure`,
-										`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
+										`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
+										`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
 									]);
 									break;
 								}
@@ -95,8 +95,8 @@ module.exports = class GameServer {
 									let session = inputToken ? this.user.getSession(inputToken) : undefined;
 									if (session === undefined) {
 										res.setHeader('Set-Cookie', [
-											`g=SiyuanAKIOI; Max-Age=-1 Path=/; HttpOnly; Secure`,
-											`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
+											`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
+											`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
 										]);
 									}
 									else {
@@ -114,8 +114,8 @@ module.exports = class GameServer {
 									}
 									this.user.removeSession(session.username);
 									res.setHeader('Set-Cookie', [
-										`g=SiyuanAKIOI; Max-Age=-1 Path=/; HttpOnly; Secure`,
-										`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
+										`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
+										`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
 									]);
 									break;
 								}
