@@ -76,16 +76,11 @@ module.exports = class GameServer {
 										`g=${token}; Path=/; HttpOnly; Secure`,
 										`n=${n}; Path=/; Secure`,
 									]);
-									res.writeHead(200);
-									res.end();
 									break;
 								}
 								case '/api/auth/change-password': {
 									const { oldPassword, newPassword } = JSON.parse(data);
-									if (inputToken === undefined) {
-										throw new Error('login first');
-									}
-									let session = this.user.getSession(inputToken);
+									let session = inputToken ? this.user.getSession(inputToken) : undefined;
 									if (session === undefined) {
 										throw new Error('login first');
 									}
@@ -94,8 +89,6 @@ module.exports = class GameServer {
 										`g=SiyuanAKIOI; Max-Age=-1 Path=/; HttpOnly; Secure`,
 										`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
 									]);
-									res.writeHead(200);
-									res.end();
 									break;
 								}
 								case '/api/auth/refresh': {
@@ -106,7 +99,7 @@ module.exports = class GameServer {
 											`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
 										]);
 									}
-									else{
+									else {
 										res.setHeader('Set-Cookie', [
 											`g=${session.token}; Path=/; HttpOnly; Secure`,
 											`n=${session.username}; Path=/; Secure`,
@@ -114,11 +107,31 @@ module.exports = class GameServer {
 									}
 									break;
 								}
+								case '/api/auth/logout': {
+									let session = inputToken ? this.user.getSession(inputToken) : undefined;
+									if(session === undefined){
+										throw new Error('Why?');
+									}
+									this.user.removeSession(session.username);
+									res.setHeader('Set-Cookie', [
+										`g=SiyuanAKIOI; Max-Age=-1 Path=/; HttpOnly; Secure`,
+										`n=SiyuanAKIOI; Max-Age=-1 Path=/; Secure`,
+									]);
+									break;
+								}
+								default: {
+									throw new Error('Why?');
+								}
 							}
+							res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+							res.writeHead(200);
+							res.write(`${url}\nstatus: 200 OK\nreponse time: ${Math.round(Math.random()**2*150)}ms`);
+							res.end();
 						}
 						catch (e) {
+							res.setHeader('Content-Type', 'text/plain;charset=utf-8');
 							res.writeHead(401);
-							res.write(e.message);
+							res.write(e.message === 'Why?' ? '服务器被 D 没了' : e.message);
 							res.end();
 						}
 					}
@@ -153,6 +166,9 @@ module.exports = class GameServer {
 					webSocket.on('close', () => {
 						this.user.startExpire(token);
 					})
+					webSocket.on('ping', () => {
+						webSocket.pong();
+					});
 					this.playerConnect(session.username, webSocket, request);
 				}
 				catch (e) {
