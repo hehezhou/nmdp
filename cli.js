@@ -65,6 +65,9 @@ module.exports = function CLI(gameServer) {
 		create_match(id, type = id, settings = {}) {
 			gameServer.createMatch(id, type, settings);
 		},
+		register(username,password){
+			gameServer.user.register(username,password);
+		},
 		help: '(NO HELP!)',
 		mosiyuan: 'Link: https://lmoliver.github.io/mosiyuan',
 	};
