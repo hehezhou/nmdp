@@ -3,37 +3,43 @@
 	<head>
 		<meta charset="utf-8">
 		<base href="/">
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<title>NMDP</title>
-		<link rel="stylesheet" href="./lib/normalize.css">
-		<link rel="stylesheet" href="./lib/default.css">
 	</head>
 	<body>
-		<h1>
-			索引 - NMDP
-		</h1>
-		<p>
-			欢迎来到用于学(tui)习(fei)的网站！
-		</p>
-		<hr>
-		<!-- <p>通知: </p> -->
-		<ul>
-			<li>
-				<a href="./atom">Atom</a>
-			</li>
-			<li>
-				<a href="./area">Area</a>
-			</li>
-			<li>
-				<a href="./mosiyuan">mo<strong style="color:black;">S<span style="color:red;">iyuan</span></strong></a>
-			</li>
-			<li>
-				<a href="./paint-board">绘板</a>
-			</li>
-			<li>
-				<a href="./forty">四十米长刀</a>
-			</li>
-		</ul>
+		<style>
+			* {
+				margin: 0;
+			}
+			button {
+				height: 60px;
+				width: 165px;
+				font-size: 1.5em;
+				align-self: center;
+				justify-self: center;
+				background-color: whitesmoke;
+				border: 1px solid black;
+				border-radius: 4px;
+			}
+			button:hover {
+				background-color: rgb(196, 196, 196);
+			}
+		</style>
+		<div style="display: grid; align-content: center; justify-content: center; gap: 7px; grid-gap: 7px; height: 100vh; width: 100vw;">
+			<h1 style="font-size: 40px; text-align: center;">
+				索引 - NMDP
+			</h1>
+			<p style="font-size: 20px; text-align: center;">
+				欢迎来到用于学(tui)习(fei)的网站!
+			</p>
+			<div style="height: 35px;"></div>
+			<button onclick="location.href=location.origin+'/atom';">Atom</button>
+			<button onclick="location.href=location.origin+'/area';">Area</button>
+			<button onclick="location.href=location.origin+'/mosiyuan';">膜<strong style="color:black;">S<span style="color:red;">iyuan</span></strong></button>
+			<button onclick="location.href=location.origin+'/paint-board';">绘板</button>
+			<button onclick="location.href=location.origin+'/forty';">四十米长刀</button>
+			<button onclick="location.href=location.origin+'/login'">登录</button>
+			<div style="height: 15vh;"></div>
+		</div>
 		<script>
 			try {
 				new WebSocket(`wss://${location.host}/wss/`);
