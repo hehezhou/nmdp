@@ -778,17 +778,7 @@ async function gameInterface(msg) {
         document.addEventListener('keyup', keyupListener);
         io.addEventListener('message', async function x(msg) {
             let data = JSON.parse(msg.data);
-            if (data[0] === 'force_quit') {
-                alert('您已被移出房间，原因: ' + data[1]);
-                document.body.className = '';
-                window.removeEventListener('resize', updateSize);
-                io.removeEventListener('message', x);
-                frame.removeEventListener('keydown', keydownListener);
-                frame.removeEventListener('keyup', keyupListener);
-                running = 0;
-                resolve(CONTINUE_TAG);
-            }
-            else if (data[0] === 'game_update') {
+            if (data[0] === 'game_update') {
                 FORTY.update(data[1]);
             }
             else if (data[0] === 'player_lose') {
@@ -843,10 +833,23 @@ function loadSettings() {
 async function run() {
     let tag = 0;
     io.addEventListener('close', () => {
+        if(tag === -1) return;
         alert(tag ? '连接断开' : '连接失败');
     });
     await new Promise(resolve => io.addEventListener('open', resolve));
     tag = 1;
+    io.addEventListener('message', (msg) => {
+        let data = JSON.parse(msg.data);
+        if (data[0] !== 'force_quit') return;
+        if (data[1].trim() === 'login first') {
+            tag = -1;
+            location.href = location.origin + '/login';
+        }
+        else {
+            setTimeout(alert(`房间已关闭, 原因: ${data[1]}`), 200);
+            boom();
+        }
+    });
     let tmp = null;
     while (1) {
         await endInterface(await gameInterface(await readyInterface(await joinInterface(await chooseInterface(tmp)))));

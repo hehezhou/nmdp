@@ -396,7 +396,7 @@
             COLOR.rePaint(pos);
             this.head++;
             this.serverCnt--;
-            if(this.serverCnt < 0) this.serverCnt = 0;
+            if (this.serverCnt < 0) this.serverCnt = 0;
         },
         initCommand: function () {
             this.head = 0;
@@ -539,7 +539,7 @@
     }
     const typeList = {
         '经典 FFA': { check: () => 1, type: JOIN_AUTO_FFA },
-        '单机模式': {check: () => 1, type: SINGLE},
+        '单机模式': { check: () => 1, type: SINGLE },
         '重新连接': { check: () => Boolean(localStorage.areaLastRoomId), type: GAME_CONTINUE },
     };
     async function chooseInterface() {
@@ -619,7 +619,7 @@
         }
         if (type === JOIN_AUTO_FFA) await join_auto_FFA();
         else if (type === GAME_CONTINUE) await game_continue();
-        else if(type === SINGLE) await game_single();
+        else if (type === SINGLE) await game_single();
     }
     let playerMessage, nowAttitude;
     async function readyInterface() {
@@ -805,26 +805,24 @@
     }
 
     async function run() {
-        let onRefresh = 0;
-        window.addEventListener('beforeunload', () => {
-            onRefresh = 1;
-        });
+        let tag = 0;
         io.addEventListener('close', () => {
-            if (onRefresh) return;
-            setTimeout(alert('连接断开'), 200);
-            boom();
+            if(tag === -1) return;
+            alert(tag ? '连接断开' : '连接失败');
         });
-        await new Promise((resolve) => {
-            io.addEventListener('open', function x() {
-                io.removeEventListener('open', x);
-                resolve();
-            })
-        });
+        await new Promise(resolve => io.addEventListener('open', resolve));
+        tag = 1;
         io.addEventListener('message', (msg) => {
             let data = JSON.parse(msg.data);
             if (data[0] !== 'force_quit') return;
-            setTimeout(alert(`房间已关闭, 原因: ${data[1]}`), 200);
-            boom();
+            if (data[1].trim() === 'login first') {
+                tag = -1;
+                location.href = location.origin + '/login';
+            }
+            else {
+                setTimeout(alert(`房间已关闭, 原因: ${data[1]}`), 200);
+                boom();
+            }
         });
         while (1) {
             await work();

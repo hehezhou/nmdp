@@ -51,14 +51,24 @@ const record = ((x, id, f) => ((message) => {
     }, 5000);
 }))(document.createElement('p'), null, false);
 async function work() {
+    let tag = 0;
     io.addEventListener('close', () => {
-        if (running === 0) return;
-        alert('连接断开');
-        location.href = location.origin;
+        if(tag === -1) return;
+        alert(tag ? '连接断开' : '连接失败');
     });
-    let running = 1;
-    await new Promise(function (resolve, reject) {
-        io.addEventListener('open', () => resolve(1));
+    await new Promise(resolve => io.addEventListener('open', resolve));
+    tag = 1;
+    io.addEventListener('message', (msg) => {
+        let data = JSON.parse(msg.data);
+        if (data[0] !== 'force_quit') return;
+        if (data[1].trim() === 'login first') {
+            tag = -1;
+            location.href = location.origin + '/login';
+        }
+        else {
+            setTimeout(alert(`房间已关闭, 原因: ${data[1]}`), 200);
+            boom();
+        }
     });
     send(['join', roomId]);
     if (await new Promise(function (resolve, reject) {
@@ -74,14 +84,6 @@ async function work() {
             resolve(SUCCESS);
         });
     }));
-    io.addEventListener('message', (rec) => {
-        let data = JSON.parse(rec.data);
-        if (data[0] === 'force_quit') {
-            alert('房间已关闭,原因: ' + data[1]);
-            running = 0;
-            location.href = location.origin;
-        }
-    });
     let nowColor = initColor;
     let paint = await new Promise(async (resolve, reject) => {
         let array = await new Promise(function (resolve, reject) {
@@ -270,7 +272,6 @@ async function work() {
         });
     })();
     io.addEventListener('message', (rec) => {
-        if (running === 0) return;
         let data = JSON.parse(rec.data);
         if (data[0] === 'update') {
             paint(data[1]);

@@ -609,23 +609,25 @@ async function work() {
     await WORK.endInterface(await WORK.gameInterface(await WORK.readyInterface(await WORK.joinInterface(await WORK.chooseInterface()))));
 }
 async function run() {
-    let running = 1, open = 0;
-    window.addEventListener('beforeunload', () => {
-        running = 0;
-    });
+    let tag = 0;
     io.addEventListener('close', () => {
-        if (running) {
-            alert(open ? '连接断开' : '连接失败');
+        if(tag === -1) return;
+        alert(tag ? '连接断开' : '连接失败');
+    });
+    await new Promise(resolve => io.addEventListener('open', resolve));
+    tag = 1;
+    io.addEventListener('message', (msg) => {
+        let data = JSON.parse(msg.data);
+        if (data[0] !== 'force_quit') return;
+        if (data[1].trim() === 'login first') {
+            tag = -1;
+            location.href = location.origin + '/login';
+        }
+        else {
+            setTimeout(alert(`房间已关闭, 原因: ${data[1]}`), 200);
             boom();
         }
     });
-    await new Promise(resolve => {
-        io.addEventListener('open', function x() {
-            open = 1;
-            io.removeEventListener('open', x);
-            resolve();
-        });
-    })
     while (1) await work();
 }
 run();
