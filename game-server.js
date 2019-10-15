@@ -1,7 +1,6 @@
 const WS = require('ws');
 const https = require('https');
 const User = require('./user/user.js');
-const querystring = require('querystring');
 const fs = require('fs');
 const vaild = require('./utils/vaild.js');
 const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
