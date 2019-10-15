@@ -1,0 +1,86 @@
+<html>
+    <head>
+        <base href="/account/">
+        <meta charset="utf-8">
+        <title>账号设置</title>
+        <style>
+            button {
+                background-color: whitesmoke;
+                border: 1px solid black;
+                border-radius: 2px;
+            }
+            button:hover {
+                background-color: rgb(196, 196, 196);
+            }
+        </style>
+    </head>
+    <body style="margin: 15vh 15vw">
+        <script src="../sources/js/post.js"></script>
+        <script src="../sources/js/get-name.js"></script>
+        <script>
+            if(getName() === '') location.href = `${location.origin}/login`;
+        </script>
+        <button id="logout" style="font-size: 17px; height: 35px; width: 80px;">注销</button>
+        <h1>安全设置</h1>
+        <hr>
+        <h2 style="margin: 1vh;">修改密码</h2>
+        <div id="oldKey-box" style="margin: 1vh;">
+            <label style="display: block; font-size: 18px;">旧密码</label>
+            <input id="oldKey" type="password" style="height: 20px; width: 200px;">
+        </div>
+        <div id="newKey-box" style="margin: 1vh;">
+            <label style="display: block; font-size: 18px;">新密码</label>
+            <input id="newKey" type="password" style="height: 20px; width: 200px;">
+        </div>
+        <div id="repeatKey-box" style="margin: 1vh;">
+            <label style="display: block; font-size: 18px;">重复新密码</label>
+            <input id="repeatKey" type="password" style="height: 20px; width: 200px;">
+        </div>
+        <div id="submitResetPassword-box" style="justify-self: center; margin: 1vh;">
+            <button id="submitResetPassword" style="font-size: 17px; height: 35px; width: 80px;">修改</button>
+        </div>
+        <div id="change-password-msg" style="width: 200px;"></div>
+        <script src="../sources/js/post.js"></script>
+        <script>
+            (() => {
+                let inputOld = document.getElementById('oldKey'), inputNew = document.getElementById('newKey'), repeatKey = document.getElementById('repeatKey');
+                let btn = document.getElementById('submitResetPassword'), msg = document.getElementById('change-password-msg');
+                btn.addEventListener('click', () => {
+                    ajaxPost({
+                        url: `https://${location.host}/api/auth/change-password`,
+                        data: JSON.stringify({oldPassword: oldKey.value, newPassword: newKey.value}),
+                        fnSucceed: () => location.href = location.origin,
+                        fnFail: (data) => {
+                            if(data.status === 401) msg.innerText = data.text;
+                            else msg.innerText = '请求错误, 错误码: ' + data.status;
+                            btn.disabled = false;
+                            btn.innerText = '修改';
+                        },
+                        fnLoading: () => {
+                            btn.disabled = true;
+                            btn.innerText = '修改中';
+                        },
+                    });
+                })
+            })();
+            (() => {
+                let btn = document.getElementById('logout');
+                btn.addEventListener('click', () => {
+                    ajaxPost({
+                        url: `https://${location.host}/api/auth/logout`,
+                        data: '{}',
+                        fnSucceed: () => location.href = location.origin,
+                        fnFail: (data) => {
+                            alert(data.text);
+                            location.href = location.origin;
+                        },
+                        fnLoading: () => {
+                            btn.disabled = true;
+                            btn.innerText = '注销中';
+                        },
+                    });
+                })
+            })();
+        </script>
+    </body>
+</html>

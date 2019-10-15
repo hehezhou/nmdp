@@ -6,6 +6,8 @@
 		<title>NMDP</title>
 	</head>
 	<body>
+		<script src="./sources/js/post.js"></script>
+		<script src="./sources/js/get-name.js"></script>
 		<style>
 			* {
 				margin: 0;
@@ -37,16 +39,26 @@
 			<button onclick="location.href=location.origin+'/mosiyuan';">膜<strong style="color:black;">S<span style="color:red;">iyuan</span></strong></button>
 			<button onclick="location.href=location.origin+'/paint-board';">绘板</button>
 			<button onclick="location.href=location.origin+'/forty';">四十米长刀</button>
-			<button onclick="location.href=location.origin+'/login'">登录</button>
+			<button id="account"></button>
 			<div style="height: 15vh;"></div>
 		</div>
 		<script>
-			try {
-				new WebSocket(`wss://${location.host}/wss/`);
-			}
-			catch (e) {
-
-			}
+			(async () => {
+				let tag = 1;
+				try {
+					new WebSocket(`wss://${location.host}/wss/`);
+				}
+				catch (e) {
+					tag = 0;
+				}
+				if(tag && await getName() === '') tag = 0; 
+				let btn = document.getElementById('account');
+				btn.innerHTML = tag ? '账号管理' : '登录';
+				btn.addEventListener('click', () => {
+					if(tag) location.href = location.origin + '/account';
+					else location.href = location.origin + '/login';
+				});
+			})();
 		</script>
 	</body>
 </html>
