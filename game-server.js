@@ -163,7 +163,13 @@ module.exports = class GameServer {
 						this.playerDisconnect(session.username, 'session removed');
 					});
 					this.user.stopExpire(token);
+					let interval=setInterval(()=>{
+						if(webSocket.readyState===WS.OPEN){
+							webSocket.ping();
+						}
+					},10000);
 					webSocket.on('close', () => {
+						clearInterval(interval);
 						this.user.startExpire(token);
 					})
 					webSocket.on('ping', () => {
