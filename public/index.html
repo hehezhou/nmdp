@@ -51,7 +51,7 @@
 				catch (e) {
 					tag = 0;
 				}
-				if(tag && await getName() === '') tag = 0; 
+				if(tag && await getName() === '') tag = 0;
 				let btn = document.getElementById('account');
 				btn.innerHTML = tag ? '账号管理' : '登录';
 				btn.addEventListener('click', () => {
