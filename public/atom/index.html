@@ -7,6 +7,11 @@
         <link rel="stylesheet" href="./style.css">
     </head>
     <body>
+        <script src="../sources/js/post.js"></script>
+        <script src="../sources/js/get-name.js"></script>
+        <script>
+            (async () => {if(await getName() === '') location.href = `${location.origin}/login`;})();
+        </script>
         <script src="./map_maker.js"></script>
         <script src="./object.js"></script>
         <script src="./two_dim.js"></script>

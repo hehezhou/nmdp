@@ -831,6 +831,7 @@ async function run() {
     io.addEventListener('close', () => {
         if (tag === -1) return;
         alert(tag ? '连接断开' : '连接失败');
+        boom();
     });
     await new Promise(resolve => io.addEventListener('open', resolve));
     tag = 1;
