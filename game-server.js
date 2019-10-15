@@ -62,8 +62,8 @@ module.exports = class GameServer {
 							let url = req.url.endsWith('/') ? req.url.slice(0, -1) : req.url;
 							let inputToken;
 							(req.headers.cookie || '').split(';').forEach(str => {
-								let [key, value] = str.split('=', 2);
-								if (key === 'g') {
+								let [key, value] = str.split('=', 2).map(s=>s.trim());
+								if (key === 'g' && value !== undefined) {
 									inputToken = value;
 								}
 							});
@@ -109,7 +109,7 @@ module.exports = class GameServer {
 								}
 								case '/api/auth/logout': {
 									let session = inputToken ? this.user.getSession(inputToken) : undefined;
-									if(session === undefined){
+									if (session === undefined) {
 										throw new Error('Why?');
 									}
 									this.user.removeSession(session.username);
@@ -125,7 +125,7 @@ module.exports = class GameServer {
 							}
 							res.setHeader('Content-Type', 'text/plain;charset=utf-8');
 							res.writeHead(200);
-							res.write(`${url}\nstatus: 200 OK\nreponse time: ${Math.round(Math.random()**2*150)}ms`);
+							res.write(`${url}\nstatus: 200 OK\nreponse time: ${Math.round(Math.random() ** 2 * 150)}ms`);
 							res.end();
 						}
 						catch (e) {
@@ -163,11 +163,11 @@ module.exports = class GameServer {
 						this.playerDisconnect(session.username, 'session removed');
 					});
 					this.user.stopExpire(token);
-					let interval=setInterval(()=>{
-						if(webSocket.readyState===WS.OPEN){
+					let interval = setInterval(() => {
+						if (webSocket.readyState === WS.OPEN) {
 							webSocket.ping();
 						}
-					},10000);
+					}, 10000);
 					webSocket.on('close', () => {
 						clearInterval(interval);
 						this.user.startExpire(token);

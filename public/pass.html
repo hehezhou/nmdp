@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PASS</title>
+	<script src="./a.js"></script>
+</head>
+
+<body>
+	<script>
+		const body=document.body;
+		function clear(){
+			Array.from(body.children)
+			.forEach(c=>body.removeChild(c));
+		}
+		function write(content){
+			if(typeof content==='string'){
+				let p=document.createElement('p');
+				p.innerText=content;
+				write(p);
+			}
+			else{
+				body.appendChild(content);
+			}
+		}
+	</script>
+	<script src="./wr.js"></script>
+</body>
+
+</html>
