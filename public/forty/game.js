@@ -447,17 +447,15 @@ async function gameInterface(msg) {
                     if (data.smelting) {
                         if (!svgAttackMap.has(data.id)) {
                             let tmp1 = SVG.create('circle'),
-                                tmp2 = SVG.create('circle'),
-                                tmp3 = SVG.create('path'),
-                                tmp4 = SVG.create('g');
-                            svgAttackMap.set(data.id, tmp4);
-                            g_attack.appendChild(tmp4);
-                            tmp4.appendChild(tmp1);
-                            tmp4.appendChild(tmp2);
-                            tmp4.appendChild(tmp3);
+                                tmp2 = SVG.create('path'),
+                                tmp3 = SVG.create('g');
+                            svgAttackMap.set(data.id, tmp3);
+                            g_attack.appendChild(tmp3);
+                            tmp3.appendChild(tmp1);
+                            tmp3.appendChild(tmp2);
                         }
                         let now = svgAttackMap.get(data.id);
-                        let [circle1, circle2, path] = now.children;
+                        let [circle, path] = now.children;
                         nowStrokeColor = data.attackRestTime <= lastTime ?
                             'rgba(255, 56, 56, 0.8)'
                             : data.team === myTeam ?
@@ -465,10 +463,10 @@ async function gameInterface(msg) {
                                 : 'rgba(90, 90, 90, 0.8)';
                         nowFillColor = 'rgba(0, 0, 0, 0)';
                         nowLineWidth = fix(0.5);
-                        setStyle(circle2);
-                        circle2.setAttribute('cx', `${fix(data.y - Y)}`);
-                        circle2.setAttribute('cy', `${fix(data.x - X)}`);
-                        circle2.setAttribute('r', `${fix(data.knifeRadius)}`);
+                        setStyle(circle);
+                        circle.setAttribute('cx', `${fix(data.y - Y)}`);
+                        circle.setAttribute('cy', `${fix(data.x - X)}`);
+                        circle.setAttribute('r', `${fix(data.knifeRadius)}`);
                         nowFillColor =
                             data.attackRestTime <= lastTime ?
                                 'rgba(255, 56, 56, 0.5)'
@@ -476,16 +474,14 @@ async function gameInterface(msg) {
                                     `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`
                                     : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`;
                         nowStrokeColor = 'rgba(0, 0, 0, 0)';
-                        setStyle(circle1);
-                        circle1.setAttribute('cx', `${fix(data.y - Y)}`);
-                        circle1.setAttribute('cy', `${fix(data.x - X)}`);
-                        circle1.setAttribute('r', `${fix(playerRadius)}`);
                         nowLineWidth = 0;
                         setStyle(path);
                         let str = '';
                         str += `M${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
-                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y - 0.001)},${fix(data.x - X - playerRadius)}`;
-                        str += `L${fix(data.y - Y - 0.001)} ${fix(data.x - X - data.knifeRadius)} `;
+                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y)},${fix(data.x - X + playerRadius)}`;
+                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 1,1 ${fix(data.y - Y)},${fix(data.x - X - playerRadius)}`;
+                        str += `L${fix(data.y - Y)} ${fix(data.x - X - data.knifeRadius)} `;
+                        str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 1,0 ${fix(data.y - Y)},${fix(data.x - X + data.knifeRadius)}`;
                         str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 1,0 ${fix(data.y - Y)},${fix(data.x - X - data.knifeRadius)}`;
                         str += `L${fix(data.y - Y)} ${fix(data.x - X - playerRadius)} `;
                         str += `Z`;
