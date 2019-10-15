@@ -62,7 +62,7 @@ module.exports = class GameServer {
 						const { username, password } = JSON.parse(data);
 						try {
 							let token = this.user.login(username, password);
-							res.setHeader('Set-Cookie', [`g=${token}; HttpOnly; Secure`]);
+							res.setHeader('Set-Cookie', [`g=${token}; Path=/; HttpOnly; Secure`]);
 							res.writeHead(200);
 							res.end();
 						}
