@@ -1,4 +1,10 @@
-﻿function __gid({ x, y }) {
+﻿try {
+    new WebSocket(`wss://${location.host}/wss/`);
+}
+catch (e) {
+
+}
+function __gid({ x, y }) {
     return `g_${x}_${y}`;
 }
 function __xy(gid) {
@@ -263,7 +269,7 @@ function genAI(difficulty) {
                         d = Math.round(d + randFloat(-d * difficulty, 5 * d * difficulty));
                         lx = tpos.x - d, rx = tpos.x + d;
                         ly = tpos.y - d, ry = tpos.y + d;
-                        if(lx > rx || ly > ry) continue;
+                        if (lx > rx || ly > ry) continue;
                         if (lx < 0) lx = 0;
                         if (ly < 0) ly = 0;
                         if (rx < 0) rx = 0;
@@ -314,8 +320,8 @@ function genAI(difficulty) {
 /**
  * getVarName({qwq}) returns 'qwq'
  */
-function getVarName(obj){
-    for(let i in obj){
+function getVarName(obj) {
+    for (let i in obj) {
         return i;
     }
 }
@@ -447,18 +453,18 @@ async function work() {
      * @param {0|1} type 
      */
     function save(type) {
-        let obj = {init: __g_c, tag: type};
-        if(type) {
-            obj.information = {n, m, playerCnt, humanCnt, difficulty, restCnt, isAlive, playerColor, emptyColor, round, nowPlayer};
+        let obj = { init: __g_c, tag: type };
+        if (type) {
+            obj.information = { n, m, playerCnt, humanCnt, difficulty, restCnt, isAlive, playerColor, emptyColor, round, nowPlayer };
             obj.map = map;
         }
         localStorage.setItem('game-area-save', JSON.stringify({ areaMapData: obj }));
     }
     function load(data) {
-        if(data.init === undefined) return 0;
+        if (data.init === undefined) return 0;
         __g_c = data.init;
-        if(data.tag) {
-            ({n, m, playerCnt, humanCnt, difficulty, restCnt, isAlive, playerColor, emptyColor, round, nowPlayer} = data.information);
+        if (data.tag) {
+            ({ n, m, playerCnt, humanCnt, difficulty, restCnt, isAlive, playerColor, emptyColor, round, nowPlayer } = data.information);
             map = JSON.parse(JSON.stringify(data.map));
             return 1;
         }
@@ -480,7 +486,7 @@ async function work() {
                 for (let j = 0; j < m; j++) {
                     if (map[i][j] == GRID_EMPTY) setColor({ x: i, y: j }, emptyColor);
                     else setColor({ x: i, y: j }, playerColor[map[i][j]]);
-                    update({x: i, y: j}, map);
+                    update({ x: i, y: j }, map);
                 }
             // await new Promise((resolve) => requestAnimationFrame(resolve));
         }
@@ -602,7 +608,7 @@ async function work() {
     showRestart();
     function die(playerId) {
         return new Promise(async (resolve, reject) => {
-            if(document.getElementById("dieEffect").checked) {
+            if (document.getElementById("dieEffect").checked) {
                 setHint(`${playerString(playerId)} 失败了！`);
                 let SYM_GG = Symbol('GG');
                 for (let _ = 0; _ < 3; _++) {
@@ -729,18 +735,18 @@ function restartAddEvent() {
     });
 }
 
-document.addEventListener('keydown', function(event) {
-    if(event.ctrlKey || event.shiftKey || event.altKey) {
+document.addEventListener('keydown', function (event) {
+    if (event.ctrlKey || event.shiftKey || event.altKey) {
         return;
     }
-    if(event.key === ' ' && pauseButton.style.display !== 'none') {
+    if (event.key === ' ' && pauseButton.style.display !== 'none') {
         event.preventDefault();
         pauseButton.click();
     }
-    if(event.key === 'r' && restartButton.style.display !== 'none') {
+    if (event.key === 'r' && restartButton.style.display !== 'none') {
         restartButton.click();
     }
-    if(event.key === 'Enter' && enterButton.style.display !== 'none') {
+    if (event.key === 'Enter' && enterButton.style.display !== 'none') {
         event.preventDefault();
         enterButton.click();
     }

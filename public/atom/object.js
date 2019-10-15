@@ -1,3 +1,3 @@
-size=function size(object){
+size = function size(object) {
 	return Object.keys(object).length;
 }

@@ -53,7 +53,7 @@ const record = ((x, id, f) => ((message) => {
 async function work() {
     let tag = 0;
     io.addEventListener('close', () => {
-        if(tag === -1) return;
+        if (tag === -1) return;
         alert(tag ? '连接断开' : '连接失败');
     });
     await new Promise(resolve => io.addEventListener('open', resolve));

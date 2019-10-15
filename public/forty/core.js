@@ -120,7 +120,7 @@ const GAME = (() => {
             if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if (this.attackState.time <= 0) {
-                    if(this.effects.some(data => data.id === EFFECT.SMELTING)) {
+                    if (this.effects.some(data => data.id === EFFECT.SMELTING)) {
                         this.attackState.time = 2;
                     }
                     else if (this.effects.some(data => data.id === EFFECT.BROADSWORD)) this.attackState = new AfterAttack({ time: 1.5 });
@@ -151,7 +151,7 @@ const GAME = (() => {
                 data.id = i[0];
                 data.onattack = i[1].attackState !== Waiting;
                 if (i[1].attackState !== Waiting) {
-                    if(i[1].attackState instanceof BeforeAttack) {
+                    if (i[1].attackState instanceof BeforeAttack) {
                         data.attackRestTime = i[1].attackState.time;
                         data.attackTheta = i[1].attackState.angle;
                     }
@@ -178,7 +178,7 @@ const GAME = (() => {
                         break;
                     }
                 }
-                for(let j of i[1].effects) {
+                for (let j of i[1].effects) {
                     transferEffect[j.id](data);
                 }
                 ans.push(data);
@@ -210,13 +210,13 @@ const GAME = (() => {
                     speed: new vector(i[1].speed),
                     targetSpeed: new vector(i[1].target_speed),
                     attackState: ((data) => {
-                        if(data.type === 0) {
+                        if (data.type === 0) {
                             return Waiting;
                         }
-                        else if(data.type === 1) {
+                        else if (data.type === 1) {
                             return new BeforeAttack(data);
                         }
-                        else if(data.type === 2) {
+                        else if (data.type === 2) {
                             return new AfterAttack(data);
                         }
                     })(i[1].attack_state),

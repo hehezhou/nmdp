@@ -1,5 +1,5 @@
 const DRAW = {
-    'mountain': function (ctx, color, { x:y, y:x }) {
+    'mountain': function (ctx, color, { x: y, y: x }) {
         ctx.clearRect(x, y, 50, 50);
         ctx.strokeStyle = color;
         ctx.lineWidth = 1;

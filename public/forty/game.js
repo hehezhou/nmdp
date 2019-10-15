@@ -613,7 +613,7 @@ async function gameInterface(msg) {
                     tmp1.setAttribute('dominant-baseline', `middle`);
                     tmp2.setAttribute('text-anchor', `middle`);
                     tmp2.setAttribute('dominant-baseline', `middle`);
-                    if(data.id === playerIndex) {
+                    if (data.id === playerIndex) {
                         let tmp3 = SVG.create('text');
                         tmp3.setAttribute('font-size', `${fix(fontSize)}`);
                         tmp3.setAttribute('text-anchor', `middle`);
@@ -633,7 +633,7 @@ async function gameInterface(msg) {
                 now.name.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + textDis + HPheight + fontSize / 2)}`);
                 now.score.setAttribute('y', `${fix(data.x - X + HPdis + playerRadius + textDis + HPheight + 3 * fontSize / 2)}`);
                 now.score.innerHTML = `${Math.floor(data.score)}分`;
-                if(playerIndex === data.id) {
+                if (playerIndex === data.id) {
                     if (data.onattack) {
                         nowFillColor = nowStrokeColor = data.attackRestTime < 0 ? 'red' : 'black';
                         setStyle(now.cool);
@@ -651,7 +651,7 @@ async function gameInterface(msg) {
             for (let i of deleteList) {
                 svgTextMap.get(i).score.remove();
                 svgTextMap.get(i).name.remove();
-                if(i === playerIndex) svgTextMap.get(i).cool.remove();
+                if (i === playerIndex) svgTextMap.get(i).cool.remove();
                 svgTextMap.delete(i);
             }
             standingBox.innerHTML = '';
@@ -833,7 +833,7 @@ function loadSettings() {
 async function run() {
     let tag = 0;
     io.addEventListener('close', () => {
-        if(tag === -1) return;
+        if (tag === -1) return;
         alert(tag ? '连接断开' : '连接失败');
     });
     await new Promise(resolve => io.addEventListener('open', resolve));
