@@ -130,7 +130,7 @@ class User {
 	changePassword(username,oldPw,newPw){
 		username=this.checkUsername(username);
 		oldPw=this.checkPassword(oldPw);
-		newPw=this.changePassword(newPw);
+		newPw=this.checkPassword(newPw);
 		if(!this.verify(username,oldPw)){
 			throw new Error('username or password is wrong');
 		}
