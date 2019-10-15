@@ -3,13 +3,11 @@ async function getName() {
         ajaxPost({
             url: `${location.origin}/api/auth/refresh`,
             data: '{}',
-            fnSucceed: (data) => {
-                resolve(data);
-            },
-            fnFail: (data) => {
-                if(data.status === 401) resolve('');
-                else reject(data.text);
-            }
+            fnSucceed: resolve,
+            fnFail: resolve,
         });
     });
+    let tmp = document.cookie.split(';').map(data => data.trim().split('=')).filter(data => data[0] === 'n');
+    if(tmp.length === 0) return '';
+    else return tmp[tmp.length - 1][1];
 }
