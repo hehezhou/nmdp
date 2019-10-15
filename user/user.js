@@ -18,7 +18,7 @@ class User {
 				.map(s => s
 					.split(' ', 2)
 					.filter(t => t.length !== 0)
-					.trim()
+					.map(t => t.trim())
 				)
 				.filter(a => a.length === 2)
 		);
