@@ -68,6 +68,9 @@ module.exports = function CLI(gameServer) {
 		register(username,password){
 			gameServer.user.register(username,password);
 		},
+		encode(username,password){
+			return `${gameServer.user.encode(username)}${password!==undefined?` ${gameServer.user.encode(username,password)}`:''}`;
+		},
 		help: '(NO HELP!)',
 		mosiyuan: 'Link: https://lmoliver.github.io/mosiyuan',
 	};

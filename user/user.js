@@ -15,8 +15,11 @@ class User {
 			(await promisify(fs.readFile)('./user/users.dat', { encoding: 'utf-8' }))
 				.split('\n')
 				.filter(s => s.length !== 0)
-				.map(s => s.split(' ', 2))
-				.filter(a => a.length !== 2)
+				.map(s => s
+					.split(' ', 2)
+					.filter(t => t.length !== 0)
+				)
+				.filter(a => a.length === 2)
 		);
 	}
 	checkUsername(input) {
@@ -126,7 +129,7 @@ class User {
 		if (session !== undefined) {
 			return session.username;
 		}
-		else{
+		else {
 			throw new Error('Why?');
 		}
 	}
