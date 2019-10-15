@@ -53,10 +53,7 @@ module.exports = class GameServer {
 	listen(port) {
 		this.user.init().then(() => {
 			const server = https.createServer(options, (req, res) => {
-				if (req.method === 'OPTION') {
-
-				}
-				else if (req.method === 'POST') {
+				if (req.method === 'POST') {
 					let data = '';
 					req.on('data', chunk => {
 						data += chunk;
@@ -64,13 +61,9 @@ module.exports = class GameServer {
 					req.on('end', () => {
 						const { username, password } = JSON.parse(data);
 						try {
-							let og = req.headers.origin || 'https://orzsiyuan.org';
 							let token = this.user.login(username, password);
-							res.writeHead(200, {
-								'Access-Control-Allow-Origin': req.headers.origin,
-								'Access-Control-Allow-Credentials': true,
-								'Set-Cookie': `g=${token}; Domain=${og}; HttpOnly; Secure`,
-							});
+							res.setHeader('Set-Cookie', [`g=${token}; HttpOnly; Secure`]);
+							res.writeHead(200);
 							res.end();
 						}
 						catch (e) {

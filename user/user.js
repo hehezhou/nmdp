@@ -48,7 +48,6 @@ class User {
 		let nm = vaild.string(username, { length: { min: 3, max: 20 }, hint: 'username' });
 		let pw = vaild.string(password, { length: { min: 6, max: 64 }, hint: 'password' });
 		let x = this.encode(nm, pw);
-		console.log(nm, pw, x);
 		if (!this.users.has(x)) {
 			throw new Error('username or password is wrong');
 		}
