@@ -1,6 +1,6 @@
 const WS = require('ws');
 const https = require('https');
-const User = require('./user/user.js');
+const UserD = require('./userD.js');
 const fs = require('fs');
 const vaild = require('./utils/vaild.js');
 const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
@@ -27,18 +27,26 @@ module.exports = class GameServer {
 	constructor(gameData) {
 		this.games = Object.create(null);
 		this.matchs = Object.create(null);
-		this.user = new User();
+		this.userD = new UserD();
 		if (gameData !== undefined) {
-			for (let id in gameData.games) {
-				let { type, data } = gameData.games[id];
-				this.createGame(id, type, data, true);
-			}
-			this.matchs = vaild.object(gameData.matchs, { hint: 'matchs' });
-			for (let id in this.matchs) {
-				let gameID = this.matchs[id].gameID;
-				if (gameID !== null) {
-					this.createGameForMatch(id, gameID);
+			const {games,matchs,userD}=gameData;
+			if(games!==undefined){
+				for (let id in games) {
+					let { type, data } = games[id];
+					this.createGame(id, type, data, true);
 				}
+			}
+			if(matchs!==undefined){
+				this.matchs = vaild.object(matchs, { hint: 'matchs' });
+				for (let id in this.matchs) {
+					let gameID = this.matchs[id].gameID;
+					if (gameID !== null) {
+						this.createGameForMatch(id, gameID);
+					}
+				}
+			}
+			if(userD!==undefined){
+				this.userD = gameData.user === undefined ? new UserD() : UserD.fromJSON(gameData.user);
 			}
 		}
 		this.players = Object.create(null);
@@ -50,92 +58,90 @@ module.exports = class GameServer {
 		}, 0);
 	}
 	listen(port) {
-		this.user.init().then(() => {
-			const server = https.createServer(options, (req, res) => {
-				let data = '';
-				req.on('data', chunk => {
-					data += chunk;
-				});
-				req.on('end', () => {
-					if (req.method === 'POST') {
-						try {
-							let url = req.url.endsWith('/') ? req.url.slice(0, -1) : req.url;
-							let inputToken;
-							(req.headers.cookie || '').split(';').forEach(str => {
-								let [key, value] = str.split('=', 2).map(s=>s.trim());
-								if (key === 'g' && value !== undefined) {
-									inputToken = value;
+		const server = https.createServer(options, (req, res) => {
+			let data = '';
+			req.on('data', chunk => {
+				data += chunk;
+			});
+			req.on('end', () => {
+				if (req.method === 'POST') {
+					try {
+						let url = req.url.endsWith('/') ? req.url.slice(0, -1) : req.url;
+						let inputToken;
+						(req.headers.cookie || '').split(';').forEach(str => {
+							let [key, value] = str.split('=', 2).map(s => s.trim());
+							if (key === 'g' && value !== undefined) {
+								inputToken = value;
+							}
+						});
+						switch (url) {
+							case '/api/auth/login': {
+								const { username, password } = JSON.parse(data);
+								let n = this.userD.checkUsername(username);
+								let token = this.userD.login(n, password);
+								res.setHeader('Set-Cookie', [
+									`g=${token}; Path=/; HttpOnly; Secure`,
+									`n=${n}; Path=/; Secure`,
+								]);
+								break;
+							}
+							case '/api/auth/change-password': {
+								const { oldPassword, newPassword } = JSON.parse(data);
+								let session = inputToken ? this.userD.getSession(inputToken) : undefined;
+								if (session === undefined) {
+									throw new Error('login first');
 								}
-							});
-							switch (url) {
-								case '/api/auth/login': {
-									const { username, password } = JSON.parse(data);
-									let n = this.user.checkUsername(username);
-									let token = this.user.login(n, password);
-									res.setHeader('Set-Cookie', [
-										`g=${token}; Path=/; HttpOnly; Secure`,
-										`n=${n}; Path=/; Secure`,
-									]);
-									break;
-								}
-								case '/api/auth/change-password': {
-									const { oldPassword, newPassword } = JSON.parse(data);
-									let session = inputToken ? this.user.getSession(inputToken) : undefined;
-									if (session === undefined) {
-										throw new Error('login first');
-									}
-									this.user.changePassword(session.username, oldPassword, newPassword);
-									res.setHeader('Set-Cookie', [
-										`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
-										`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
-									]);
-									break;
-								}
-								case '/api/auth/refresh': {
-									let session = inputToken ? this.user.getSession(inputToken) : undefined;
-									if (session === undefined) {
-										res.setHeader('Set-Cookie', [
-											`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
-											`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
-										]);
-									}
-									else {
-										res.setHeader('Set-Cookie', [
-											`g=${session.token}; Path=/; HttpOnly; Secure`,
-											`n=${session.username}; Path=/; Secure`,
-										]);
-									}
-									break;
-								}
-								case '/api/auth/logout': {
-									let session = inputToken ? this.user.getSession(inputToken) : undefined;
-									if (session === undefined) {
-										throw new Error('Why?');
-									}
-									this.user.removeSession(session.username);
+								this.userD.changePassword(session.username, oldPassword, newPassword);
+								res.setHeader('Set-Cookie', [
+									`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
+									`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
+								]);
+								break;
+							}
+							case '/api/auth/refresh': {
+								let session = inputToken ? this.userD.getSession(inputToken) : undefined;
+								if (session === undefined) {
 									res.setHeader('Set-Cookie', [
 										`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
 										`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
 									]);
-									break;
 								}
-								default: {
+								else {
+									res.setHeader('Set-Cookie', [
+										`g=${session.token}; Path=/; HttpOnly; Secure`,
+										`n=${session.username}; Path=/; Secure`,
+									]);
+								}
+								break;
+							}
+							case '/api/auth/logout': {
+								let session = inputToken ? this.userD.getSession(inputToken) : undefined;
+								if (session === undefined) {
 									throw new Error('Why?');
 								}
+								this.userD.removeSession(session.username);
+								res.setHeader('Set-Cookie', [
+									`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
+									`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
+								]);
+								break;
 							}
-							res.setHeader('Content-Type', 'text/plain;charset=utf-8');
-							res.writeHead(200);
-							res.write(`${url}\nstatus: 200 OK\nreponse time: ${Math.round(Math.random() ** 2 * 150)}ms`);
-							res.end();
+							default: {
+								throw new Error('Why?');
+							}
 						}
-						catch (e) {
-							res.setHeader('Content-Type', 'text/plain;charset=utf-8');
-							res.writeHead(401);
-							res.write(e.message === 'Why?' ? '服务器被 D 没了' : e.message);
-							res.end();
-						}
+						res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+						res.writeHead(200);
+						res.write(`${url}\nstatus: 200 OK\nreponse time: ${Math.round(Math.random() ** 2 * 150)}ms`);
+						res.end();
 					}
-				});
+					catch (e) {
+						res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+						res.writeHead(401);
+						res.write(e.message === 'Why?' ? '服务器被 D 没了' : e.message);
+						res.end();
+					}
+				}
 			});
 			server.listen(port);
 			this.webSocketServer = new WS.Server({ server: server });
@@ -155,14 +161,14 @@ module.exports = class GameServer {
 					if (token === undefined) {
 						throw new Error('Why?');
 					}
-					let session = this.user.getSession(token);
+					let session = this.userD.getSession(token);
 					if (session === undefined) {
 						throw new Error('Why?');
 					}
 					session.on('remove', () => {
 						this.playerDisconnect(session.username, 'session removed');
 					});
-					this.user.stopExpire(token);
+					this.userD.stopExpire(token);
 					let interval = setInterval(() => {
 						if (webSocket.readyState === WS.OPEN) {
 							webSocket.ping();
@@ -170,7 +176,7 @@ module.exports = class GameServer {
 					}, 10000);
 					webSocket.on('close', () => {
 						clearInterval(interval);
-						this.user.startExpire(token);
+						this.userD.startExpire(token);
 					})
 					webSocket.on('ping', () => {
 						webSocket.pong();
@@ -390,6 +396,7 @@ module.exports = class GameServer {
 		let result = {
 			games: {},
 			matchs: this.matchs,
+			userD: this.userD.toJSON(),
 		};
 		for (let id in this.games) {
 			let game = this.games[id];

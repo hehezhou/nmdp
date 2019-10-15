@@ -65,11 +65,11 @@ module.exports = function CLI(gameServer) {
 		create_match(id, type = id, settings = {}) {
 			gameServer.createMatch(id, type, settings);
 		},
-		register(username,password){
-			gameServer.user.register(username,password);
+		get userCount(){
+			return gameServer.userD.users.size;
 		},
-		encode(username,password){
-			return `${gameServer.user.encode(username)}${password!==undefined?` ${gameServer.user.encode(username,password)}`:''}`;
+		register(username,password){
+			gameServer.userD.register(username,password);
 		},
 		help: '(NO HELP!)',
 		mosiyuan: 'Link: https://lmoliver.github.io/mosiyuan',

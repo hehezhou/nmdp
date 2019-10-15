@@ -1,27 +1,18 @@
-const promisify = require('../utils/promisify.js');
+const promisify = require('./utils/promisify.js');
 const fs = require('fs');
 const crypto = require('crypto');
-const vaild = require('../utils/vaild.js');
+const vaild = require('./utils/vaild.js');
 const SESSION_TOKEN_EXPIRE_TIME = 60 * 1000;
-class User {
-	constructor() {
+class UserD {
+	constructor(users = new Map(), salt = this.genToken()) {
 		this.tokens = new Map();
 		this.sessions = new Map();
+		this.users = users;
+		this.salt = vaild.string(salt, { hint: 'salt' });
 		this.ops = 0;
 	}
 	async init() {
 		this.salt = await promisify(fs.readFile)('./user/salt.dat', { encoding: 'utf-8' });
-		this.users = new Map(
-			(await promisify(fs.readFile)('./user/users.dat', { encoding: 'utf-8' }))
-				.split('\n')
-				.filter(s => s.length !== 0)
-				.map(s => s
-					.split(' ', 2)
-					.filter(t => t.length !== 0)
-					.map(t => t.trim())
-				)
-				.filter(a => a.length === 2)
-		);
 	}
 	checkUsername(input) {
 		return vaild.string(input, { length: { min: 3, max: 20 }, hint: 'username' });
@@ -78,23 +69,26 @@ class User {
 		}
 		return session;
 	}
-	addSession(username) {
-		this.clean();
+	genToken() {
 		let tkAr = [];
 		crypto.randomBytes(32).forEach(x => tkAr.push((x >> 4).toString(16), (x & 0xf).toString(16)));
-		let token = tkAr.join('');
+		return tkAr.join('');
+	}
+	addSession(username) {
+		this.clean();
+		let token = this.genToken();
 		let session = {
 			username,
 			token,
 			expire: Date.now() + SESSION_TOKEN_EXPIRE_TIME,
-			callbacks:{
-				remove:[],
+			callbacks: {
+				remove: [],
 			},
-			on(event,callback){
+			on(event, callback) {
 				this.callbacks[event].push(callback);
 			},
-			emit(event){
-				this.callbacks[event].forEach(c=>c.call(this));
+			emit(event) {
+				this.callbacks[event].forEach(c => c.call(this));
 			},
 		}
 		if (this.sessions.has(username)) {
@@ -112,7 +106,7 @@ class User {
 			session.emit('remove');
 		}
 	}
-	verify(username,password){
+	verify(username, password) {
 		let key = this.encode(username);
 		let x = this.users.get(key);
 		return x === this.encode(username, password);
@@ -120,22 +114,22 @@ class User {
 	login(username, password) {
 		username = this.checkUsername(username);
 		password = this.checkPassword(password);
-		if(!this.verify(username,password)){
+		if (!this.verify(username, password)) {
 			throw new Error('username or password is wrong');
 		}
 		let token = this.addSession(username);
 		this.clean();
 		return token;
 	}
-	changePassword(username,oldPw,newPw){
-		username=this.checkUsername(username);
-		oldPw=this.checkPassword(oldPw);
-		newPw=this.checkPassword(newPw);
-		if(!this.verify(username,oldPw)){
+	changePassword(username, oldPw, newPw) {
+		username = this.checkUsername(username);
+		oldPw = this.checkPassword(oldPw);
+		newPw = this.checkPassword(newPw);
+		if (!this.verify(username, oldPw)) {
 			throw new Error('username or password is wrong');
 		}
 		this.removeSession(username);
-		this.users.set(this.encode(username),this.encode(username,newPw));
+		this.users.set(this.encode(username), this.encode(username, newPw));
 		this.clean();
 	}
 	startExpire(token) {
@@ -152,5 +146,15 @@ class User {
 		}
 		this.clean();
 	}
+	toJSON() {
+		return {
+			users: JSON.stringify(Array.from(this.users)),
+			salt: this.salt,
+		};
+	}
+	static fromJSON(data) {
+		const { users, salt } = data;
+		return new UserD(new Map(users), salt);
+	}
 };
-module.exports = User;
+module.exports = UserD;
