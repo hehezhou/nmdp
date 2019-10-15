@@ -59,9 +59,13 @@ module.exports = class GameServer {
 					});
 					req.on('end', () => {
 						const { username, password } = JSON.parse(data);
+						let n=this.user.checkUsername(username);
 						try {
-							let token = this.user.login(username, password);
-							res.setHeader('Set-Cookie', [`g=${token}; Path=/; HttpOnly; Secure`]);
+							let token = this.user.login(n, password);
+							res.setHeader('Set-Cookie', [
+								`g=${token}; Path=/; HttpOnly; Secure`,
+								`n=${n}; Path=/; Secure`,
+							]);
 							res.writeHead(200);
 							res.end();
 						}
@@ -91,12 +95,18 @@ module.exports = class GameServer {
 					if (token === undefined) {
 						throw new Error('Why?');
 					}
-					let playerID = this.user.getUsername(token);
+					let session = this.user.getSession(token);
+					if(session===undefined){
+						throw new Error('Why?');
+					}
+					session.on('remove',()=>{
+						this.playerDisconnect(session.username, 'session removed');
+					});
 					this.user.stopExpire(token);
 					webSocket.on('close', () => {
 						this.user.startExpire(token);
 					})
-					this.playerConnect(playerID, webSocket, request);
+					this.playerConnect(session.username, webSocket, request);
 				}
 				catch (e) {
 					webSocket.send(JSON.stringify(['force_quit', 'login first']))

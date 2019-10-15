@@ -79,6 +79,7 @@ class User {
 		return session;
 	}
 	addSession(username) {
+		this.clean();
 		let tkAr = [];
 		crypto.randomBytes(32).forEach(x => tkAr.push((x >> 4).toString(16), (x & 0xf).toString(16)));
 		let token = tkAr.join('');
@@ -86,6 +87,15 @@ class User {
 			username,
 			token,
 			expire: Date.now() + SESSION_TOKEN_EXPIRE_TIME,
+			callbacks:{
+				remove:[],
+			},
+			on(event,callback){
+				this.callbacks[event].push(callback);
+			},
+			emit(event){
+				this.callbacks[event].forEach(c=>c.call(this));
+			},
 		}
 		if (this.sessions.has(username)) {
 			this.removeSession(username);
@@ -99,40 +109,48 @@ class User {
 		if (session !== undefined) {
 			this.sessions.delete(username);
 			this.tokens.delete(session.token);
+			session.emit('remove');
 		}
+	}
+	verify(username,password){
+		let key = this.encode(username);
+		let x = this.users.get(key);
+		return x === this.encode(username, password);
 	}
 	login(username, password) {
 		username = this.checkUsername(username);
 		password = this.checkPassword(password);
-		let key = this.encode(username);
-		let x = this.users.get(key);
-		if (x !== this.encode(username, password)) {
+		if(!this.verify(username,password)){
 			throw new Error('username or password is wrong');
 		}
 		let token = this.addSession(username);
 		this.clean();
 		return token;
 	}
+	changePassword(username,oldPw,newPw){
+		username=this.checkUsername(username);
+		oldPw=this.checkPassword(oldPw);
+		newPw=this.changePassword(newPw);
+		if(!this.verify(username,oldPw)){
+			throw new Error('username or password is wrong');
+		}
+		this.removeSession(username);
+		this.users.set(this.encode(username),this.encode(username,newPw));
+		this.clean();
+	}
 	startExpire(token) {
 		let session = this.getSession(token);
 		if (session !== undefined) {
 			session.expire = Date.now() + SESSION_TOKEN_EXPIRE_TIME;
 		}
+		this.clean();
 	}
 	stopExpire(token) {
 		let session = this.getSession(token);
 		if (session !== undefined) {
 			session.expire = Infinity;
 		}
-	}
-	getUsername(token) {
-		let session = this.getSession(token);
-		if (session !== undefined) {
-			return session.username;
-		}
-		else {
-			throw new Error('Why?');
-		}
+		this.clean();
 	}
 };
 module.exports = User;
