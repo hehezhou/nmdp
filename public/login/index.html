@@ -81,7 +81,7 @@
                     try {
                         await new Promise((resolve, reject) => {
                             ajaxPost({
-                                url: `https://${location.hostname}:817/api/auth/login`, data: JSON.stringify({username: userNameData, password: keyData}),
+                                url: `https://${location.host}/api/auth/login`, data: JSON.stringify({username: userNameData, password: keyData}),
                                 fnSucceed: (data) => {
                                     if(data === '') msg.innerText = '登录成功', history.go(-1), resolve(true);
                                     else msg.innerText = data, resolve(false);
