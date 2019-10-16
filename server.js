@@ -32,7 +32,7 @@ function loadSaveFile(path) {
 			return (GameServer.unserialization(result.toString()));
 		})
 		.catch(error => {
-			console.warn(`! invalid save file ${path}`);
+			console.error(`! invalid save file ${path}`);
 			console.error(error);
 			throw error;
 		});
@@ -44,7 +44,7 @@ async function clearSaveFile(path) {
 		.map(parseFileName)
 		.filter(info => info !== null && info.prefix === 'save')
 		.sort((a, b) => b.time - a.time);
-	let [, ...useless] = infos;
+	let useless = infos.slice(5);
 	await Promise.all(useless.map(info => {
 		let name = path + info.fileName;
 		return promisify(fs.unlink)(name);
@@ -64,10 +64,9 @@ async function loadSaveDir(path) {
 			await clearSaveFile(path);
 			return server;
 		}
-		catch (e) {
-			await promisify(fs.unlink)(name);
-		}
+		catch (e) {}
 	}
+	await clearSaveFile(path);
 	throw new Error('no save files');
 }
 
@@ -92,41 +91,41 @@ async function loadGameServer(saveUrl) {
 
 module.exports = class Server {
 	constructor() {
-		this.port=null;
+		this.port = null;
 		loadGameServer()
-		.then(gameServer=>{
-			if(this.port){
-				gameServer.listen(this.port);
-			}
-			this.gameServer = gameServer;
+			.then(gameServer => {
+				if (this.port) {
+					gameServer.listen(this.port);
+				}
+				this.gameServer = gameServer;
 
-			setInterval(()=>{
-				this.save();
-			}, 60000);
-
-			CLI(gameServer)
-				.on('save',()=>{
+				setInterval(() => {
 					this.save();
-				})
-				.on('close',()=>{
-					this.exit();
-				});
-		});
+				}, 60000);
+
+				CLI(gameServer)
+					.on('save', () => {
+						this.save();
+					})
+					.on('close', () => {
+						this.exit();
+					});
+			});
 	}
-	async save(){
+	async save() {
 		const result = await promisify(zlib.gzip)(this.gameServer.serialization());
-		try{
+		try {
 			await promisify(fs.mkdir)(PATH);
 		}
-		catch(error){
-			if(error.code!=='EEXIST'){
+		catch (error) {
+			if (error.code !== 'EEXIST') {
 				throw error;
 			}
 		}
 		await promisify(fs.writeFile)(PATH + genFileName('save'), result);
 		return await clearSaveFile(PATH);
 	}
-	async exit(){
+	async exit() {
 		try {
 			await this.save();
 			process.exit(0);
@@ -137,8 +136,8 @@ module.exports = class Server {
 		}
 	}
 	listen(port) {
-		this.port=port;
-		if(this.gameServer!==undefined){
+		this.port = port;
+		if (this.gameServer !== undefined) {
 			this.gameServer.listen(port);
 		}
 	}

@@ -148,7 +148,7 @@ class UserD {
 	}
 	toJSON() {
 		return {
-			users: JSON.stringify(Array.from(this.users)),
+			users: Array.from(this.users),
 			salt: this.salt,
 		};
 	}
