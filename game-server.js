@@ -25,9 +25,11 @@ const loadGame = (cache => name => {
 })(new Map());
 function parseCookie(cookie){
 	let result=new Map();
-	cookie.split(';').map(str=>str.split('=',2).map(s=>s.trim())).filter(([,v])=>v!==undefined).forEach(([key,value])=>{
-		result.set(key,value);
-	});
+	if(cookie!==undefined){
+		cookie.split(';').map(str=>str.split('=',2).map(s=>s.trim())).filter(([,v])=>v!==undefined).forEach(([key,value])=>{
+			result.set(key,value);
+		});
+	}
 	return result;
 }
 module.exports = class GameServer {
