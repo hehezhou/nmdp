@@ -23,6 +23,13 @@ const loadGame = (cache => name => {
 		throw new Error('Invaild game name');
 	}
 })(new Map());
+function parseCookie(cookie){
+	let result=new Map();
+	cookie.split(';').map(str=>str.split('=',2).map(s=>s.trim())).filter(([,v])=>v!==undefined).forEach(([key,value])=>{
+		result.set(key,value);
+	});
+	return result;
+}
 module.exports = class GameServer {
 	constructor(gameData) {
 		this.games = Object.create(null);
@@ -67,13 +74,7 @@ module.exports = class GameServer {
 				if (req.method === 'POST') {
 					try {
 						let url = req.url.endsWith('/') ? req.url.slice(0, -1) : req.url;
-						let inputToken;
-						(req.headers.cookie || '').split(';').forEach(str => {
-							let [key, value] = str.split('=', 2).map(s => s.trim());
-							if (key === 'g' && value !== undefined) {
-								inputToken = value;
-							}
-						});
+						let inputToken = parseCookie(req.headers.cookie).get('g');
 						switch (url) {
 							case '/api/auth/login': {
 								const { username, password } = JSON.parse(data);
@@ -152,13 +153,7 @@ module.exports = class GameServer {
 				if (cookies === undefined) {
 					throw new Error('Why?');
 				}
-				let token;
-				cookies.split(';').forEach(str => {
-					let [key, value] = str.split('=', 2);
-					if (key === 'g') {
-						token = value;
-					}
-				});
+				let token = parseCookie(cookies).get('g');
 				if (token === undefined) {
 					throw new Error('Why?');
 				}
@@ -185,7 +180,7 @@ module.exports = class GameServer {
 				this.playerConnect(session.username, webSocket, request);
 			}
 			catch (e) {
-				webSocket.send(JSON.stringify(['force_quit', 'login first']))
+				webSocket.send(JSON.stringify(['force_quit',e.message==='Why?'?'login first':e.message]))
 				webSocket.close();
 			}
 		});
