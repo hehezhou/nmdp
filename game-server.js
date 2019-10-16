@@ -46,7 +46,7 @@ module.exports = class GameServer {
 				}
 			}
 			if(userD!==undefined){
-				this.userD = gameData.user === undefined ? new UserD() : UserD.fromJSON(gameData.user);
+				this.userD = UserD.fromJSON(userD);
 			}
 		}
 		this.players = Object.create(null);
