@@ -6,8 +6,8 @@ const vaild = require('./utils/vaild.js');
 const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
 
 const options = {
-	cert: fs.readFileSync(paths.certPath),
-	key: fs.readFileSync(paths.keyPath),
+	pfx: fs.readFileSync(paths.pfxPath),
+	passphrase: paths.passphrase ? paths.passphrase : undefined,
 };
 
 const loadGame = (cache => name => {
