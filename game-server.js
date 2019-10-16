@@ -143,51 +143,51 @@ module.exports = class GameServer {
 					}
 				}
 			});
-			server.listen(port);
-			this.webSocketServer = new WS.Server({ server: server });
-			this.webSocketServer.on('connection', (webSocket, request) => {
-				let cookies = request.headers.cookie;
-				try {
-					if (cookies === undefined) {
-						throw new Error('Why?');
-					}
-					let token;
-					cookies.split(';').forEach(str => {
-						let [key, value] = str.split('=', 2);
-						if (key === 'g') {
-							token = value;
-						}
-					});
-					if (token === undefined) {
-						throw new Error('Why?');
-					}
-					let session = this.userD.getSession(token);
-					if (session === undefined) {
-						throw new Error('Why?');
-					}
-					session.on('remove', () => {
-						this.playerDisconnect(session.username, 'session removed');
-					});
-					this.userD.stopExpire(token);
-					let interval = setInterval(() => {
-						if (webSocket.readyState === WS.OPEN) {
-							webSocket.ping();
-						}
-					}, 10000);
-					webSocket.on('close', () => {
-						clearInterval(interval);
-						this.userD.startExpire(token);
-					})
-					webSocket.on('ping', () => {
-						webSocket.pong();
-					});
-					this.playerConnect(session.username, webSocket, request);
+		});
+		server.listen(port);
+		this.webSocketServer = new WS.Server({ server: server });
+		this.webSocketServer.on('connection', (webSocket, request) => {
+			let cookies = request.headers.cookie;
+			try {
+				if (cookies === undefined) {
+					throw new Error('Why?');
 				}
-				catch (e) {
-					webSocket.send(JSON.stringify(['force_quit', 'login first']))
-					webSocket.close();
+				let token;
+				cookies.split(';').forEach(str => {
+					let [key, value] = str.split('=', 2);
+					if (key === 'g') {
+						token = value;
+					}
+				});
+				if (token === undefined) {
+					throw new Error('Why?');
 				}
-			});
+				let session = this.userD.getSession(token);
+				if (session === undefined) {
+					throw new Error('Why?');
+				}
+				session.on('remove', () => {
+					this.playerDisconnect(session.username, 'session removed');
+				});
+				this.userD.stopExpire(token);
+				let interval = setInterval(() => {
+					if (webSocket.readyState === WS.OPEN) {
+						webSocket.ping();
+					}
+				}, 10000);
+				webSocket.on('close', () => {
+					clearInterval(interval);
+					this.userD.startExpire(token);
+				})
+				webSocket.on('ping', () => {
+					webSocket.pong();
+				});
+				this.playerConnect(session.username, webSocket, request);
+			}
+			catch (e) {
+				webSocket.send(JSON.stringify(['force_quit', 'login first']))
+				webSocket.close();
+			}
 		});
 		return this;
 	}
