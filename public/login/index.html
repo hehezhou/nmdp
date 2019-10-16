@@ -30,7 +30,7 @@
             <div id="submit-box" style="justify-self: center; margin: 1vh;">
                 <button id="submit" style="font-size: 18px; height: 30px; width: 65px;">登录</button>
             </div>
-            <div style="height: 15vh; text-align: center; font-size: 17px; width: 200px;" id="msg"></div>
+            <div style="height: 15vh; text-align: center; font-size: 17px; width: 200px; margin: 1vh;" id="msg"></div>
         </div>
         <script>
             let btn = document.getElementById('submit'), userName = document.getElementById('user-name'), key = document.getElementById('key'), msg = document.getElementById('msg');
@@ -64,7 +64,10 @@
                     btn.innerText = '登录';
                     btn.disabled = false;
                 }
-            })
+            });
+            document.addEventListener('keydown', (data) => {
+                if(data.key.trim().toLowerCase() === 'enter') btn.click();
+            });
         </script>
     </body>
 </html>
