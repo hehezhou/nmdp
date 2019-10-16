@@ -39,6 +39,11 @@
  * ['queue_pop', cnt]
  */
 (() => {
+    function parse(x) {
+        let p = document.createElement('p');
+        p.innerText = x;
+        return p.innerHTML;
+    }
     const io = new WebSocket(`wss://${location.host}/wss/`);
     const SUCCESS = 1, LOST = 0, gameType = 'area';
     const GRID_EMPTY = -1, GRID_BLOCK = -2, GRID_MIST = -3, maxQueueLen = 5, Ratio = 20;
@@ -353,12 +358,12 @@
     let messageP;
     function record(message) {
         if (messageP.className === 'message') {
-            messageP.innerHTML = message;
+            messageP.innerHTML = parse(message);
             if (message) messageP.style.display = 'inline';
             else messageP.style.display = 'none';
         }
         else if (messageP.className === 'message-game') {
-            messageP.innerHTML += message + '<br />';
+            messageP.innerHTML += parse(message) + '<br />';
         }
     }
     var COMMAND = {
@@ -516,7 +521,7 @@
             }
         }
         COLOR.rePaint();
-        nowRound.innerHTML = `第${round + 1}轮 <br /> 当前行动: ${playerList[turn]} <br /> 你是: ${playerList[playerIndex]}`;
+        nowRound.innerHTML = `第${round + 1}轮 <br /> 当前行动: ${parse(playerList[turn])} <br /> 你是: ${parse(playerList[playerIndex])}`;
         if (turn === playerIndex) nowRound.innerHTML += `<br /><strong>轮到你行动了,请尽快做出决策</strong>`;
     }
     /**
@@ -715,8 +720,8 @@
             let aliveList = [], deadList = [];
             playerList.forEach((data, index) => {
                 data = COLOR.getPlayerNameWithColor(index);
-                if (alive[index]) aliveList.push(`${data}`);
-                else deadList.push(`${data}`);
+                if (alive[index]) aliveList.push(`${parse(data)}`);
+                else deadList.push(`${parse(data)}`);
             });
             aliveBox.innerHTML = aliveList.join('<br />');
             deadBox.innerHTML = deadList.join('<br />');

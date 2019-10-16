@@ -68,6 +68,11 @@ function boom() {
 }
 
 const HTML = {
+    parse: function(x) {
+        let p = document.createElement('p');
+        p.innerText = x;
+        return p.innerHTML;
+    },
     setPixelated: function (x) {
         let type = navigator.userAgent;
         if (type.indexOf('Firefox') > -1) x.style.imageRendering = 'crisp-edges';
@@ -206,7 +211,7 @@ async function joinInterface(type) {
     function addWait(ele, data) {
         let now = 0, max = 3;
         return setInterval(() => {
-            let str = ['<span style="color: rgba(0, 0, 0, 1)">', data];
+            let str = ['<span style="color: rgba(0, 0, 0, 1)">', parse(data)];
             for (let i = 0; i < now; i++) str.push('.');
             str.push('</span><span style="color: rgba(0, 0, 0, 0);">')
             for (let i = now; i < max; i++) str.push('.');
@@ -600,7 +605,7 @@ async function gameInterface(msg) {
                 tmpSet.add(data.id);
                 if (!svgTextMap.has(data.id)) {
                     let tmp1 = SVG.create('text'), tmp2 = SVG.create('text');
-                    tmp1.innerHTML = `${data.id}`;
+                    tmp1.innerHTML = `${parse(data.id)}`;
                     tmp1.setAttribute('font-size', `${fix(fontSize)}`);
                     tmp2.setAttribute('font-size', `${fix(fontSize)}`);
                     g_text.appendChild(tmp1);
@@ -655,13 +660,13 @@ async function gameInterface(msg) {
             if (type === GAME_TYPE.FFA) {
                 for (let i = 0; i < 10; i++) {
                     if (i < standing.length) {
-                        standingBox.innerHTML += `${i + 1}.${standing[i][0]} ${Math.floor(standing[i][1].score)}分<br/>`;
+                        standingBox.innerHTML += `${i + 1}.${parse(standing[i][0])} ${Math.floor(standing[i][1].score)}分<br/>`;
                     }
                     else break;
                 }
                 if (alive && tag) {
                     let ID = standing.findIndex(data => data[0] === playerIndex);
-                    standingBox.innerHTML += `<hr/>${ID + 1}.${playerIndex} ${Math.floor(standing[ID][1].score)}分<br />`;
+                    standingBox.innerHTML += `<hr/>${ID + 1}.${parse(playerIndex)} ${Math.floor(standing[ID][1].score)}分<br />`;
                     if (Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
                 }
             }
@@ -670,14 +675,14 @@ async function gameInterface(msg) {
                     if (i < standing.length) {
                         standingBox.innerHTML +=
                             `${i + 1}.
-                            <span style="color: ${standing[i][0] === myTeam ? 'blue' : hashGetColor(standing[i][0])};">${standing[i][0]}</span>
+                            <span style="color: ${parse(standing[i][0]) === myTeam ? 'blue' : hashGetColor(parse(standing[i][0]))};">${parse(standing[i][0])}</span>
                             ${Math.floor(standing[i][1])}分<br/>`;
                     }
                     else break;
                 }
                 if (alive && tag) {
                     let ID = standing.findIndex(data => data[0] === myTeam);
-                    standingBox.innerHTML += `<hr/>${ID + 1}.<span style="color: blue;">${myTeam}</span> ${Math.floor(standing[ID][1])}分<br />`;
+                    standingBox.innerHTML += `<hr/>${ID + 1}.<span style="color: blue;">${parse(myTeam)}</span> ${Math.floor(standing[ID][1])}分<br />`;
                     if (Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
                 }
             }
@@ -801,7 +806,7 @@ async function gameInterface(msg) {
                     alive = 1;
                 }
                 else if (killerID === playerIndex) {
-                    deadMsg = `<strong>你击杀了${deadID}!</strong>`;
+                    deadMsg = `<strong>你击杀了${parse(deadID)}!</strong>`;
                     deadMsgToTime = Date.now() + 2000;
                 }
             }
@@ -813,7 +818,7 @@ async function endInterface(data) {
     else if (data.type === DIE) {
         HTML.clearBody();
         let frame = HTML.create('div', 'frame end-interface-die');
-        frame.appendChild(HTML.create('h1', 'killer', `你被${data.data}击杀了`));
+        frame.appendChild(HTML.create('h1', 'killer', `你被${HTML.parse(data.data)}击杀了`));
         let btn = HTML.create('button', 'restart-die', '确定');
         frame.appendChild(btn);
         document.body.appendChild(frame);

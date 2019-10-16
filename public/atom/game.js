@@ -50,6 +50,11 @@ function boom() {
     location.href = location.origin;
 }
 const HTML = {
+    parse: function(x) {
+        let p = this.create('p');
+        p.innerText = x;
+        return p.innerHTML;
+    },
     setPixelated: function (x) {
         let type = navigator.userAgent;
         if (type.indexOf('Firefox') > -1) x.style.imageRendering = 'crisp-edges';
@@ -457,7 +462,7 @@ const WORK = {
                 if (data === 0 && alive[index]) {
                     alive[index] = 0;
                     rankList.unshift(index);
-                    msgBox.innerHTML += index === playerIndex ? `你阵亡了<br/>` : `${getPlayerName(index)}阵亡了<br/>`;
+                    msgBox.innerHTML += index === playerIndex ? `你阵亡了<br/>` : `${HTML.parse(getPlayerName(index))}阵亡了<br/>`;
                 }
             });
             playerList.forEach((data, index) => {
@@ -495,8 +500,8 @@ const WORK = {
                             }
                         }
                         lastMap = newMap;
-                        roundMsg.innerHTML = getRoundMsg();
-                        playerMsg.innerHTML = getPlayerMsg();
+                        roundMsg.innerHTML = parse(getRoundMsg());
+                        playerMsg.innerHTML = parse(getPlayerMsg());
                         for (let i = 0; i < 5; i++) await new Promise(resolve => requestAnimationFrame(resolve));
                     }
                     mapList = [];
@@ -531,7 +536,7 @@ const WORK = {
                     io.removeEventListener('message', x);
                 }
                 else if (data[0] === 'decide_fail') {
-                    msgBox.innerHTML += `决策有误, 原因:${data[1]}<br/>`;
+                    msgBox.innerHTML += `决策有误, 原因:${parse(data[1])}<br/>`;
                 }
             });
             function pos(event) {
