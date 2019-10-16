@@ -5,6 +5,7 @@ const { randomReal } = require('../../utils/random.js');
 const vaild = require('../../utils/vaild.js');
 const ARENA_HEIGHT = 1000;
 const ARENA_WIDTH = 1000;
+const UPDATE_COOLDOWN = 0.05;
 function getDefaultPlayerProp() {
 	return {
 		maxSpeed: 60,
@@ -117,6 +118,8 @@ module.exports = class Forty extends Game {
 		this.waitingPlayers = new Map();
 		this.time = -Infinity;
 		let game = this;
+		this.needUpdate = false;
+		this.updateCooldown = 0;
 		this.Player = class Player {
 			constructor({
 				state = PLAYER_STATE_SELECTING_PASSIVE_SKILL,
@@ -454,9 +457,13 @@ module.exports = class Forty extends Game {
 		if (deaths.length > 0) {
 			this.needUpdate = true;
 		}
-		if (this.needUpdate) {
+		if (this.updateCooldown > 0) {
+			this.updateCooldown -= deltaTime;
+		}
+		if (this.needUpdate && this.updateCooldown <= 0) {
 			this.update();
 			this.needUpdate = false;
+			this.updateCooldown = UPDATE_COOLDOWN;
 		}
 	}
 	serialization() {
