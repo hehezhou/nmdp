@@ -211,7 +211,7 @@ async function joinInterface(type) {
     function addWait(ele, data) {
         let now = 0, max = 3;
         return setInterval(() => {
-            let str = ['<span style="color: rgba(0, 0, 0, 1)">', parse(data)];
+            let str = ['<span style="color: rgba(0, 0, 0, 1)">', HTML.parse(data)];
             for (let i = 0; i < now; i++) str.push('.');
             str.push('</span><span style="color: rgba(0, 0, 0, 0);">')
             for (let i = now; i < max; i++) str.push('.');
@@ -605,7 +605,7 @@ async function gameInterface(msg) {
                 tmpSet.add(data.id);
                 if (!svgTextMap.has(data.id)) {
                     let tmp1 = SVG.create('text'), tmp2 = SVG.create('text');
-                    tmp1.innerHTML = `${parse(data.id)}`;
+                    tmp1.innerHTML = `${HTML.parse(data.id)}`;
                     tmp1.setAttribute('font-size', `${fix(fontSize)}`);
                     tmp2.setAttribute('font-size', `${fix(fontSize)}`);
                     g_text.appendChild(tmp1);
@@ -660,13 +660,13 @@ async function gameInterface(msg) {
             if (type === GAME_TYPE.FFA) {
                 for (let i = 0; i < 10; i++) {
                     if (i < standing.length) {
-                        standingBox.innerHTML += `${i + 1}.${parse(standing[i][0])} ${Math.floor(standing[i][1].score)}分<br/>`;
+                        standingBox.innerHTML += `${i + 1}.${HTML.parse(standing[i][0])} ${Math.floor(standing[i][1].score)}分<br/>`;
                     }
                     else break;
                 }
                 if (alive && tag) {
                     let ID = standing.findIndex(data => data[0] === playerIndex);
-                    standingBox.innerHTML += `<hr/>${ID + 1}.${parse(playerIndex)} ${Math.floor(standing[ID][1].score)}分<br />`;
+                    standingBox.innerHTML += `<hr/>${ID + 1}.${HTML.parse(playerIndex)} ${Math.floor(standing[ID][1].score)}分<br />`;
                     if (Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
                 }
             }
@@ -675,14 +675,14 @@ async function gameInterface(msg) {
                     if (i < standing.length) {
                         standingBox.innerHTML +=
                             `${i + 1}.
-                            <span style="color: ${parse(standing[i][0]) === myTeam ? 'blue' : hashGetColor(parse(standing[i][0]))};">${parse(standing[i][0])}</span>
+                            <span style="color: ${HTML.parse(standing[i][0]) === myTeam ? 'blue' : hashGetColor(HTML.parse(standing[i][0]))};">${HTML.parse(standing[i][0])}</span>
                             ${Math.floor(standing[i][1])}分<br/>`;
                     }
                     else break;
                 }
                 if (alive && tag) {
                     let ID = standing.findIndex(data => data[0] === myTeam);
-                    standingBox.innerHTML += `<hr/>${ID + 1}.<span style="color: blue;">${parse(myTeam)}</span> ${Math.floor(standing[ID][1])}分<br />`;
+                    standingBox.innerHTML += `<hr/>${ID + 1}.<span style="color: blue;">${HTML.parse(myTeam)}</span> ${Math.floor(standing[ID][1])}分<br />`;
                     if (Date.now() < deadMsgToTime) standingBox.innerHTML += deadMsg;
                 }
             }
@@ -806,7 +806,7 @@ async function gameInterface(msg) {
                     alive = 1;
                 }
                 else if (killerID === playerIndex) {
-                    deadMsg = `<strong>你击杀了${parse(deadID)}!</strong>`;
+                    deadMsg = `<strong>你击杀了${HTML.parse(deadID)}!</strong>`;
                     deadMsgToTime = Date.now() + 2000;
                 }
             }

@@ -10,7 +10,7 @@ function getDefaultPlayerProp() {
 	return {
 		maxSpeed: 60,
 		acc: 200,
-		maxHealth: 100,
+		maxHealth: 200,
 		attack: {
 			range: 40,
 			angle: Math.PI / 6,

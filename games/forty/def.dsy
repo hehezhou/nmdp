@@ -11,7 +11,7 @@ Teams:{teamCount:Int};
 PlayerProp:{
 	maxSpeed:Real=60;
 	acc:Real=200;
-	maxHealth:Real=100;
+	maxHealth:Real=200;
 	attack:{
 		range:Real=40;
 		angle:Real=PI/6;

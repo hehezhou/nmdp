@@ -40,7 +40,7 @@ const GAME = (() => {
         PLAYER_TIME_BEFORE_ATTACK: 0.8,
         PLAYER_MAX_SPEED: 60,
         PLAYER_ACC: 200,
-        PLAYER_MAX_HEALTH: 100,
+        PLAYER_MAX_HEALTH: 200,
         PLAYER_ATTACK_RANGE: 40,
         PLAYER_ATTACK_ANGLE: Math.PI / 6,
         PLAYER_ATTACK_DAMAGE: 40,
