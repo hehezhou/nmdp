@@ -245,7 +245,7 @@ async function work() {
                         if (data[0] === 'paint_success') resolve(SUCCESS);
                         else record("绘画失败,原因: " + data[1]), resolve(LOST);
                     }
-                })
+                });
             });
         });
         resolve(paint)
