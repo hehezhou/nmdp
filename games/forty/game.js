@@ -425,7 +425,7 @@ module.exports = class Forty extends Game {
 				this.updateEffect();
 			}
 			removeEffect(effect) {
-				let index = this.effects.index(effect);
+				let index = this.effects.indexOf(effect);
 				if (index !== -1) {
 					this.effects.splice(index, 1);
 					this.updateEffect();
