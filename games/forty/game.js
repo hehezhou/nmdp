@@ -244,7 +244,7 @@ const VIEWED_EFFECTS = [
 	Knive,
 	Broadsward,
 	Furnace,
-	MgBoss,
+	Jian,
 ];
 const VIEWED_EFFECT_ID = new Map(VIEWED_EFFECTS.map((Effect, index) => [Effect.prototype, index]));
 const PASSIVE_SKILLS = [
@@ -252,6 +252,7 @@ const PASSIVE_SKILLS = [
 	Knive,
 	Broadsward,
 	Furnace,
+	Jian,
 ].map(Effect => ({ Effect }));
 
 class Waiting { };
