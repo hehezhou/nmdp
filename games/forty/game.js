@@ -37,10 +37,10 @@ class Shape {
 	_unTransform(point) {
 		let qwq = point.sub(this.translation);
 		let { x, y } = V.fromAngle(-this.rorate);
-		return {
-			x: (x * qwq.x - y * qwq.y) / this.scale.x,
-			y: (y * qwq.x + x * qwq.y) / this.scale.y,
-		};
+		return new V(
+			(x * qwq.x - y * qwq.y) / this.scale.x,
+			(y * qwq.x + x * qwq.y) / this.scale.y
+		);
 	}
 	include(point) {
 		if (this.edges.length === 0) {
