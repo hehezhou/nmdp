@@ -77,6 +77,7 @@ class Shape {
 
 class PlayerProp extends EventEmitter {
 	constructor() {
+		super();
 		const DEFAULT_PLAYER_PROP = {
 			maxSpeed: 60,
 			acc: 200,
