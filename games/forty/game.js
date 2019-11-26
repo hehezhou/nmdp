@@ -474,7 +474,7 @@ module.exports = class Forty extends Game {
 
 				this.effects.forEach(effect => effect.time -= s);
 				if (this.effects.some(effect => effect.time <= 0)) {
-					this.effects = this.effect.filter(effect => effect.time > 0);
+					this.effects = this.effects.filter(effect => effect.time > 0);
 					this.updateEffect();
 				}
 			}
