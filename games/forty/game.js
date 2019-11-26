@@ -246,6 +246,7 @@ const VIEWED_EFFECTS = [
 	Broadsward,
 	Furnace,
 	Jian,
+	JianAttacking,
 ];
 const VIEWED_EFFECT_ID = new Map(VIEWED_EFFECTS.map((Effect, index) => [Effect.prototype, index]));
 const PASSIVE_SKILLS = [
