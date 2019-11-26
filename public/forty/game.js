@@ -68,7 +68,7 @@ function boom() {
 }
 
 const HTML = {
-    parse: function(x) {
+    parse: function (x) {
         let p = document.createElement('p');
         p.innerText = x;
         return p.innerHTML;
@@ -143,7 +143,7 @@ async function settingInterface() {
 async function skillsInterface() {
     HTML.clearBody();
     let nameList = {
-        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 0 }, { text: '匕首', value: 1 }, { text: '重刃', value: 2 }, { text: '熔炉', value: 3 }] },
+        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 0 }, { text: '匕首', value: 1 }, { text: '重刃', value: 2 }, { text: '熔炉', value: 3 }, { text: '剑魔TEST', value: 4 }] },
     };
     let frame = HTML.create('div', 'frame skills-interface');
     document.body.appendChild(frame);
@@ -448,18 +448,45 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 if (data.onattack) {
                     if (data.attackRestTime < 0) return;
-                    tmpSet.add(data.id);
-                    if (data.smelting) {
+                    nowStrokeColor = data.attackRestTime <= lastTime ?
+                        'rgba(255, 56, 56, 0.8)'
+                        : data.team === myTeam ?
+                            'rgba(61, 139, 255, 0.8)'
+                            : 'rgba(90, 90, 90, 0.8)';
+                    nowFillColor =
+                        data.attackRestTime <= lastTime ?
+                            'rgba(255, 56, 56, 0.5)'
+                            : data.team === myTeam ?
+                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`
+                                : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`;
+                    nowLineWidth = fix(0.5);
+                }
+                else if (data.id === playerIndex) {
+                    data.attackTheta = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
+                    nowLineWidth = fix(0.5);
+                    nowStrokeColor = 'rgba(79, 194, 230, 0.6)';
+                    nowFillColor = 'rgba(79, 194, 230, 0.3)';
+                }
+                else return;
+                tmpSet.add(data.id);
+                if (svgAttackMap.has(data.id)) {
+                    if (svgAttackMap.get(data.id).type !== data.attackType) {
+                        svgAttackMap.get(data.id).data.remove();
+                        svgAttackMap.delete(data.id);
+                    }
+                }
+                switch(data.attackType) {
+                    case 'smelting': {
                         if (!svgAttackMap.has(data.id)) {
                             let tmp1 = SVG.create('circle'),
                                 tmp2 = SVG.create('path'),
                                 tmp3 = SVG.create('g');
-                            svgAttackMap.set(data.id, tmp3);
+                            svgAttackMap.set(data.id, {data: tmp3, type: data.attackType});
                             g_attack.appendChild(tmp3);
                             tmp3.appendChild(tmp1);
                             tmp3.appendChild(tmp2);
                         }
-                        let now = svgAttackMap.get(data.id);
+                        let now = svgAttackMap.get(data.id).data;
                         let [circle, path] = now.children;
                         nowStrokeColor = data.attackRestTime <= lastTime ?
                             'rgba(255, 56, 56, 0.8)'
@@ -493,78 +520,106 @@ async function gameInterface(msg) {
                         path.setAttribute('d', str);
                         return;
                     }
-                    if (!svgAttackMap.has(data.id)) {
-                        let tmp = SVG.create('path');
-                        svgAttackMap.set(data.id, tmp);
-                        g_attack.appendChild(tmp);
+                    case 'initial': {
+                        if (!svgAttackMap.has(data.id)) {
+                            let tmp = SVG.create('path');
+                            svgAttackMap.set(data.id, {data: tmp, type: data.attackType});
+                            g_attack.appendChild(tmp);
+                        }
+                        let now = svgAttackMap.get(data.id).data;
+                        nowLineWidth = fix(0.5);
+                        setStyle(now);
+                        let str = '';
+                        str += `M${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
+                        str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta + data.theta))},${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta + data.theta))}`;
+                        str += `L${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta + data.theta))} ${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta + data.theta))} `;
+                        str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta - data.theta))},${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta - data.theta))}`;
+                        str += `L${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
+                        str += `Z`;
+                        now.setAttribute('d', str);
+                        if (data.attackRestTime <= lastTime) {
+                            let tag = data.attackRestTime / lastTime;
+                            let Theta = (data.attackTheta - data.theta) * tag + (data.attackTheta + data.theta) * (1 - tag);
+                            let line = SVG.create('line');
+                            nowLineWidth = fix(2);
+                            nowFillColor = 'white';
+                            nowStrokeColor = 'white';
+                            if (data.blood) nowFillColor = nowStrokeColor = 'red';
+                            setStyle(line);
+                            line.setAttribute('x1', `${fix(data.y - Y + Math.cos(Theta) * playerRadius)}`);
+                            line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * data.knifeRadius)}`);
+                            line.setAttribute('y1', `${fix(data.x - X - Math.sin(Theta) * playerRadius)}`);
+                            line.setAttribute('y2', `${fix(data.x - X - Math.sin(Theta) * data.knifeRadius)}`);
+                            g_knife.appendChild(line);
+                        }
+                        return;
                     }
-                    let now = svgAttackMap.get(data.id);
-                    nowStrokeColor = data.attackRestTime <= lastTime ?
-                        'rgba(255, 56, 56, 0.8)'
-                        : data.team === myTeam ?
-                            'rgba(61, 139, 255, 0.8)'
-                            : 'rgba(90, 90, 90, 0.8)';
-                    nowFillColor =
-                        data.attackRestTime <= lastTime ?
-                            'rgba(255, 56, 56, 0.5)'
-                            : data.team === myTeam ?
-                                `rgba(61, 139, 255, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`
-                                : `rgba(90, 90, 90, ${0.5 - 0.3 * (data.attackRestTime / data.attackSumTime)})`;
-                    nowLineWidth = fix(0.5);
-                    setStyle(now);
-                    let str = '';
-                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
-                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta + data.theta))},${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta + data.theta))}`;
-                    str += `L${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta + data.theta))} ${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta + data.theta))} `;
-                    str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + data.knifeRadius * Math.cos(-data.attackTheta - data.theta))},${fix(data.x - X + data.knifeRadius * Math.sin(-data.attackTheta - data.theta))}`;
-                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-data.attackTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-data.attackTheta - data.theta))} `;
-                    str += `Z`;
-                    now.setAttribute('d', str);
-                    if (data.attackRestTime <= lastTime) {
-                        let tag = data.attackRestTime / lastTime;
-                        let Theta = (data.attackTheta - data.theta) * tag + (data.attackTheta + data.theta) * (1 - tag);
-                        let line = SVG.create('line');
-                        nowLineWidth = fix(2);
-                        nowFillColor = 'white';
-                        nowStrokeColor = 'white';
-                        if (data.blood) nowFillColor = nowStrokeColor = 'red';
-                        setStyle(line);
-                        line.setAttribute('x1', `${fix(data.y - Y + Math.cos(Theta) * playerRadius)}`);
-                        line.setAttribute('x2', `${fix(data.y - Y + Math.cos(Theta) * data.knifeRadius)}`);
-                        line.setAttribute('y1', `${fix(data.x - X - Math.sin(Theta) * playerRadius)}`);
-                        line.setAttribute('y2', `${fix(data.x - X - Math.sin(Theta) * data.knifeRadius)}`);
-                        g_knife.appendChild(line);
+                    case 'king1': {
+                        if (!svgAttackMap.has(data.id)) {
+                            let tmp1 = SVG.create('path'),
+                                tmp2 = SVG.create('path'),
+                                tmp3 = SVG.create('line'),
+                                tmp4 = SVG.create('g');
+                            tmp4.appendChild(tmp1);
+                            tmp4.appendChild(tmp2);
+                            tmp4.appendChild(tmp3);
+                            svgAttackMap.set(data.id, {data: tmp4, type: data.attackType});
+                            g_attack.appendChild(tmp4);
+                        }
+                        let tmpStroke = nowStrokeColor;
+                        let [border, spj, split] = svgAttackMap.get(data.id).data.children;
+                        let str = '';
+                        str += `M${fix(data.y - Y + Math.cos(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2)} ${fix(data.x - X + Math.sin(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2)}`;
+                        str += `L${fix(data.y - Y + Math.cos(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2)} ${fix(data.x - X + Math.sin(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2)}`;
+                        str += `L${fix(data.y - Y + Math.cos(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackLength)} ${fix(data.x - X + Math.sin(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackLength)}`;
+                        str += `L${fix(data.y - Y + Math.cos(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackLength)} ${fix(data.x - X + Math.sin(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackLength)}`;
+                        str += `L${fix(data.y - Y + Math.cos(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2)} ${fix(data.x - X + Math.sin(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2)}`;
+                        str += 'Z';
+                        setStyle(border);
+                        border.setAttribute('d', str);
+                        str = '';
+                        str += `M${fix(data.y - Y + Math.cos(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackSPJ)} ${fix(data.x - X + Math.sin(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackSPJ)}`;
+                        str += `L${fix(data.y - Y + Math.cos(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackSPJ)} ${fix(data.x - X + Math.sin(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackSPJ)}`;
+                        str += `L${fix(data.y - Y + Math.cos(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackLength)} ${fix(data.x - X + Math.sin(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackLength)}`;
+                        str += `L${fix(data.y - Y + Math.cos(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackLength)} ${fix(data.x - X + Math.sin(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackLength)}`;
+                        str += `L${fix(data.y - Y + Math.cos(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackSPJ)} ${fix(data.x - X + Math.sin(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackSPJ)}`;
+                        str += 'Z';
+                        nowStrokeColor = 'rgba(0, 0, 0, 0)';
+                        setStyle(spj);
+                        spj.setAttribute('d', str);
+                        nowStrokeColor = tmpStroke;
+                        nowFillColor = 'rgba(0, 0, 0, 0)';
+                        split.setAttribute('x1', `${fix(data.y - Y + Math.cos(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackSPJ)}`);
+                        split.setAttribute('x2', `${fix(data.y - Y + Math.cos(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.cos(-data.attackTheta) * data.attackSPJ)}`);
+                        split.setAttribute('y1', `${fix(data.x - X + Math.sin(-Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackSPJ)}`);
+                        split.setAttribute('y2', `${fix(data.x - X + Math.sin(Math.PI / 2 - data.attackTheta) * data.attackWidth / 2 + Math.sin(-data.attackTheta) * data.attackSPJ)}`);
+                        setStyle(split);
+                        return;
+                    }
+                    case 'king2': {
+                        if (!svgAttackMap.has(data.id)) {
+                            let tmp = SVG.create('path');
+                            svgAttackMap.set(data.id, {data: tmp, type: data.attackType});
+                            g_attack.appendChild(tmp);
+                        }
+                        return;
+                    }
+                    case 'king3': {
+                        if (!svgAttackMap.has(data.id)) {
+                            let tmp = SVG.create('path');
+                            svgAttackMap.set(data.id, {data: tmp, type: data.attackType});
+                            g_attack.appendChild(tmp);
+                        }
+                        
+                        return;
                     }
                 }
-                else if (data.id === playerIndex) {
-                    tmpSet.add(data.id);
-                    if (!svgAttackMap.has(data.id)) {
-                        let tmp = SVG.create('path');
-                        svgAttackMap.set(data.id, tmp);
-                        g_attack.appendChild(tmp);
-                    }
-                    let now = svgAttackMap.get(data.id);
-                    nowLineWidth = fix(0.5);
-                    nowStrokeColor = 'rgba(79, 194, 230, 0.6)';
-                    nowFillColor = 'rgba(79, 194, 230, 0.3)';
-                    setStyle(now);
-                    let nowTheta = -Math.atan2(nowMouseX - nowHeight / 2, nowMouseY - nowWidth / 2);
-                    let str = '';
-                    str += `M${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - data.theta))} `;
-                    str += `A${fix(playerRadius)},${fix(playerRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},1 ${fix(data.y - Y + playerRadius * Math.cos(-nowTheta + data.theta))},${fix(data.x - X + playerRadius * Math.sin(-nowTheta + data.theta))}`;
-                    str += `L${fix(data.y - Y + data.knifeRadius * Math.cos(-nowTheta + data.theta))} ${fix(data.x - X + data.knifeRadius * Math.sin(-nowTheta + data.theta))} `;
-                    str += `A${fix(data.knifeRadius)},${fix(data.knifeRadius)} 0 ${data.theta >= Math.PI / 2 ? 1 : 0},0 ${fix(data.y - Y + data.knifeRadius * Math.cos(-nowTheta - data.theta))},${fix(data.x - X + data.knifeRadius * Math.sin(-nowTheta - data.theta))}`;
-                    str += `L${fix(data.y - Y + playerRadius * Math.cos(-nowTheta - data.theta))} ${fix(data.x - X + playerRadius * Math.sin(-nowTheta - data.theta))} `;
-                    str += `Z`;
-                    now.setAttribute('d', str);
-                }
-                else return;
             });
             deleteList = [];
             for (let i of svgAttackMap) {
                 if (!tmpSet.has(i[0])) deleteList.push(i[0]);
             }
-            for (let i of deleteList) svgAttackMap.get(i).remove(), svgAttackMap.delete(i);
+            for (let i of deleteList) svgAttackMap.get(i).data.remove(), svgAttackMap.delete(i);
             tmpSet.clear();
             players.forEach(data => {
                 tmpSet.add(data.id);

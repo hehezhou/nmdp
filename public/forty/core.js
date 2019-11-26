@@ -16,23 +16,49 @@ function hashGetColor(id) {
 const transferEffect = [
     (data) => {
         data.blood = true;
+        data.attackType = 'initial';
     },
     (data) => {
         data.attackSumTime -= 0.4;
         data.knifeRadius *= 0.75;
         data.dagger = true;
+        data.attackType = 'initial';
     },
     (data) => {
         data.knifeRadius *= 1.5;
         data.attackSumTime += 1.2;
         data.theta *= 1.5;
         data.broadsword = true;
+        data.attackType = 'initial';
     },
     (data) => {
         data.knifeRadius *= 0.75;
         data.attackSumTime += 1.2;
         data.attackTheta = null;
         data.smelting = true;
+        data.attackType = 'smelting';
+    },
+    (data) => {
+        data.king = true;
+    },
+    (data) => {
+        data.attackType = 'king1';
+        data.attackSumTime = 0.7;
+        data.attackWidth = 15;
+        data.attackLength = 40;
+        data.attackSPJ = 25;
+    },
+    (data) => {
+        data.attackType = 'king2';
+        data.attackSumTime = 0.7;
+        data.attackSPJ = 30;
+        data.knifeRadius *= 45 / 40;
+    },
+    (data) => {
+        data.attackType = 'king3';
+        data.attackSumTime = 0.5;
+        data.knifeRadius *= 30 / 40;
+        data.attackSPJ = 20;
     },
 ]
 const GAME = (() => {
