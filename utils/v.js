@@ -30,6 +30,9 @@ module.exports=class V{
 	eq({x,y}){
 		return this.x===x&&this.y===y;
 	}
+	cross({x,y}){
+		return this.x*y-this.y*x;
+	}
 	get sqrlen(){
 		return this.x**2+this.y**2;
 	}
@@ -40,7 +43,7 @@ module.exports=class V{
 		let angle=Math.atan2(this.y,this.x);
 		return angle>=0?angle:angle+2*Math.PI;
 	}
-	static fromAngle(angle){
-		return new V(Math.cos(angle),Math.sin(angle));
+	static fromAngle(angle,len=1){
+		return new V(Math.cos(angle)*len,Math.sin(angle)*len);
 	}
 };

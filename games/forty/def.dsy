@@ -3,10 +3,40 @@ import {sqrt,sin,cos,atan2,max,min,PI,mid,Infinity} from Math;
 import {randomReal} from Random;
 import {Set} from DataStructre;
 import {assert} from Assert;
-import {Refence,with} from SiyuanMagic;
+import {Shape,PCircle} from Shape;
+import {Refence,with,...,pseudo,removed} from SiyuanMagic;
+
+removed{
 
 FFA:{};
 Teams:{teamCount:Int};
+
+Skill:{
+	trigger(player:Player,...);
+};
+
+DamageSkill:Skill & {
+	damageValue:Real;
+	trigger(player:Player,...){
+		targets:Set<Player>=...;
+		for(target:Player in targets){
+			player.dealDamage(target,damageValue);
+		}
+	}
+};
+
+ShapedSkill:Skill &{
+	shape:Shape;
+	trigger(player:Player,...){
+		targets:Set<Player>=players.filter(shape.include);
+		...;
+	}
+}
+
+CommonAttack:ShapedSkill & DamageSkill{
+	damageValue:40;
+	shape:PCircle(PI/3,40).rorate(-PI/6);
+}
 
 PlayerProp:{
 	maxSpeed:Real=60;
@@ -30,18 +60,18 @@ defaultProp:PlayerProp;
 
 Effect:{
 	apply(playerProp:Refence<PlayerProp>);
-	time:Real=Infinity;
+	timeBeforeExpire:Real=Infinity;
 };
-makeEffect<apply:Refence<PlayerProp>=>()>:Effect in{
+makeEffect<apply:Refence<PlayerProp>=>()>:Effect & {
 	apply(playerProp:Refence<PlayerProp>){
 		with(playerProp,apply);
 	}
-	time:Real=Infinity;
+	timeBeforeExpire:Real=Infinity;
 };
-Poet:makeEffect{
+Poet:=makeEffect{
 	bloodSucking*=2;
 };
-Knive:makeEffect{
+Knive:=makeEffect{
 	maxSpeed+=10;
 	with(attack){
 		damage*=0.75;
@@ -49,7 +79,7 @@ Knive:makeEffect{
 		prepareTime-=0.4;
 	}
 };
-Broadsward:makeEffect{
+Broadsward:=makeEffect{
 	maxSpeed-=10;
 	bloodSucking*=0.75;
 	with(attack){
@@ -61,7 +91,7 @@ Broadsward:makeEffect{
 	};
 	defense+=0.2;
 };
-Furnace:makeEffect{
+Furnace:=makeEffect{
 	maxSpeed+=25;
 	bloodSucking*=1.5;
 	with(attack){
@@ -206,7 +236,16 @@ Player:{
 
 		health=max(targetHealth,health-prop.hurtRate*t);
 
-		// TODO: effect expire
+		effects.forEach(e:Refence<Effect>=>e.timeBeforeExpire-=t);
+		effects.filterModify(e:Effect=>e.timeBeforeExpire>0);
+	}
+	applyEffect(effect:Effect){
+		effects.push(effect);
+		updateEffect;
+	}
+	removeEffect(effect:Effect){
+		effects.filterModify(e:Effect=>e isnot effect);
+		updateEffect;
 	}
 };
 
@@ -260,4 +299,6 @@ time(t:Real){
 		}
 	}
 	players=players.filter(player:Player=>player.health>0);
+}
+
 }

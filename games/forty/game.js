@@ -1,3 +1,4 @@
+const { EventEmitter } = require('events');
 const Game = require('../game-base.js');
 const V = require('../../utils/v.js');
 const { mid } = require('../../utils/math.js');
@@ -6,25 +7,105 @@ const vaild = require('../../utils/vaild.js');
 const ARENA_HEIGHT = 1000;
 const ARENA_WIDTH = 1000;
 const UPDATE_COOLDOWN = 0.05;
+class Shape {
+	constructor(data = []) {
+		this.edges = [];
+		for (let element of data) {
+			this[element.type](element);
+		}
+		this.scale = new V(1, 1);
+		this.rorate = 0;
+		this.translation = new V(0, 0);
+	}
+	line(input) {
+		let dest = input instanceof V ? input : input.dest;
+		this.edges.push({
+			type: 'line',
+			dest,
+		});
+		return this;
+	}
+	arc({ dest, circleCenter, isClockwise }) {
+		this.edges.push({
+			type: 'arc',
+			dest,
+			circleCenter,
+			isClockwise,
+		});
+		return this;
+	}
+	_unTransform(point) {
+		let qwq = point.sub(this.translation);
+		let { x, y } = V.fromAngle(-this.rorate);
+		return {
+			x: (x * qwq.x - y * qwq.y) / this.scale.x,
+			y: (y * qwq.x + x * qwq.y) / this.scale.y,
+		};
+	}
+	include(point) {
+		if (this.edges.length === 0) {
+			return false;
+		}
+		point = this._unTransform(point);
+		let facing = this.edges[this.edges.length - 1].dest.sub(point);
+		let facingAngle = facing.angle;
+		let angle = 0;
+		for (let element of this.edges) {
+			let dest = element.dest.sub(point);
+			let destAngle = dest.angle;
+			let turn = (destAngle - facingAngle + 2 * Math.PI) % (2 * Math.PI);
+			switch (element.type) {
+				case 'line': {
+					angle += turn - (turn < Math.PI ? 0 : 2 * Math.PI);
+					break;
+				}
+				case 'arc': {
+					let { circleCenter, isClockwise } = element;
+					angle += turn - ((point.sub(circleCenter).sqrlen < element.dest.sub(circleCenter).sqrlen && ((facing.cross(dest) < 0) ^ isClockwise)) ^ (turn <= Math.PI) ? 0 : 2 * Math.PI);
+					break;
+				}
+				default: {
+					throw new Error('unknown type');
+				}
+			}
+			facing = dest;
+			facingAngle = destAngle;
+		}
+		return Math.abs(angle) > Math.PI;
+	}
+};
+
+class PlayerProp extends EventEmitter {
+	constructor() {
+		const DEFAULT_PLAYER_PROP = {
+			maxSpeed: 60,
+			acc: 200,
+			maxHealth: 200,
+			attack: {
+				range: 40,
+				angle: Math.PI / 6,
+				shape: null,
+				damage: 40,
+				prepareTime: 0.8,
+				cooldownTime: 0,
+				auto: false,
+				eventAttackReach: [],
+				eventAttackDone: [],
+			},
+			bloodSucking: 0.4,
+			defense: 0,
+			hurtRate: 100,
+			killSteal: 0.5,
+			KillScore: 100,
+		};
+		for (let key in DEFAULT_PLAYER_PROP) {
+			this[key] = DEFAULT_PLAYER_PROP[key];
+		}
+	}
+};
+
 function getDefaultPlayerProp() {
-	return {
-		maxSpeed: 60,
-		acc: 200,
-		maxHealth: 200,
-		attack: {
-			range: 40,
-			angle: Math.PI / 6,
-			damage: 40,
-			prepareTime: 0.8,
-			cooldownTime: 0,
-			auto: false,
-		},
-		bloodSucking: 0.4,
-		defense: 0,
-		hurtRate: 100,
-		killSteal: 0.5,
-		KillScore: 100,
-	};
+	return new PlayerProp();
 }
 function makeEffect(apply) {
 	return class Effect {
@@ -70,14 +151,108 @@ const Furnace = makeEffect(p => {
 		a.auto = true;
 	})(p.attack);
 });
-const EFFECTS = [
+// class JianLocked {
+// 	constructor(time, source, part) {
+// 		this.time = time;
+// 		this.source = source;
+// 	}
+// 	apply(_) { }
+// };
+const JIAN_COMBO_SEP_TIME=4;
+class JianAttacking {
+	constructor(time, part) {
+		this.time = time;
+		this.part = part;
+	}
+	apply(p) {
+		const A1 = Math.PI / 6;
+		const R1 = 45;
+		const R2 = 30;
+		(a => {
+			if (this.part === 2) {
+				a.shape = (new Shape())
+					.line(V.fromAngle(A1, R1))
+					.arc({
+						dest: V.fromAngle(-A1, R1),
+						circleCenter: new V(0, 0),
+						isClockwise: true,
+					}).line(new V(0, 0));
+				a.damage *= 1.25;
+			}
+			else if (this.part === 3) {
+				a.shape = (new Shape())
+					.arc({
+						dest: new V(2 * R2, 0),
+						circleCenter: new V(R2, 0),
+						isClockwise: false,
+					})
+					.arc({
+						dest: new V(0, 0),
+						circleCenter: new V(R2, 0),
+						isClockwise: false,
+					});
+				a.damage *= 1.5;
+				a.prepareTime *= 5 / 7;
+			}
+			else {
+				throw new Error(`impossable`);
+			}
+		})(p.attack);
+		p.on('afterattack', player => {
+			if (this.part === 3) {
+				player.removeEffect(this);
+			}
+			else {
+				this.part++;
+				this.time = JIAN_COMBO_SEP_TIME;
+				player.updateEffect();
+			}
+		});
+	}
+}
+class Jian {
+	constructor() {
+		this.time = Infinity;
+	}
+	apply(p) {
+		const W = 15;
+		const H = 40;
+		// p.on('afterdealdamage', (player, { target }) => {
+		// 	target.applyEffect(new (player));
+		// });
+		p.on('afterattack', player => {
+			if (!player.findEffect(e => e instanceof JianAttacking)) {
+				player.applyEffect(new JianAttacking(JIAN_COMBO_SEP_TIME,2));
+			}
+		});
+		(a => {
+			a.shape = (new Shape())
+				.line(new V(0, W / 2))
+				.line(new V(H, W / 2))
+				.line(new V(H, -W / 2))
+				.line(new V(0, -W / 2))
+				.line(new V(0, 0));
+			a.prepareTime *= 7 / 8;
+		})(p.attack);
+		p.maxSpeed *= 1.25;
+		p.bloodSucking *= 1.5;
+	}
+};
+
+const VIEWED_EFFECTS = [
 	Poet,
 	Knive,
 	Broadsward,
 	Furnace,
+	MgBoss,
 ];
-const PASSIVE_SKILLS = EFFECTS.map(Effect => ({ Effect }));
-const EFFECT_ID = new Map(EFFECTS.map((Effect, index) => [Effect.prototype, index]));
+const VIEWED_EFFECT_ID = new Map(VIEWED_EFFECTS.map((Effect, index) => [Effect.prototype, index]));
+const PASSIVE_SKILLS = [
+	Poet,
+	Knive,
+	Broadsward,
+	Furnace,
+].map(Effect => ({ Effect }));
 
 class Waiting { };
 class BeforeAttack {
@@ -170,7 +345,16 @@ module.exports = class Forty extends Game {
 			canDamage(player) {
 				return player.teamID !== this.teamID;
 			}
+			modifyShapeTransform(shape) {
+				shape.translation = this.pos;
+				shape.rorate = this.attackState.angle;
+			}
 			canAttackReach(player) {
+				let shape = this.prop.attack.shape;
+				if (shape !== null) {
+					this.modifyShapeTransform(shape);
+					return shape.include(player.pos);
+				}
 				let distance = player.pos.sub(this.pos);
 				let len = distance.len;
 				let angle = this.prop.attack.angle;
@@ -199,22 +383,32 @@ module.exports = class Forty extends Game {
 					this.facing = this.speed.mul(1 / speedLen);
 				}
 			}
-			dealDamage(player, value) {
-				let damage = Math.max((1 - player.prop.defense) * value, 0);
-				player.targetHealth -= damage;
-				player.lastDamager = this;
+			dealDamage(target, value) {
+				let x = { target, value };
+				this.prop.emit('beforedealdamage', this, x);
+				({ target, value } = x);
+				let y = { source: this, value };
+				target.prop.emit('beforehurt', target, y);
+				({ target, value } = y);
+				let damage = Math.max((1 - target.prop.defense) * value, 0);
+				target.targetHealth -= damage;
+				target.lastDamager = this;
+				target.prop.emit('afterhurt', target, { source: this, value });
 				this.targetHealth += damage * this.prop.bloodSucking;
 				if (this.targetHealth > this.prop.maxHealth) {
 					this.targetHealth = this.prop.maxHealth;
 				}
+				this.prop.emit('afterdealdamage', this, { target, value });
 			}
 			attack() {
+				this.prop.emit('beforeattack', this);
 				for (let [, player] of players) {
 					if (this.canDamage(player) && this.canAttackReach(player)) {
 						this.dealDamage(player, this.prop.attack.damage);
 						game.needUpdate = true;
 					}
 				}
+				this.prop.emit('afterattack', this);
 			}
 			updateEffect() {
 				this.prop = getDefaultPlayerProp();
@@ -225,6 +419,18 @@ module.exports = class Forty extends Game {
 			applyEffect(effect) {
 				this.effects.push(effect);
 				this.updateEffect();
+			}
+			removeEffect(effect) {
+				let index = this.effects.index(effect);
+				if (index !== -1) {
+					this.effects.splice(index, 1);
+					this.updateEffect();
+					return true;
+				}
+				return false;
+			}
+			findEffect(f) {
+				return this.effects.find(f);
 			}
 			time(s) {
 				this.move(s);
@@ -262,7 +468,11 @@ module.exports = class Forty extends Game {
 
 				this.health = Math.max(this.targetHealth, this.health - this.prop.hurtRate * s);
 
-				// TODO: effect expire
+				this.effects.forEach(effect => effect.time -= s);
+				if (this.effects.some(effect => effect.time <= 0)) {
+					this.effects = this.effect.filter(effect => effect.time > 0);
+					this.updateEffect();
+				}
 			}
 		};
 	}
@@ -410,10 +620,12 @@ module.exports = class Forty extends Game {
 						}
 						: { type: 0 },
 				facing: player.facing,
-				effects: player.effects.map(effect => ({
-					id: EFFECT_ID.get(Object.getPrototypeOf(effect)),
-					time: effect.time,
-				})),
+				effects: player.effects
+					.filter(effect => VIEWED_EFFECT_ID.has(Object.getPrototypeOf(effect)))
+					.map(effect => ({
+						id: VIEWED_EFFECT_ID.get(Object.getPrototypeOf(effect)),
+						...effect,
+					})),
 				teamID: player.teamID,
 				score: player.score,
 			}]);
