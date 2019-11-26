@@ -159,7 +159,7 @@ const Furnace = makeEffect(p => {
 // 	}
 // 	apply(_) { }
 // };
-const JIAN_COMBO_SEP_TIME=4;
+const JIAN_COMBO_SEP_TIME = 4;
 class JianAttacking {
 	constructor(time, part) {
 		this.time = time;
@@ -223,7 +223,7 @@ class Jian {
 		// });
 		p.on('afterattack', player => {
 			if (!player.findEffect(e => e instanceof JianAttacking)) {
-				player.applyEffect(new JianAttacking(JIAN_COMBO_SEP_TIME,2));
+				player.applyEffect(new JianAttacking(JIAN_COMBO_SEP_TIME, 2));
 			}
 		});
 		(a => {
@@ -386,15 +386,16 @@ module.exports = class Forty extends Game {
 				}
 			}
 			dealDamage(target, value) {
+				let source = this;
 				let x = { target, value };
 				this.prop.emit('beforedealdamage', this, x);
 				({ target, value } = x);
 				let y = { source: this, value };
 				target.prop.emit('beforehurt', target, y);
-				({ target, value } = y);
+				({ source, value } = y);
 				let damage = Math.max((1 - target.prop.defense) * value, 0);
 				target.targetHealth -= damage;
-				target.lastDamager = this;
+				target.lastDamager = source;
 				target.prop.emit('afterhurt', target, { source: this, value });
 				this.targetHealth += damage * this.prop.bloodSucking;
 				if (this.targetHealth > this.prop.maxHealth) {
