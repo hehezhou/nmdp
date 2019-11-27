@@ -49,18 +49,21 @@ const transferEffect = [
                 data.attackWidth = 15;
                 data.attackLength = 40;
                 data.attackSPJ = 25;
+                break;
             }
             case 2: {
-            data.attackType = 'king2';
-            data.attackSumTime = 0.7;
-            data.attackSPJ = 30;
-            data.knifeRadius *= 45 / 40;
+                data.attackType = 'king2';
+                data.attackSumTime = 0.7;
+                data.attackSPJ = 30;
+                data.knifeRadius *= 45 / 40;
+                break;
             }
             case 3: {
                 data.attackType = 'king3';
                 data.attackSumTime = 0.5;
                 data.knifeRadius *= 30 / 40;
                 data.attackSPJ = 20;
+                break;
             }
         }
     },
