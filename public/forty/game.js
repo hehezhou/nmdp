@@ -316,6 +316,18 @@ async function gameInterface(msg) {
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     let littleMap = HTML.create('canvas', 'little-map');
+    let skillBox = HTML.create('div', 'skill-box'), nowSkills = [];
+    let skillBoxs = (() => {
+            function x() {
+                let img = HTML.create('img', 'skill'), box = HTML.create('div', 'skill'), cover = HTML.create('div', 'skill-cover');
+                box.appendChild(img);
+                box.appendChild(cover);
+                skillBox.appendChild(box);
+                return {img, box, cover};
+            }
+            return [x(), x()];
+        }
+    )();
     littleMap.height = Math.ceil(height / ratio), littleMap.width = Math.ceil(width / ratio);
     HTML.setPixelated(littleMap);
     littleMap.style.height = `${SETTINGS.LITTLEMAPSIZE}vh`;
@@ -326,6 +338,7 @@ async function gameInterface(msg) {
     document.body.appendChild(littleMap);
     document.body.appendChild(frame);
     document.body.appendChild(standingBox);
+    document.body.appendChild(skillBox);
     document.body.className = 'game';
     function updateSize() {
         nowWidth = window.innerWidth;
@@ -365,7 +378,40 @@ async function gameInterface(msg) {
         function fix(x) {
             return x * fixInnerWidth;
         }
+        let lastCalcTime = 0;
         requestAnimationFrame(async function x() {
+            for (let i of skillBoxs) {
+                i.box.style.display = 'none';
+            }
+            let delta = Date.now() - lastCalcTime;
+            lastCalcTime += delta;
+            delta /= 1000;
+            for (let [name, skill] of nowSkills) {
+                let id;
+                switch (name[name.length - 1]) {
+                    case 'q': {
+                        id = 0;
+                        break;
+                    }
+                    case 'e': {
+                        id = 1;
+                        break;
+                    }
+                    default: {
+                        id = -1;
+                        break;
+                    }
+                }
+                if (id == -1) continue;
+                let {box, img, cover} = skillBoxs[id];
+                let str = '../sources/images/' + name + '.jpg';
+                if (img.src !== str) img.src = str;
+                box.style.display = 'inline-block';
+                skill.cooldown -= delta;
+                skill.cooldown = Math.max(skill.cooldown, 0);
+                cover.style.height = `${10 * skill.cooldown / skill.total_cooldown}vh`;
+                img.style.borderColor = skill.is_active ? 'red' : 'black';
+            }
             flush();
             g_knife.innerHTML = '';
             let nowFillColor = 'rgb(0, 0, 0)', nowStrokeColor = 'rgb(0, 0, 0)', nowLineWidth = 1;
@@ -906,7 +952,9 @@ async function gameInterface(msg) {
         io.addEventListener('message', async function x(msg) {
             let data = JSON.parse(msg.data);
             if (data[0] === 'game_update') {
+                nowSkills = data[1].skills;
                 FORTY.update(data[1]);
+                lastCalcTime = Date.now();
             }
             else if (data[0] === 'player_lose') {
                 let { killerID, deadID } = data[1];

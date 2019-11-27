@@ -230,3 +230,31 @@ text {
 svg {
     pointer-events: none;
 }
+div.skill-box {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+}
+div.skill {
+    height: calc(10vh + 4px);
+    width: calc(10vh + 4px);
+    position: relative;
+    margin: 10vh;
+    overflow: hidden;
+}
+div.skill-cover {
+    background-color: rgba(0, 0, 0, 0.6);
+    position: fixed;
+    left: calc(2px + 10vh);
+    bottom: calc(2px + 10vh);
+    width: 10vh;
+    overflow: hidden;
+}
+img.skill {
+    border: 2px solid black;
+    position: relative;
+    left: 0;
+    bottom: 0;
+    width: calc(4px + 10vh);
+    height: calc(4px + 10vh);
+}
