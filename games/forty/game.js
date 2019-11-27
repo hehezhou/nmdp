@@ -194,7 +194,7 @@ class JianAttacking {
 					break;
 				}
 				case 3: {
-					const R = 30;
+					const R = 25;
 					a.shape = (new Shape())
 						.arc({
 							dest: new V(2 * R, 0),
