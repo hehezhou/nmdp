@@ -247,7 +247,7 @@ class JianAttacking {
 						circleCenter: new V(0, 0),
 						isClockwise: true,
 					})
-					.line(V.fromAngle(-A,R21))
+					.line(V.fromAngle(-A, R21))
 					.arc({
 						dest: V.fromAngle(A, R21),
 						circleCenter: new V(0, 0),
@@ -467,15 +467,15 @@ module.exports = class Forty extends Game {
 				let data2 = { source: this, damage, bloodSucking };
 				target.prop.emit('beforehurt', target, data2);
 				({ source, damage, bloodSucking } = data2);
-				let damage = Math.max((1 - target.prop.defense) * damage, 0);
-				target.targetHealth -= damage;
+				let dealedDamage = Math.max((1 - target.prop.defense) * damage, 0);
+				target.targetHealth -= dealedDamage;
 				target.lastDamager = source;
-				target.prop.emit('afterhurt', target, { source: this, damage });
-				this.targetHealth += damage * bloodSucking;
+				target.prop.emit('afterhurt', target, { source: this, damage: dealedDamage });
+				this.targetHealth += dealedDamage * bloodSucking;
 				if (this.targetHealth > this.prop.maxHealth) {
 					this.targetHealth = this.prop.maxHealth;
 				}
-				this.prop.emit('afterdealdamage', this, { target, damage });
+				this.prop.emit('afterdealdamage', this, { target, damage: dealedDamage });
 			}
 			attack() {
 				this.prop.emit('beforeattack', this);
