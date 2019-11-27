@@ -14,51 +14,55 @@ function hashGetColor(id) {
     return '#' + hash.toString(16).padStart(6, '0');
 }
 const transferEffect = [
-    (data) => {
+    (data, msg) => {
         data.blood = true;
         data.attackType = 'initial';
     },
-    (data) => {
+    (data, msg) => {
         data.attackSumTime -= 0.4;
         data.knifeRadius *= 0.75;
         data.dagger = true;
         data.attackType = 'initial';
     },
-    (data) => {
+    (data, msg) => {
         data.knifeRadius *= 1.5;
         data.attackSumTime += 1.2;
         data.theta *= 1.5;
         data.broadsword = true;
         data.attackType = 'initial';
     },
-    (data) => {
+    (data, msg) => {
         data.knifeRadius *= 0.75;
         data.attackSumTime += 1.2;
         data.attackTheta = null;
         data.smelting = true;
         data.attackType = 'smelting';
     },
-    (data) => {
+    (data, msg) => {
         data.king = true;
     },
-    (data) => {
-        data.attackType = 'king1';
-        data.attackSumTime = 0.7;
-        data.attackWidth = 15;
-        data.attackLength = 40;
-        data.attackSPJ = 25;
-    },
-    (data) => {
-        data.attackType = 'king2';
-        data.attackSumTime = 0.7;
-        data.attackSPJ = 30;
-        data.knifeRadius *= 45 / 40;
-    },
-    (data) => {
-        data.attackType = 'king3';
-        data.attackSumTime = 0.5;
-        data.knifeRadius *= 30 / 40;
-        data.attackSPJ = 20;
+    (data, msg) => {
+        switch (msg.part) {
+            case 1: {
+                data.attackType = 'king1';
+                data.attackSumTime = 0.7;
+                data.attackWidth = 15;
+                data.attackLength = 40;
+                data.attackSPJ = 25;
+            }
+            case 2: {
+            data.attackType = 'king2';
+            data.attackSumTime = 0.7;
+            data.attackSPJ = 30;
+            data.knifeRadius *= 45 / 40;
+            }
+            case 3: {
+                data.attackType = 'king3';
+                data.attackSumTime = 0.5;
+                data.knifeRadius *= 30 / 40;
+                data.attackSPJ = 20;
+            }
+        }
     },
 ]
 const GAME = (() => {
@@ -205,7 +209,8 @@ const GAME = (() => {
                     }
                 }
                 for (let j of i[1].effects) {
-                    transferEffect[j.id](data);
+                    if (j.id >= transferEffect.length);
+                    transferEffect[j.id](data, j);
                 }
                 ans.push(data);
             }
