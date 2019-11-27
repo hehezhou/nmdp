@@ -169,8 +169,8 @@ class JianAttacking {
 		(a => {
 			switch (this.part) {
 				case 1: {
-					const W = 15;
-					const H = 40;
+					const W = 20;
+					const H = 50;
 					a.shape = (new Shape())
 						.line(new V(0, W / 2))
 						.line(new V(H, W / 2))
