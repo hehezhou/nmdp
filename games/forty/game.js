@@ -249,8 +249,10 @@ class Jian {
 		// p.on('afterdealdamage', (player, { target }) => {
 		// 	target.applyEffect(new (player));
 		// });
-		p.on('afterapply', player => {
-			player.applyEffect(new JianAttacking(Infinity, 1));
+		p.on('aftereffectapply', (player, { effect }) => {
+			if (effect === this) {
+				player.applyEffect(new JianAttacking(Infinity, 1));
+			}
 		});
 		p.maxSpeed *= 1.25;
 		p.bloodSucking *= 1.5;
@@ -446,7 +448,7 @@ module.exports = class Forty extends Game {
 			applyEffect(effect) {
 				this.effects.push(effect);
 				this.updateEffect();
-				this.prop.emit('afterapply', this, { effect });
+				this.prop.emit('aftereffectapply', this, { effect });
 			}
 			removeEffect(effect) {
 				let index = this.effects.indexOf(effect);
@@ -501,7 +503,7 @@ module.exports = class Forty extends Game {
 					this.effects = this.effects.filter(effect => {
 						if (effect.time <= 0) {
 							let data = { canceled: false };
-							this.prop.emit('beforeexpire',player,data);
+							this.prop.emit('beforeexpire', player, data);
 							return data.canceled;
 						}
 						else {
