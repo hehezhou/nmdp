@@ -152,18 +152,12 @@ const Furnace = makeEffect(p => {
 		a.auto = true;
 	})(p.attack);
 });
-// class JianLocked {
-// 	constructor(time, source, part) {
-// 		this.time = time;
-// 		this.source = source;
-// 	}
-// 	apply(_) { }
-// };
 const JIAN_COMBO_SEP_TIME = 4;
 class JianAttacking {
 	constructor(time, part) {
 		this.time = time;
 		this.part = part;
+		this._combo_hited = new Map();
 	}
 	apply(p) {
 		(a => {
@@ -189,7 +183,8 @@ class JianAttacking {
 							dest: V.fromAngle(-A, R),
 							circleCenter: new V(0, 0),
 							isClockwise: true,
-						}).line(new V(0, 0));
+						})
+						.line(new V(0, 0));
 					a.damage *= 1.5;
 					break;
 				}
@@ -215,24 +210,75 @@ class JianAttacking {
 				}
 			}
 		})(p.attack);
-		p.on('beforeexpire', (player, data) => {
-			data.canceled = true;
+		const comboEnd = () => {
 			this.part = 1;
 			this.time = Infinity;
+			this._combo_hited.clear();
+		}
+		p.on('beforeexpire', (player, data) => {
+			data.canceled = true;
+			comboEnd();
+			player.updateEffect();
 			player.game.needUpdate = true;
 		});
 		p.on('afterstartattack', player => {
-			if (this.part === 3) {
-				this.time = Infinity;
-			}
-			else {
-				this.time = JIAN_COMBO_SEP_TIME;
-			}
+			this.time = JIAN_COMBO_SEP_TIME;
 			player.updateEffect();
+		});
+		p.on('beforedealdamage', (player, data) => {
+			const W = 20;
+			const H1 = 30;
+			const H2 = 50;
+			const A = Math.PI / 6;
+			const R21 = 30;
+			const R22 = 45;
+			const R3 = 15;
+			let special_shape = {
+				1: (new Shape())
+					.line(new V(H1, W / 2))
+					.line(new V(H2, W / 2))
+					.line(new V(H2, -W / 2))
+					.line(new V(H1, -W / 2))
+					.line(new V(H1, 0)),
+				2: (new Shape())
+					.line(V.fromAngle(A, R22))
+					.arc({
+						dest: V.fromAngle(-A, R22),
+						circleCenter: new V(0, 0),
+						isClockwise: true,
+					})
+					.line(V.fromAngle(-A,R21))
+					.arc({
+						dest: V.fromAngle(A, R21),
+						circleCenter: new V(0, 0),
+						isClockwise: false,
+					}),
+				3: (new Shape())
+					.arc({
+						dest: new V(2 * R3, 0),
+						circleCenter: new V(R3, 0),
+						isClockwise: false,
+					})
+					.arc({
+						dest: new V(0, 0),
+						circleCenter: new V(R3, 0),
+						isClockwise: false,
+					})
+			}[this.part];
+			player.modifyShapeTransform(special_shape);
+			let { target } = data;
+			if (special_shape.include(target.pos)) {
+				let hited = (this._combo_hited.get(target) || 0) + 1;
+				this._combo_hited.set(target, hited);
+				if (hited === 3) {
+					data.damage = 80;
+					data.bloodSucking = 5 / 8;
+				}
+			}
 		});
 		p.on('afterattack', player => {
 			if (this.part === 3) {
-				this.part = 1;
+				this.comboEnd();
 			}
 			else {
 				this.part++;
@@ -414,17 +460,18 @@ module.exports = class Forty extends Game {
 			}
 			dealDamage(target, value) {
 				let source = this;
-				let x = { target, value };
-				this.prop.emit('beforedealdamage', this, x);
-				({ target, value } = x);
-				let y = { source: this, value };
-				target.prop.emit('beforehurt', target, y);
-				({ source, value } = y);
+				let bloodSucking = this.prop.bloodSucking;
+				let data1 = { target, value, bloodSucking };
+				this.prop.emit('beforedealdamage', this, data1);
+				({ target, value, bloodSucking } = data1);
+				let data2 = { source: this, value, bloodSucking };
+				target.prop.emit('beforehurt', target, data2);
+				({ source, value, bloodSucking } = data2);
 				let damage = Math.max((1 - target.prop.defense) * value, 0);
 				target.targetHealth -= damage;
 				target.lastDamager = source;
 				target.prop.emit('afterhurt', target, { source: this, value });
-				this.targetHealth += damage * this.prop.bloodSucking;
+				this.targetHealth += damage * bloodSucking;
 				if (this.targetHealth > this.prop.maxHealth) {
 					this.targetHealth = this.prop.maxHealth;
 				}
@@ -664,7 +711,15 @@ module.exports = class Forty extends Game {
 					.filter(effect => VIEWED_EFFECT_ID.has(Object.getPrototypeOf(effect)))
 					.map(effect => ({
 						id: VIEWED_EFFECT_ID.get(Object.getPrototypeOf(effect)),
-						...effect,
+						...((e => {
+							let result = {};
+							for (let key in e) {
+								if (key[0] !== '_') {
+									result[key] = e[key];
+								}
+							}
+							return result;
+						})(effect)),
 					})),
 				teamID: player.teamID,
 				score: player.score,
