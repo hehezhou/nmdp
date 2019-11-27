@@ -461,7 +461,7 @@ module.exports = class Forty extends Game {
 			dealDamage(target, damage) {
 				let source = this;
 				let bloodSucking = this.prop.bloodSucking;
-				let data1 = { target, value: damage, bloodSucking };
+				let data1 = { target, damage, bloodSucking };
 				this.prop.emit('beforedealdamage', this, data1);
 				({ target, damage, bloodSucking } = data1);
 				let data2 = { source: this, damage, bloodSucking };
