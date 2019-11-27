@@ -657,7 +657,7 @@ async function gameInterface(msg) {
                     }
                     case 'king3': {
                         if (!svgAttackMap.has(data.id)) {
-                            let tmp1 = SVG.create('circle'),
+                            let tmp1 = SVG.create('path'),
                                 tmp2 = SVG.create('circle'),
                                 tmp3 = SVG.create('g');
                             tmp3.appendChild(tmp1);
@@ -666,14 +666,17 @@ async function gameInterface(msg) {
                             g_attack.appendChild(tmp3);
                         }
                         let [border, spj] = svgAttackMap.get(data.id).data.children;
+                        let alpha = Math.acos(playerRadius / 2 / data.knifeRadius);
                         setStyle(border);
                         setStyle(spj);
                         spj.setAttribute('cx', `${fix(data.y - Y + Math.cos(-data.attackTheta) * data.knifeRadius)}`);
                         spj.setAttribute('cy', `${fix(data.x - X + Math.sin(-data.attackTheta) * data.knifeRadius)}`);
                         spj.setAttribute('r', `${fix(data.attackSPJ)}`);
-                        border.setAttribute('cx', `${fix(data.y - Y + Math.cos(-data.attackTheta) * data.knifeRadius)}`);
-                        border.setAttribute('cy', `${fix(data.x - X + Math.sin(-data.attackTheta) * data.knifeRadius)}`);
-                        border.setAttribute('r', `${fix(data.knifeRadius)}`);
+                        let str = '';
+                        str += `M${fix(data.y - Y + Math.cos(-data.attackTheta - alpha) * playerRadius)} ${fix(data.x - X + Math.sin(-data.attackTheta - alpha) * playerRadius)}`;
+                        str += `A${fix(playerRadius)} ${fix(playerRadius)} 0 1 1 ${fix(data.y - Y + Math.cos(-data.attackTheta + alpha) * playerRadius)} ${fix(data.x - X + Math.sin(-data.attackTheta + alpha) * playerRadius)}`;
+                        str += `A${fix(data.knifeRadius)} ${fix(data.knifeRadius)} 0 1 0 ${fix(data.y - Y + Math.cos(-data.attackTheta - alpha) * playerRadius)} ${fix(data.x - X + Math.sin(-data.attackTheta - alpha) * playerRadius)}`;
+                        border.setAttribute('d', str);
                         return;
                     }
                 }
