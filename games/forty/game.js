@@ -503,7 +503,7 @@ module.exports = class Forty extends Game {
 					this.effects = this.effects.filter(effect => {
 						if (effect.time <= 0) {
 							let data = { canceled: false };
-							this.prop.emit('beforeexpire', player, data);
+							this.prop.emit('beforeexpire', this, data);
 							return data.canceled;
 						}
 						else {
