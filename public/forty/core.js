@@ -46,8 +46,8 @@ const transferEffect = [
             case 1: {
                 data.attackType = 'king1';
                 data.attackSumTime = 0.7;
-                data.attackWidth = 15;
-                data.attackLength = 40;
+                data.attackWidth = 20;
+                data.attackLength = 50;
                 data.attackSPJ = 25;
                 break;
             }
