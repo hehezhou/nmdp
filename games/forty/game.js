@@ -194,7 +194,7 @@ class JianAttacking {
 					break;
 				}
 				case 3: {
-					const R = 30;
+					const R = 25;
 					a.shape = (new Shape())
 						.arc({
 							dest: new V(2 * R, 0),
@@ -219,6 +219,7 @@ class JianAttacking {
 			data.canceled = true;
 			this.part = 1;
 			this.time = Infinity;
+			player.game.needUpdate = true;
 		});
 		p.on('afterstartattack', player => {
 			if (this.part === 3) {
