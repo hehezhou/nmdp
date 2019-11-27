@@ -278,7 +278,7 @@ class JianAttacking {
 		});
 		p.on('afterattack', player => {
 			if (this.part === 3) {
-				this.comboEnd();
+				comboEnd();
 			}
 			else {
 				this.part++;
