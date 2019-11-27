@@ -458,24 +458,24 @@ module.exports = class Forty extends Game {
 					this.facing = this.speed.mul(1 / speedLen);
 				}
 			}
-			dealDamage(target, value) {
+			dealDamage(target, damage) {
 				let source = this;
 				let bloodSucking = this.prop.bloodSucking;
-				let data1 = { target, value, bloodSucking };
+				let data1 = { target, value: damage, bloodSucking };
 				this.prop.emit('beforedealdamage', this, data1);
-				({ target, value, bloodSucking } = data1);
-				let data2 = { source: this, value, bloodSucking };
+				({ target, damage, bloodSucking } = data1);
+				let data2 = { source: this, damage, bloodSucking };
 				target.prop.emit('beforehurt', target, data2);
-				({ source, value, bloodSucking } = data2);
-				let damage = Math.max((1 - target.prop.defense) * value, 0);
+				({ source, damage, bloodSucking } = data2);
+				let damage = Math.max((1 - target.prop.defense) * damage, 0);
 				target.targetHealth -= damage;
 				target.lastDamager = source;
-				target.prop.emit('afterhurt', target, { source: this, value });
+				target.prop.emit('afterhurt', target, { source: this, damage });
 				this.targetHealth += damage * bloodSucking;
 				if (this.targetHealth > this.prop.maxHealth) {
 					this.targetHealth = this.prop.maxHealth;
 				}
-				this.prop.emit('afterdealdamage', this, { target, value });
+				this.prop.emit('afterdealdamage', this, { target, damage });
 			}
 			attack() {
 				this.prop.emit('beforeattack', this);
