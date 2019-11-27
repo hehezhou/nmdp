@@ -358,7 +358,15 @@ async function gameInterface(msg) {
     return await new Promise(resolve => {
         let running = 1;
         let nowMouseX = 0, nowMouseY = 0;
+        let fixInnerWidth;
+        function flush() {
+            fixInnerWidth = window.innerWidth / nowWidth;
+        }
+        function fix(x) {
+            return x * fixInnerWidth;
+        }
         requestAnimationFrame(async function x() {
+            flush();
             g_knife.innerHTML = '';
             let nowFillColor = 'rgb(0, 0, 0)', nowStrokeColor = 'rgb(0, 0, 0)', nowLineWidth = 1;
             let tag = 0;
@@ -379,9 +387,6 @@ async function gameInterface(msg) {
                 ele.setAttribute('fill', `${nowFillColor}`);
                 ele.setAttribute('stroke-width', `${nowLineWidth}`);
                 ele.setAttribute('stroke', `${nowStrokeColor}`);
-            }
-            function fix(x) {
-                return x / nowWidth * window.innerWidth;
             }
             nowFillColor = nowStrokeColor = 'rgb(128, 128, 128)';
             nowLineWidth = 0;
