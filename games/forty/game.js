@@ -166,48 +166,78 @@ class JianAttacking {
 		this.part = part;
 	}
 	apply(p) {
-		const A1 = Math.PI / 6;
-		const R1 = 45;
-		const R2 = 30;
 		(a => {
-			if (this.part === 2) {
-				a.shape = (new Shape())
-					.line(V.fromAngle(A1, R1))
-					.arc({
-						dest: V.fromAngle(-A1, R1),
-						circleCenter: new V(0, 0),
-						isClockwise: true,
-					}).line(new V(0, 0));
-				a.damage *= 1.25;
-			}
-			else if (this.part === 3) {
-				a.shape = (new Shape())
-					.arc({
-						dest: new V(2 * R2, 0),
-						circleCenter: new V(R2, 0),
-						isClockwise: false,
-					})
-					.arc({
-						dest: new V(0, 0),
-						circleCenter: new V(R2, 0),
-						isClockwise: false,
-					});
-				a.damage *= 1.5;
-				a.prepareTime *= 5 / 7;
-			}
-			else {
-				throw new Error(`impossable`);
+			switch (this.part) {
+				case 1: {
+					const W = 15;
+					const H = 40;
+					a.shape = (new Shape())
+						.line(new V(0, W / 2))
+						.line(new V(H, W / 2))
+						.line(new V(H, -W / 2))
+						.line(new V(0, -W / 2))
+						.line(new V(0, 0));
+					a.prepareTime *= 7 / 8;
+					break;
+				}
+				case 2: {
+					const A = Math.PI / 6;
+					const R = 45;
+					a.shape = (new Shape())
+						.line(V.fromAngle(A, R))
+						.arc({
+							dest: V.fromAngle(-A, R),
+							circleCenter: new V(0, 0),
+							isClockwise: true,
+						}).line(new V(0, 0));
+					a.damage *= 1.25;
+					break;
+				}
+				case 3: {
+					const R = 30;
+					a.shape = (new Shape())
+						.arc({
+							dest: new V(2 * R, 0),
+							circleCenter: new V(R, 0),
+							isClockwise: false,
+						})
+						.arc({
+							dest: new V(0, 0),
+							circleCenter: new V(R, 0),
+							isClockwise: false,
+						});
+					a.damage *= 1.5;
+					a.prepareTime *= 5 / 7;
+					break;
+				}
+				default: {
+					throw new Error('impossible');
+				}
 			}
 		})(p.attack);
+		p.on('beforeexpire', (player, data) => {
+			data.canceled = true;
+			this.part = 1;
+			this.time = Infinity;
+		});
+		p.on('afterstartattack', player => {
+			if (this.part === 3) {
+				this.time = Infinity;
+			}
+			else {
+				this.time = JIAN_COMBO_SEP_TIME;
+			}
+			player.updateEffect();
+		});
 		p.on('afterattack', player => {
 			if (this.part === 3) {
-				player.removeEffect(this);
+				this.part = 1;
 			}
 			else {
 				this.part++;
-				this.time = JIAN_COMBO_SEP_TIME;
-				player.updateEffect();
 			}
+			player.updateEffect();
+			player.game.needUpdate = true;
 		});
 	}
 }
@@ -216,25 +246,12 @@ class Jian {
 		this.time = Infinity;
 	}
 	apply(p) {
-		const W = 15;
-		const H = 40;
 		// p.on('afterdealdamage', (player, { target }) => {
 		// 	target.applyEffect(new (player));
 		// });
-		p.on('afterattack', player => {
-			if (!player.findEffect(e => e instanceof JianAttacking)) {
-				player.applyEffect(new JianAttacking(JIAN_COMBO_SEP_TIME, 2));
-			}
+		p.on('afterapply', player => {
+			player.applyEffect(new JianAttacking(Infinity, 1));
 		});
-		(a => {
-			a.shape = (new Shape())
-				.line(new V(0, W / 2))
-				.line(new V(H, W / 2))
-				.line(new V(H, -W / 2))
-				.line(new V(0, -W / 2))
-				.line(new V(0, 0));
-			a.prepareTime *= 7 / 8;
-		})(p.attack);
 		p.maxSpeed *= 1.25;
 		p.bloodSucking *= 1.5;
 	}
@@ -331,12 +348,18 @@ module.exports = class Forty extends Game {
 				this.teamID = teamID;
 				this.id = id;
 				this.callback = callback;
+				this.game = game;
 			}
 			startAttack(angle) {
 				if (!(this.attackState instanceof Waiting)) {
 					throw new Error('player is attacking');
 				}
-				this.attackState = new BeforeAttack(this.prop.attack.prepareTime, angle);
+				let prepareTime = this.prop.prepareTime;
+				let a = { prepareTime, angle };
+				this.prop.emit('beforestartattack', this, a);
+				({ prepareTime, angle } = a);
+				this.attackState = new BeforeAttack(prepareTime, angle);
+				this.prop.emit('afterstartattack', this, { prepareTime, angle });
 			}
 			startMove(targetSpeed) {
 				let len = targetSpeed.len;
@@ -409,7 +432,7 @@ module.exports = class Forty extends Game {
 				for (let [, player] of players) {
 					if (this.canDamage(player) && this.canAttackReach(player)) {
 						this.dealDamage(player, this.prop.attack.damage);
-						game.needUpdate = true;
+						this.game.needUpdate = true;
 					}
 				}
 				this.prop.emit('afterattack', this);
@@ -423,6 +446,7 @@ module.exports = class Forty extends Game {
 			applyEffect(effect) {
 				this.effects.push(effect);
 				this.updateEffect();
+				this.prop.emit('afterapply', this, { effect });
 			}
 			removeEffect(effect) {
 				let index = this.effects.indexOf(effect);
@@ -474,7 +498,16 @@ module.exports = class Forty extends Game {
 
 				this.effects.forEach(effect => effect.time -= s);
 				if (this.effects.some(effect => effect.time <= 0)) {
-					this.effects = this.effects.filter(effect => effect.time > 0);
+					this.effects = this.effects.filter(effect => {
+						if (effect.time <= 0) {
+							let data = { canceled: false };
+							this.prop.emit('beforeexpire',player,data);
+							return data.canceled;
+						}
+						else {
+							return true;
+						}
+					});
 					this.updateEffect();
 				}
 			}
