@@ -225,7 +225,7 @@ class JianAttacking {
 			this.time = JIAN_COMBO_SEP_TIME;
 			player.updateEffect();
 		});
-		p.on('beforedealdamage', (player, data) => {
+		p.on('afterattackreach', (player, data) => {
 			const W = 20;
 			const H1 = 30;
 			const H2 = 50;
@@ -271,8 +271,7 @@ class JianAttacking {
 				let hited = (this._combo_hited.get(target) || 0) + 1;
 				this._combo_hited.set(target, hited);
 				if (hited === 3) {
-					data.damage = 80;
-					data.bloodSucking = 5 / 8;
+					player.dealDamage(target, 80, { bloodSucking: 5 / 8 });
 				}
 			}
 		});
@@ -458,30 +457,37 @@ module.exports = class Forty extends Game {
 					this.facing = this.speed.mul(1 / speedLen);
 				}
 			}
-			dealDamage(target, damage) {
-				let source = this;
-				let bloodSucking = this.prop.bloodSucking;
-				let data1 = { target, damage, bloodSucking };
-				this.prop.emit('beforedealdamage', this, data1);
-				({ target, damage, bloodSucking } = data1);
-				let data2 = { source: this, damage, bloodSucking };
-				target.prop.emit('beforehurt', target, data2);
-				({ source, damage, bloodSucking } = data2);
-				let dealedDamage = Math.max((1 - target.prop.defense) * damage, 0);
-				target.targetHealth -= dealedDamage;
+			dealDamage(target, damage, options = {}) {
+				let data = {
+					source: this,
+					target,
+					damage,
+					bloodSucking: this.prop.bloodSucking,
+					...options,
+				};
+				this.prop.emit('beforedealdamage', this, data);
+				target.prop.emit('beforehurt', target, data);
+				let source, damage, bloodSucking;
+				({ source, target, damage, bloodSucking } = data);
+				let defense = target.prop.defense;
+				damage = Math.max((1 - defense) * damage, 0);
+				target.targetHealth -= damage;
 				target.lastDamager = source;
-				target.prop.emit('afterhurt', target, { source: this, damage: dealedDamage });
-				this.targetHealth += dealedDamage * bloodSucking;
+				target.prop.emit('afterhurt', target, { source, target, damage });
+				this.targetHealth += damage * bloodSucking;
 				if (this.targetHealth > this.prop.maxHealth) {
 					this.targetHealth = this.prop.maxHealth;
 				}
-				this.prop.emit('afterdealdamage', this, { target, damage: dealedDamage });
+				this.prop.emit('afterdealdamage', this, { source, target, damage });
 			}
 			attack() {
 				this.prop.emit('beforeattack', this);
-				for (let [, player] of players) {
-					if (this.canDamage(player) && this.canAttackReach(player)) {
-						this.dealDamage(player, this.prop.attack.damage);
+				for (let [, target] of players) {
+					if (this.canDamage(target) && this.canAttackReach(target)) {
+						let data = { target, damage: this.prop.attack.damage };
+						this.prop.emit('beforeattackreach', this, data);
+						this.dealDamage(target, data.damage);
+						this.prop.emit('afterattackreach', this, data);
 						this.game.needUpdate = true;
 					}
 				}
