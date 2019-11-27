@@ -190,7 +190,7 @@ class JianAttacking {
 							circleCenter: new V(0, 0),
 							isClockwise: true,
 						}).line(new V(0, 0));
-					a.damage *= 1.25;
+					a.damage *= 1.5;
 					break;
 				}
 				case 3: {
@@ -206,8 +206,8 @@ class JianAttacking {
 							circleCenter: new V(R, 0),
 							isClockwise: false,
 						});
-					a.damage *= 1.5;
 					a.prepareTime *= 5 / 7;
+					a.damage *= 1.25;
 					break;
 				}
 				default: {
