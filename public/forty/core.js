@@ -61,8 +61,8 @@ const transferEffect = [
             case 3: {
                 data.attackType = 'king3';
                 data.attackSumTime = 0.5;
-                data.knifeRadius *= 30 / 40;
-                data.attackSPJ = 20;
+                data.knifeRadius *= 25 / 40;
+                data.attackSPJ = 15;
                 break;
             }
         }
