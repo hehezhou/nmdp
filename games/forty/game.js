@@ -356,7 +356,7 @@ module.exports = class Forty extends Game {
 				if (!(this.attackState instanceof Waiting)) {
 					throw new Error('player is attacking');
 				}
-				let prepareTime = this.prop.prepareTime;
+				let prepareTime = this.prop.attack.prepareTime;
 				let a = { prepareTime, angle };
 				this.prop.emit('beforestartattack', this, a);
 				({ prepareTime, angle } = a);
