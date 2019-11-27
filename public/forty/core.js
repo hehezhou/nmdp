@@ -48,7 +48,7 @@ const transferEffect = [
                 data.attackSumTime = 0.7;
                 data.attackWidth = 20;
                 data.attackLength = 50;
-                data.attackSPJ = 25;
+                data.attackSPJ = 30;
                 break;
             }
             case 2: {
