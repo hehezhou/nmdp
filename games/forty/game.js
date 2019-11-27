@@ -219,6 +219,7 @@ class JianAttacking {
 			data.canceled = true;
 			this.part = 1;
 			this.time = Infinity;
+			player.game.needUpdate = true;
 		});
 		p.on('afterstartattack', player => {
 			if (this.part === 3) {
