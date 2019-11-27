@@ -467,7 +467,7 @@ module.exports = class Forty extends Game {
 				};
 				this.prop.emit('beforedealdamage', this, data);
 				target.prop.emit('beforehurt', target, data);
-				let source, damage, bloodSucking;
+				let source, bloodSucking;
 				({ source, target, damage, bloodSucking } = data);
 				let defense = target.prop.defense;
 				damage = Math.max((1 - defense) * damage, 0);
