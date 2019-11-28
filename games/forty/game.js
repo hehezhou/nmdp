@@ -353,7 +353,7 @@ class Jian {
 	apply(p) {
 		p.maxSpeed *= 1.25;
 		p.bloodSucking *= 1.5;
-		p.prop.on('afterapply', player => {
+		p.on('afterapply', player => {
 			player.skills.addSkill(new JianQ());
 		});
 	}
