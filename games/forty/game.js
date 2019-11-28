@@ -337,7 +337,7 @@ class JianQAttacking {
 			}
 			else {
 				this.part++;
-				this.updateEffect();
+				player.game.updateEffect();
 				player.game.needUpdate = true;
 			}
 		});
