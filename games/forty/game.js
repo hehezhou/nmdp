@@ -274,14 +274,12 @@ class JianQAttacking {
 		const comboEnd = (player) => {
 			this._combo_hited.clear();
 			player.game.needUpdate = true;
-			player.removeEffect(this);
 			try {
 				player.skills.getSkill('king_q').disactive(player);
 			}
 			catch (_) { }
 		}
 		p.on('beforeexpire', (player, data) => {
-			data.canceled = true;
 			comboEnd(player);
 		});
 		p.on('afterstartattack', player => {
@@ -341,12 +339,13 @@ class JianQAttacking {
 		p.on('afterattack', player => {
 			if (this.part === 3) {
 				comboEnd(player);
+				player.removeEffect(this);
 			}
 			else {
 				this.part++;
 				player.updateEffect();
-				player.game.needUpdate = true;
 			}
+			player.game.needUpdate = true;
 		});
 	}
 }
@@ -756,6 +755,7 @@ module.exports = class Forty extends Game {
 				}
 				player.skills.getSkill(vaild.string(data.name, { hint: 'name' })).active(player, data);
 				this.needUpdate = true;
+				break;
 			}
 			case 'set_direction': {
 				if (player.state !== PLAYER_STATE_PLAYING) {
