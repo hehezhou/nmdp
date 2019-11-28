@@ -40,6 +40,7 @@ const transferEffect = [
     },
     (data, msg) => {
         data.king = true;
+        data.attackType = 'initial';
     },
     (data, msg) => {
         switch (msg.part) {
