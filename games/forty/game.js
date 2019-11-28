@@ -97,6 +97,11 @@ class SkillMap {
 			f(key, this.o[key]);
 		}
 	}
+	toJSON(){
+		let result=[];
+		this.forEach(s=>result.push(s));
+		return result;
+	}
 }
 class PlayerProp extends EventEmitter {
 	constructor() {
@@ -332,6 +337,8 @@ class JianQAttacking {
 			}
 			else {
 				this.part++;
+				this.updateEffect();
+				player.game.needUpdate = true;
 			}
 		});
 	}
@@ -794,14 +801,17 @@ module.exports = class Forty extends Game {
 				score: player.score,
 			}]);
 		}
-		let message = ['game_update', { map: { players } }];
+		let message = player => ['game_update', {
+			map: { players },
+			skills: player.skills.toJSON(),
+		}];
 		if (id !== null) {
 			let player = this.players.get(id);
-			player.callback(message);
+			player.callback(message(player));
 		}
 		else {
 			this.players.forEach((player) => {
-				player.callback(message);
+				player.callback(message(player));
 			});
 		}
 	}
