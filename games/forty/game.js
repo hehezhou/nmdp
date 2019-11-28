@@ -102,6 +102,9 @@ class SkillMap {
 		this.forEach((name, skill) => {
 			let data = { ...skill };
 			data.total_cooldown = data.totalCooldown;
+			delete data.totalCooldown;
+			data.is_active = data.isActive;
+			delete data.isActive;
 			result.push([name, data]);
 		});
 		return result;
