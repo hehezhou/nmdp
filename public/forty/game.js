@@ -318,15 +318,15 @@ async function gameInterface(msg) {
     let littleMap = HTML.create('canvas', 'little-map');
     let skillBox = HTML.create('div', 'skill-box'), nowSkills = [];
     let skillBoxs = (() => {
-            function x() {
-                let img = HTML.create('img', 'skill'), box = HTML.create('div', 'skill'), cover = HTML.create('div', 'skill-cover');
-                box.appendChild(img);
-                box.appendChild(cover);
-                skillBox.appendChild(box);
-                return {img, box, cover};
-            }
-            return [x(), x()];
+        function x() {
+            let img = HTML.create('img', 'skill'), box = HTML.create('div', 'skill'), cover = HTML.create('div', 'skill-cover');
+            box.appendChild(img);
+            box.appendChild(cover);
+            skillBox.appendChild(box);
+            return { img, box, cover };
         }
+        return [x(), x()];
+    }
     )();
     littleMap.height = Math.ceil(height / ratio), littleMap.width = Math.ceil(width / ratio);
     HTML.setPixelated(littleMap);
@@ -403,7 +403,7 @@ async function gameInterface(msg) {
                     }
                 }
                 if (id == -1) continue;
-                let {box, img, cover} = skillBoxs[id];
+                let { box, img, cover } = skillBoxs[id];
                 let str = '../sources/images/' + name + '.jpg';
                 if (img.src !== str) img.src = str;
                 box.style.display = 'inline-block';
@@ -526,13 +526,13 @@ async function gameInterface(msg) {
                         svgAttackMap.delete(data.id);
                     }
                 }
-                switch(data.attackType) {
+                switch (data.attackType) {
                     case 'smelting': {
                         if (!svgAttackMap.has(data.id)) {
                             let tmp1 = SVG.create('circle'),
                                 tmp2 = SVG.create('path'),
                                 tmp3 = SVG.create('g');
-                            svgAttackMap.set(data.id, {data: tmp3, type: data.attackType});
+                            svgAttackMap.set(data.id, { data: tmp3, type: data.attackType });
                             g_attack.appendChild(tmp3);
                             tmp3.appendChild(tmp1);
                             tmp3.appendChild(tmp2);
@@ -574,7 +574,7 @@ async function gameInterface(msg) {
                     case 'initial': {
                         if (!svgAttackMap.has(data.id)) {
                             let tmp = SVG.create('path');
-                            svgAttackMap.set(data.id, {data: tmp, type: data.attackType});
+                            svgAttackMap.set(data.id, { data: tmp, type: data.attackType });
                             g_attack.appendChild(tmp);
                         }
                         let now = svgAttackMap.get(data.id).data;
@@ -614,7 +614,7 @@ async function gameInterface(msg) {
                             tmp4.appendChild(tmp1);
                             tmp4.appendChild(tmp2);
                             tmp4.appendChild(tmp3);
-                            svgAttackMap.set(data.id, {data: tmp4, type: data.attackType});
+                            svgAttackMap.set(data.id, { data: tmp4, type: data.attackType });
                             g_attack.appendChild(tmp4);
                         }
                         let tmpStroke = nowStrokeColor;
@@ -658,7 +658,7 @@ async function gameInterface(msg) {
                             tmp4.appendChild(tmp1);
                             tmp4.appendChild(tmp2);
                             tmp4.appendChild(tmp3);
-                            svgAttackMap.set(data.id, {data: tmp4, type: data.attackType});
+                            svgAttackMap.set(data.id, { data: tmp4, type: data.attackType });
                             g_attack.appendChild(tmp4);
                         }
                         let tmpStroke = nowStrokeColor;
@@ -713,7 +713,7 @@ async function gameInterface(msg) {
                                 tmp3 = SVG.create('g');
                             tmp3.appendChild(tmp1);
                             tmp3.appendChild(tmp2);
-                            svgAttackMap.set(data.id, {data: tmp3, type: data.attackType});
+                            svgAttackMap.set(data.id, { data: tmp3, type: data.attackType });
                             g_attack.appendChild(tmp3);
                         }
                         let [border, spj] = svgAttackMap.get(data.id).data.children;
@@ -921,7 +921,7 @@ async function gameInterface(msg) {
                         let tmp = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
                         for (let i of nowSkills) {
                             if (i[0][i[0].length - 1] === key) {
-                                if (i[1].cooldown <= 0) send(['skill', {name: i[0], angle: tmp < 0 ? tmp + 2 * Math.PI : tmp}]);
+                                if (i[1].cooldown <= 0) send(['skill', { name: i[0], angle: tmp < 0 ? tmp + 2 * Math.PI : tmp }]);
                             }
                         }
                     }
