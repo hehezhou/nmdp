@@ -99,7 +99,11 @@ class SkillMap {
 	}
 	toJSON() {
 		let result = [];
-		this.forEach((name, skill) => result.push([name, { ...skill }]));
+		this.forEach((name, skill) => {
+			let data = { ...skill };
+			data.total_cooldown = data.totalCooldown;
+			result.push([name, data]);
+		});
 		return result;
 	}
 }
