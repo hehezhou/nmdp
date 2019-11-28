@@ -74,7 +74,30 @@ class Shape {
 		return Math.abs(angle) > Math.PI;
 	}
 };
-
+class SkillMap {
+	constructor() {
+		this.o = Object.create(null);
+	}
+	addSkill(skill) {
+		this.o[skill.name] = skill;
+	}
+	removeSkill(key) {
+		delete (this.o)[key];
+	}
+	getSkill(key) {
+		if (key in this.o) {
+			return this.o[key];
+		}
+		else {
+			throw new Error('no such skill');
+		}
+	}
+	forEach(f) {
+		for (let key in this.o) {
+			f(key, this.o[key]);
+		}
+	}
+}
 class PlayerProp extends EventEmitter {
 	constructor() {
 		super();
@@ -118,6 +141,35 @@ function makeEffect(apply) {
 		}
 	};
 }
+class Skill {
+	constructor() { }
+}
+function makeSkill(name, cooldown, active = () => { }, disactive = () => { }) {
+	return class extends Skill {
+		constructor() {
+			super();
+			this.name = name;
+			this.totalCooldown = cooldown;
+			this.cooldown = 0;
+			this.isActive = false;
+		}
+		active(player, ...args) {
+			if (this.cooldown > 0) {
+				throw new Error('skill is cooldowning');
+			}
+			if (this.isActive) {
+				throw new Error('skill is active');
+			}
+			this.isActive = true;
+			active(player, ...args);
+		}
+		disactive(player, ...args) {
+			disactive(player, ...args);
+			this.isActive = false;
+			this.cooldown = this.totalCooldown;
+		}
+	};
+};
 const Poet = makeEffect(p => {
 	p.bloodSucking *= 2;
 });
@@ -152,9 +204,9 @@ const Furnace = makeEffect(p => {
 		a.auto = true;
 	})(p.attack);
 });
-const JIAN_COMBO_SEP_TIME = 4;
-class JianAttacking {
-	constructor(time, part) {
+const JIAN_Q_MAX_SEP_TIME = 4;
+class JianQAttacking {
+	constructor(time, part = 1) {
 		this.time = time;
 		this.part = part;
 		this._combo_hited = new Map();
@@ -211,18 +263,17 @@ class JianAttacking {
 			}
 		})(p.attack);
 		const comboEnd = () => {
-			this.part = 1;
-			this.time = Infinity;
 			this._combo_hited.clear();
+			player.game.needUpdate = true;
+			player.removeEffect(this);
+			player.skills['king_q'].disactive(player);
 		}
 		p.on('beforeexpire', (player, data) => {
 			data.canceled = true;
 			comboEnd();
-			player.updateEffect();
-			player.game.needUpdate = true;
 		});
 		p.on('afterstartattack', player => {
-			this.time = JIAN_COMBO_SEP_TIME;
+			this.time = JIAN_Q_MAX_SEP_TIME;
 			player.updateEffect();
 		});
 		p.on('afterattackreach', (player, data) => {
@@ -282,26 +333,23 @@ class JianAttacking {
 			else {
 				this.part++;
 			}
-			player.updateEffect();
-			player.game.needUpdate = true;
 		});
 	}
 }
+const JianQ = makeSkill('king_q', 20, (player) => {
+	player.applyEffect(new JianQAttacking(JIAN_Q_MAX_SEP_TIME));
+});
 class Jian {
 	constructor() {
 		this.time = Infinity;
 	}
 	apply(p) {
-		// p.on('afterdealdamage', (player, { target }) => {
-		// 	target.applyEffect(new (player));
-		// });
-		p.on('aftereffectapply', (player, { effect }) => {
-			if (effect === this) {
-				player.applyEffect(new JianAttacking(Infinity, 1));
-			}
-		});
 		p.maxSpeed *= 1.25;
 		p.bloodSucking *= 1.5;
+		p.skills.addSkill(new JianQ());
+		p.prop.on('afterapply', player => {
+			player.skills.addSkill(new JianQ());
+		});
 	}
 };
 
@@ -311,10 +359,10 @@ const VIEWED_EFFECTS = [
 	Broadsward,
 	Furnace,
 	Jian,
-	JianAttacking,
+	JianQAttacking,
 ];
 const VIEWED_EFFECT_ID = new Map(VIEWED_EFFECTS.map((Effect, index) => [Effect.prototype, index]));
-const PASSIVE_SKILLS = [
+const SELECTABLE_EFFECTS = [
 	Poet,
 	Knive,
 	Broadsward,
@@ -376,6 +424,7 @@ module.exports = class Forty extends Game {
 				targetHealth = prop.maxHealth,
 				lastDamager = null,
 				effects = [],
+				skills = new SkillMap(),
 				score = 0,
 				teamID,
 				id,
@@ -391,6 +440,7 @@ module.exports = class Forty extends Game {
 				this.targetHealth = targetHealth;
 				this.lastDamager = lastDamager;
 				this.effects = effects;
+				this.skills = skills;
 				this.prop = prop;
 				this.score = score;
 				this.teamID = teamID;
@@ -552,6 +602,12 @@ module.exports = class Forty extends Game {
 
 				this.health = Math.max(this.targetHealth, this.health - this.prop.hurtRate * s);
 
+				this.skills.forEach(([name, skill]) => {
+					if (!skill.isActive) {
+						skill.cooldown = Math.max(skill.cooldown - s, 0);
+					}
+				});
+
 				this.effects.forEach(effect => effect.time -= s);
 				if (this.effects.some(effect => effect.time <= 0)) {
 					this.effects = this.effects.filter(effect => {
@@ -617,7 +673,7 @@ module.exports = class Forty extends Game {
 				})(),
 				id,
 			});
-			callback(['request_choice', { type: 'skills' }])
+			callback(['request_choice', { type: 'skills' }]);
 			this.waitingPlayers.set(id, player);
 		}
 		switch (player.state) {
@@ -662,8 +718,8 @@ module.exports = class Forty extends Game {
 					throw new Error('player cannot select a passive skill');
 				}
 				const { passive } = data;
-				let passiveSkillID = vaild.integer(passive, { min: 0, max: PASSIVE_SKILLS.length - 1, hint: 'passiveSkillID' });
-				let Effect = PASSIVE_SKILLS[passiveSkillID].Effect;
+				let passiveSkillID = vaild.integer(passive, { min: 0, max: SELECTABLE_EFFECTS.length - 1, hint: 'passiveSkillID' });
+				let Effect = SELECTABLE_EFFECTS[passiveSkillID].Effect;
 				player.applyEffect(new Effect());
 				player.state = PLAYER_STATE_PLAYING;
 				this.players.set(id, player);
@@ -678,6 +734,13 @@ module.exports = class Forty extends Game {
 				player.startAttack(vaild.real(data, { min: 0, max: Math.PI * 2, hint: 'angle' }));
 				this.needUpdate = true;
 				break;
+			}
+			case 'skill': {
+				if (player.state !== PLAYER_STATE_PLAYING) {
+					throw new Error('player is not playing');
+				}
+				player.skills.getSkill(vaild.string(data.name, { hint: 'name' })).active(player, data);
+				this.needUpdate = true;
 			}
 			case 'set_direction': {
 				if (player.state !== PLAYER_STATE_PLAYING) {
