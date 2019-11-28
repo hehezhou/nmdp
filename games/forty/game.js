@@ -350,7 +350,7 @@ class JianQAttacking {
 		});
 	}
 }
-const JianQ = makeSkill('king_q', 20, (player) => {
+const JianQ = makeSkill('king_q', 10, (player) => {
 	player.applyEffect(new JianQAttacking(JIAN_Q_MAX_SEP_TIME));
 });
 class Jian {
