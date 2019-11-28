@@ -610,7 +610,7 @@ module.exports = class Forty extends Game {
 
 				this.health = Math.max(this.targetHealth, this.health - this.prop.hurtRate * s);
 
-				this.skills.forEach(([name, skill]) => {
+				this.skills.forEach((name, skill) => {
 					if (!skill.isActive) {
 						skill.cooldown = Math.max(skill.cooldown - s, 0);
 					}
