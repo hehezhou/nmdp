@@ -99,7 +99,7 @@ class SkillMap {
 	}
 	toJSON(){
 		let result=[];
-		this.forEach(([name,skill])=>result.push([name,{...skill}]));
+		this.forEach((name,skill)=>result.push([name,{...skill}]));
 		return result;
 	}
 }
