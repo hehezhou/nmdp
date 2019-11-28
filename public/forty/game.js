@@ -921,7 +921,7 @@ async function gameInterface(msg) {
                         let tmp = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
                         for (let i of nowSkills) {
                             if (i[0][i[0].length - 1] === key) {
-                                if (i[1].cooldown <= 0) send(['skill', {name: i[0][i[0].length - 1], angle: tmp < 0 ? tmp + 2 * Math.PI : tmp}]);
+                                if (i[1].cooldown <= 0) send(['skill', {name: i[0], angle: tmp < 0 ? tmp + 2 * Math.PI : tmp}]);
                             }
                         }
                     }
