@@ -99,7 +99,7 @@ class SkillMap {
 	}
 	toJSON(){
 		let result=[];
-		this.forEach(s=>result.push(s));
+		this.forEach(([name,skill])=>result.push([name,{...skill}]));
 		return result;
 	}
 }
@@ -353,8 +353,10 @@ class Jian {
 	apply(p) {
 		p.maxSpeed *= 1.25;
 		p.bloodSucking *= 1.5;
-		p.on('afterapply', player => {
-			player.skills.addSkill(new JianQ());
+		p.on('aftereffectapply', (player,effect) => {
+			if(effect===this){
+				player.skills.addSkill(new JianQ());
+			}
 		});
 	}
 };
