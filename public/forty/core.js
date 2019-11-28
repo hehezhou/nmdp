@@ -167,7 +167,30 @@ const GAME = (() => {
                     this.attackState = Waiting;
                 }
             }
-            this.health = Math.max(this.targetHealth, this.health - BASE.PLAYER_HURT_PER_SEC * t);
+            function swap(x, y) {
+                let tmp = x;
+                x = y;
+                y = tmp;
+            }
+            let hurtPerSec = BASE.PLAYER_HURT_PER_SEC;
+            for (let i = 0; i < this.effects.length; i++) {
+                if (this.effects[i].time !== null) {
+                    this.effects[i].time -= t / 1000;
+                    if (this.effects[i].time < 0) {
+                        swap(this.effects[i], this.effects[this.effects.length - 1]);
+                        this.effects.pop();
+                        i--;
+                        continue;
+                    }
+                }
+                switch (this.effects[i].id) {
+                    case 3: {
+                        hurtPerSec = 50;
+                        break;
+                    }
+                }
+            }
+            this.health = Math.max(this.targetHealth, this.health - hurtPerSec * t);
         }
     }
     return class {
