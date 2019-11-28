@@ -97,9 +97,9 @@ class SkillMap {
 			f(key, this.o[key]);
 		}
 	}
-	toJSON(){
-		let result=[];
-		this.forEach((name,skill)=>result.push([name,{...skill}]));
+	toJSON() {
+		let result = [];
+		this.forEach((name, skill) => result.push([name, { ...skill }]));
 		return result;
 	}
 }
@@ -271,7 +271,10 @@ class JianQAttacking {
 			this._combo_hited.clear();
 			player.game.needUpdate = true;
 			player.removeEffect(this);
-			player.skills['king_q'].disactive(player);
+			try {
+				player.skills.getSkill('king_q').disactive(player);
+			}
+			catch (_) { }
 		}
 		p.on('beforeexpire', (player, data) => {
 			data.canceled = true;
@@ -353,8 +356,8 @@ class Jian {
 	apply(p) {
 		p.maxSpeed *= 1.25;
 		p.bloodSucking *= 1.5;
-		p.on('aftereffectapply', (player,{effect}) => {
-			if(effect===this){
+		p.on('aftereffectapply', (player, { effect }) => {
+			if (effect === this) {
 				player.skills.addSkill(new JianQ());
 			}
 		});
