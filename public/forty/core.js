@@ -79,7 +79,7 @@ const GAME = (() => {
         PLAYER_ATTACK_ANGLE: Math.PI / 6,
         PLAYER_ATTACK_DAMAGE: 40,
         PLAYER_ATTACK_HEAL: 0.4,
-        PLAYER_HURT_PER_SEC: 100,
+        PLAYER_HURT_PER_SEC: 200,
     }
     class vector {
         constructor(x, y) {
