@@ -130,7 +130,7 @@ class PlayerProp extends EventEmitter {
 			},
 			bloodSucking: 0.4,
 			defense: 0,
-			hurtRate: 100,
+			hurtRate: 200,
 			killSteal: 0.5,
 			KillScore: 100,
 		};
