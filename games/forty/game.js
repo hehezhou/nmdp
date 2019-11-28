@@ -267,7 +267,7 @@ class JianQAttacking {
 				}
 			}
 		})(p.attack);
-		const comboEnd = () => {
+		const comboEnd = (player) => {
 			this._combo_hited.clear();
 			player.game.needUpdate = true;
 			player.removeEffect(this);
@@ -275,7 +275,7 @@ class JianQAttacking {
 		}
 		p.on('beforeexpire', (player, data) => {
 			data.canceled = true;
-			comboEnd();
+			comboEnd(player);
 		});
 		p.on('afterstartattack', player => {
 			this.time = JIAN_Q_MAX_SEP_TIME;
@@ -333,7 +333,7 @@ class JianQAttacking {
 		});
 		p.on('afterattack', player => {
 			if (this.part === 3) {
-				comboEnd();
+				comboEnd(player);
 			}
 			else {
 				this.part++;
