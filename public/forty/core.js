@@ -45,6 +45,7 @@ const transferEffect = {
     'king_q': (data, msg) => {
         switch (msg.part) {
             case 1: {
+                data.img.king_q = 'king_q1';
                 data.attackType = 'king1';
                 data.attackSumTime = 0.7;
                 data.attackWidth = 20;
@@ -53,6 +54,7 @@ const transferEffect = {
                 break;
             }
             case 2: {
+                data.img.king_q = 'king_q2';
                 data.attackType = 'king2';
                 data.attackSumTime = 0.7;
                 data.attackSPJ = 30;
@@ -60,6 +62,7 @@ const transferEffect = {
                 break;
             }
             case 3: {
+                data.img.king_q = 'king_q3';
                 data.attackType = 'king3';
                 data.attackSumTime = 0.5;
                 data.knifeRadius *= 25 / 40;
@@ -176,24 +179,24 @@ const GAME = (() => {
             }
             let hurtPerSec = BASE.PLAYER_HURT_PER_SEC;
             for (let i = 0; i < this.effects.length; i++) {
-                if (this.effects[i].time !== null) {
-                    this.effects[i].time -= t / 1000;
-                    if (this.effects[i].time < 0) {
-                        swap(this.effects[i], this.effects[this.effects.length - 1]);
-                        this.effects.pop();
-                        i--;
-                        continue;
-                    }
-                }
                 switch (this.effects[i].id) {
                     case 'furnace': {
                         // hurtPerSec = 50;
                         break;
                     }
                     case 'shifting': {
-                        let {deltaSpeed} = this.effects[i];
-                        this.pos.x += deltaSpeed.x * t;
-                        this.pos.y += deltaSpeed.y * t;
+                        let {deltaSpeed} = this.effects[i], time = Math.min(t, this.effects[i].time);
+                        this.pos.x += deltaSpeed.x * time;
+                        this.pos.y += deltaSpeed.y * time;
+                    }
+                }
+                if (this.effects[i].time !== null) {
+                    this.effects[i].time -= t;
+                    if (this.effects[i].time < 0) {
+                        swap(this.effects[i], this.effects[this.effects.length - 1]);
+                        this.effects.pop();
+                        i--;
+                        continue;
                     }
                 }
             }
@@ -232,6 +235,7 @@ const GAME = (() => {
                 data.knifeRadius = BASE.PLAYER_ATTACK_RANGE;
                 data.attackSumTime = BASE.PLAYER_TIME_BEFORE_ATTACK;
                 data.theta = BASE.PLAYER_ATTACK_ANGLE;
+                data.img = {};
                 switch (this.type) {
                     case GAME_TYPE.FFA: {
                         data.team = data.id;
