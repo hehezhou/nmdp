@@ -381,7 +381,7 @@ class Shifting{
 	}
 }
 
-const VIEWED_EFFECT_ID = new Map([[
+const VIEWED_EFFECT_ID = new Map([
 	[Poet,'poet'],
 	[Knife,'knife'],
 	[Broadsward,'broadsward'],
@@ -389,7 +389,7 @@ const VIEWED_EFFECT_ID = new Map([[
 	[Jian,'king'],
 	[JianQAttacking,'king_q'],
 	[Shifting,'shifting'],
-]].map(([Effect, id]) => [Effect.prototype, id]));
+].map(([Effect, id]) => [Effect.prototype, id]));
 const SELECTABLE_EFFECTS = [
 	Poet,
 	Knife,
