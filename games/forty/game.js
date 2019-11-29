@@ -399,6 +399,7 @@ const EFFECT_IDS = [
 	['shifting', Shifting],
 ];
 const EFFECT_IDS_MAP = new Map(EFFECT_IDS);
+const ID_EFFECTS_MAP = new Map(EFFECT_IDS.map(([a,b])=>[b,a]));
 const VIEWED_EFFECT_ID = new Map([
 	Poet,
 	Knife,
@@ -407,14 +408,14 @@ const VIEWED_EFFECT_ID = new Map([
 	Jian,
 	JianQAttacking,
 	Shifting,
-].map((Effect) => [Effect.prototype, EFFECT_IDS.get(Effect)]));
+].map((Effect) => [Effect.prototype, EFFECT_IDS_MAP.get(Effect)]));
 const DEFAULT_SELECTABLE_EFFECTS = [
 	Poet,
 	Knife,
 	Broadsward,
 	Furnace,
 	Jian,
-].map(Effect => (EFFECT_IDS_MAP.get(Effect)));
+].map(Effect => (ID_EFFECTS_MAP.get(Effect)));
 
 class Waiting { };
 class BeforeAttack {
