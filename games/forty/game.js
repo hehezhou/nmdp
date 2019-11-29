@@ -282,8 +282,10 @@ class JianQAttacking {
 			}
 			catch (_) { }
 		}
-		p.on('beforeexpire', (player, data) => {
-			comboEnd(player);
+		p.on('beforeexpire', (player, { effect }) => {
+			if (effect === this) {
+				comboEnd(player);
+			}
 		});
 		p.on('afterstartattack', player => {
 			this.time = JIAN_Q_MAX_SEP_TIME;
@@ -366,7 +368,7 @@ class Shifting {
 const JianQ = makeSkill('king_q', 10, (player) => {
 	player.applyEffect(new JianQAttacking(JIAN_Q_MAX_SEP_TIME));
 });
-const JianE = makeSkill('king_e', 10, (player,{angle}) => {
+const JianE = makeSkill('king_e', 10, (player, { angle }) => {
 	angle = vaild.real(angle, { hint: 'angle', min: 0, max: 2 * Math.PI });
 	player.applyEffect(new Shifting(0.2, V.fromAngle(angle, 100)));
 	player.skills.getSkill('king_e').disactive();
@@ -648,7 +650,7 @@ module.exports = class Forty extends Game {
 				if (this.effects.some(effect => effect.time <= 0)) {
 					this.effects = this.effects.filter(effect => {
 						if (effect.time <= 0) {
-							let data = { canceled: false };
+							let data = { effect, canceled: false };
 							this.prop.emit('beforeexpire', this, data);
 							return data.canceled;
 						}
