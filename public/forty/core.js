@@ -43,9 +43,10 @@ const transferEffect = {
         data.attackType = 'initial';
     },
     'king_q': (data, msg) => {
+        // console.log(data);
         switch (msg.part) {
             case 1: {
-                data.img.king_q = 'king_q1';
+                data.img.king_q = 'king_q1.jpg';
                 data.attackType = 'king1';
                 data.attackSumTime = 0.7;
                 data.attackWidth = 20;
@@ -54,7 +55,7 @@ const transferEffect = {
                 break;
             }
             case 2: {
-                data.img.king_q = 'king_q2';
+                data.img.king_q = 'king_q2.jpg';
                 data.attackType = 'king2';
                 data.attackSumTime = 0.7;
                 data.attackSPJ = 30;
@@ -62,7 +63,7 @@ const transferEffect = {
                 break;
             }
             case 3: {
-                data.img.king_q = 'king_q3';
+                data.img.king_q = 'king_q3.jpg';
                 data.attackType = 'king3';
                 data.attackSumTime = 0.5;
                 data.knifeRadius *= 25 / 40;

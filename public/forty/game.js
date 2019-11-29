@@ -38,8 +38,9 @@ var GAME_TYPE = {
     FFA: Symbol('ffa'),
     TEAM: Symbol('team'),
 }
-var CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), SET_SETTINGS = Symbol('set_settings'), DIE = Symbol('die'), JOIN_AUTO_TEAM = Symbol('join_auto_team');
+var CONTINUE_TAG = Symbol('continue_tag'), JOIN_AUTO_FFA = Symbol('join_auto_ffa'), SET_SETTINGS = Symbol('set_settings'), DIE = Symbol('die'), JOIN_AUTO_FFA_BETA = Symbol('ffa_beta'), JOIN_AUTO_TEAM = Symbol('join_auto_team');
 var future = Symbol('future');
+var Beta;
 const W = 1, S = 2, A = 4, D = 8;
 const moveList = [-1, 2, 6, -1, 4, 3, 5, 4, 0, 1, 7, 0, -1, 2, 6, -1];
 
@@ -143,7 +144,7 @@ async function settingInterface() {
 async function skillsInterface() {
     HTML.clearBody();
     let nameList = {
-        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 0 }, { text: '匕首', value: 1 }, { text: '重刃', value: 2 }, { text: '熔炉', value: 3 }, { text: '剑魔TEST', value: 4 }] },
+        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 0, beta: false }, { text: '匕首', value: 1, beta: false }, { text: '重刃', value: 2, beta: false }, { text: '熔炉', value: 3, beta: false }, { text: '剑魔', value: 4, beta: true }] },
     };
     let frame = HTML.create('div', 'frame skills-interface');
     document.body.appendChild(frame);
@@ -158,6 +159,7 @@ async function skillsInterface() {
             let running = 1;
             div.appendChild(HTML.create('p', 'skills', now.text));
             for (let j of now.btnList) {
+                if (j.beta && !Beta) continue;
                 j.btn = HTML.create('button', 'skills', j.text);
                 j.btn.addEventListener('click', () => {
                     if (running === 0) return;
@@ -180,6 +182,7 @@ async function chooseInterface(tag) {
     const typeList = {
         '经典 FFA': { check: () => true, type: JOIN_AUTO_FFA, },
         '团队': { check: () => true, type: JOIN_AUTO_TEAM, },
+        'FFA-Beta': { check: () => true, type: JOIN_AUTO_FFA_BETA, },
         '设置': { check: () => true, type: SET_SETTINGS },
     };
     HTML.clearBody();
@@ -229,13 +232,15 @@ async function joinInterface(type) {
             let roomName;
             if (type === JOIN_AUTO_FFA) roomName = 'forty';
             else if (type === JOIN_AUTO_TEAM) roomName = 'forty-team';
+            else if (type === JOIN_AUTO_FFA_BETA) roomName = 'forty-beta'
             send(['join_auto', roomName]);
             io.addEventListener('message', async function x(msg) {
                 let data = JSON.parse(msg.data);
                 if (data[0] === 'join_success') {
                     localStorage.fortyLastRoomId = roomId = data[1];
-                    if (type === JOIN_AUTO_FFA) resolve(GAME_TYPE.FFA);
-                    if (type === JOIN_AUTO_TEAM) resolve(GAME_TYPE.TEAM);
+                    if (type === JOIN_AUTO_FFA) Beta = false, resolve(GAME_TYPE.FFA);
+                    if (type === JOIN_AUTO_TEAM) Beta = false, resolve(GAME_TYPE.TEAM);
+                    if (type === JOIN_AUTO_FFA_BETA) Beta = true, resolve(GAME_TYPE.FFA);
                     resolve(CONTINUE_TAG);
                 }
                 else if (data[0] === 'join_fail') alert('匹配失败, 原因: ' + data[1]), resolve(CONTINUE_TAG);
@@ -245,7 +250,7 @@ async function joinInterface(type) {
             });
         });
     }
-    if (type === JOIN_AUTO_FFA || type === JOIN_AUTO_TEAM) return await joinAuto();
+    if (type === JOIN_AUTO_FFA || type === JOIN_AUTO_TEAM || type === JOIN_AUTO_FFA_BETA) return await joinAuto();
     else return console.error(`unknown type ${type}`), CONTINUE_TAG;
 }
 async function readyInterface(type) {
@@ -386,6 +391,12 @@ async function gameInterface(msg) {
             let delta = Date.now() - lastCalcTime;
             lastCalcTime += delta;
             delta /= 1000;
+            let myTeam, myData;
+            let tag = 0;
+            let { players, standing } = FORTY.getNowMap();
+            players.forEach(data => {
+                if (data.id === playerIndex) myData = data, X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1, myTeam = data.team;
+            });
             for (let [name, skill] of nowSkills) {
                 let id;
                 switch (name[name.length - 1]) {
@@ -405,6 +416,10 @@ async function gameInterface(msg) {
                 if (id == -1) continue;
                 let { box, img, cover } = skillBoxs[id];
                 let str = '../sources/images/' + name + '.jpg';
+                console.log(myData);
+                if (myData && myData.img[name]) {
+                    str = '../sources/images/' + myData.img[name];
+                }
                 if (img.src !== str) img.src = str;
                 box.style.display = 'inline-block';
                 skill.cooldown -= delta;
@@ -415,16 +430,10 @@ async function gameInterface(msg) {
             flush();
             g_knife.innerHTML = '';
             let nowFillColor = 'rgb(0, 0, 0)', nowStrokeColor = 'rgb(0, 0, 0)', nowLineWidth = 1;
-            let tag = 0;
             let littlecxt = littleMap.getContext('2d');
             littlecxt.clearRect(0, 0, width, height);
             littlecxt.fillStyle = 'rgba(128, 128, 128, 0.5)';
             littlecxt.fillRect(0, 0, littleMap.width, littleMap.height);
-            let { players, standing } = FORTY.getNowMap();
-            let myTeam;
-            players.forEach(data => {
-                if (data.id === playerIndex) X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1, myTeam = data.team;
-            });
             players.forEach(data => {
                 littlecxt.fillStyle = data.team === myTeam ? 'blue' : 'red';
                 littlecxt.fillRect(Math.floor((data.y) / ratio) - 2.5, Math.floor((width + data.x)) / ratio - 2.5, 5, 5);
