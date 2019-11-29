@@ -352,9 +352,26 @@ class JianQAttacking {
 		});
 	}
 }
+class Shifting {
+	constructor(time, deltaSpeed) {
+		this.time = time;
+		this.deltaSpeed = deltaSpeed;
+	}
+	apply(p) {
+		p.on('time', (player, { time }) => {
+			player.pos.addM(this.deltaSpeed.mul(time));
+		});
+	}
+}
 const JianQ = makeSkill('king_q', 10, (player) => {
 	player.applyEffect(new JianQAttacking(JIAN_Q_MAX_SEP_TIME));
 });
+const JianE = makeSkill('king_e', 10, (player,{angle}) => {
+	angle = vaild.real(angle, { hint: 'angle', min: 0, max: 2 * Math.PI });
+	player.applyEffect(new Shifting(0.2, V.fromAngle(angle, 100)));
+	player.skills.getSkill('king_e').disactive();
+});
+
 class Jian {
 	constructor() {
 		this.time = Infinity;
@@ -365,30 +382,20 @@ class Jian {
 		p.on('aftereffectapply', (player, { effect }) => {
 			if (effect === this) {
 				player.skills.addSkill(new JianQ());
+				player.skills.addSkill(new JianE());
 			}
 		});
 	}
 };
 
-class Shifting{
-	constructor(time,deltaSpeed){
-		this.time=time;
-		this.deltaSpeed=deltaSpeed;
-	}
-	apply(p){
-		// TODO
-		p.on('time',()=>{});
-	}
-}
-
 const VIEWED_EFFECT_ID = new Map([
-	[Poet,'poet'],
-	[Knife,'knife'],
-	[Broadsward,'broadsward'],
-	[Furnace,'furnace'],
-	[Jian,'king'],
-	[JianQAttacking,'king_q'],
-	[Shifting,'shifting'],
+	[Poet, 'poet'],
+	[Knife, 'knife'],
+	[Broadsward, 'broadsward'],
+	[Furnace, 'furnace'],
+	[Jian, 'king'],
+	[JianQAttacking, 'king_q'],
+	[Shifting, 'shifting'],
 ].map(([Effect, id]) => [Effect.prototype, id]));
 const SELECTABLE_EFFECTS = [
 	Poet,
@@ -528,8 +535,6 @@ module.exports = class Forty extends Game {
 					this.speed.addM(deltaSpeed.mul(1 / len).mul(accT * this.prop.acc));
 				}
 				this.pos.addM(this.speed.mul(s - accT / 2));
-				this.pos.x = mid(this.pos.x, 0, ARENA_WIDTH);
-				this.pos.y = mid(this.pos.y, 0, ARENA_HEIGHT);
 				let speedLen = this.speed.len;
 				if (speedLen > 0) {
 					this.facing = this.speed.mul(1 / speedLen);
@@ -595,7 +600,10 @@ module.exports = class Forty extends Game {
 				return this.effects.find(f);
 			}
 			time(s) {
+				this.prop.emit('time', this, { time: s });
 				this.move(s);
+				this.pos.x = mid(this.pos.x, 0, ARENA_WIDTH);
+				this.pos.y = mid(this.pos.y, 0, ARENA_HEIGHT);
 
 				let attackTime = s;
 				const updateAttackState = (state, done) => {
