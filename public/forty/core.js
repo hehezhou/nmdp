@@ -68,6 +68,8 @@ const transferEffect = {
             }
         }
     },
+    'shifting': (data, msg) => {
+    }
 }
 const GAME = (() => {
     const BASE = {
@@ -184,9 +186,14 @@ const GAME = (() => {
                     }
                 }
                 switch (this.effects[i].id) {
-                    case 3: {
-                        hurtPerSec = 50;
+                    case 'furnace': {
+                        // hurtPerSec = 50;
                         break;
+                    }
+                    case 'shifting': {
+                        let {deltaSpeed} = this.effects[i];
+                        this.pos.x += deltaSpeed.x * t;
+                        this.pos.y += deltaSpeed.y * t;
                     }
                 }
             }
