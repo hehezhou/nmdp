@@ -409,7 +409,7 @@ const VIEWED_EFFECT_ID = new Map([
 	JianQAttacking,
 	Shifting,
 ].map((Effect) => [Effect.prototype, ID_EFFECT_MAP.get(Effect)]));
-const DEFAULT_SELECTABLE_EFFECTS = [
+const ALL_SELECTABLE_PASSIVE_EFFECT_IDS = [
 	Poet,
 	Knife,
 	Broadsward,
@@ -442,14 +442,14 @@ module.exports = class Forty extends Game {
 		this.settings = settings;
 		const {
 			teamCount = null,
-			selectableEffectIDs = DEFAULT_SELECTABLE_EFFECTS,
+			selectableEffectIDs = ALL_SELECTABLE_PASSIVE_EFFECT_IDS,
 			ban = [],
 			bannedEffectIDs = ban || [],
 		} = settings;
 		this.teamCount = vaild.integer(teamCount, { hint: 'teamCount', min: 2, allows: [null] });
 		this.selectableEffects = selectableEffectIDs
 			.filter(id=>!bannedEffectIDs.includes(id))
-			.map(id => ({ Effect: ID_EFFECT_MAP.get(id) }));
+			.map(id => ID_EFFECT_MAP.get(id));
 		if (this.teamCount !== null) {
 			this.teams = [];
 			for (let i = 1; i <= this.teamCount; i++) {
