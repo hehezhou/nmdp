@@ -389,23 +389,32 @@ class Jian {
 		});
 	}
 };
-
+const EFFECT_IDS = [
+	['poet', Poet],
+	['knife', Knife],
+	['broadsward', Broadsward],
+	['furnace', Furnace],
+	['king', Jian],
+	['king_q', JianQAttacking],
+	['shifting', Shifting],
+];
+const EFFECT_IDS_MAP = new Map(EFFECT_IDS);
 const VIEWED_EFFECT_ID = new Map([
-	[Poet, 'poet'],
-	[Knife, 'knife'],
-	[Broadsward, 'broadsward'],
-	[Furnace, 'furnace'],
-	[Jian, 'king'],
-	[JianQAttacking, 'king_q'],
-	[Shifting, 'shifting'],
-].map(([Effect, id]) => [Effect.prototype, id]));
-const SELECTABLE_EFFECTS = [
 	Poet,
 	Knife,
 	Broadsward,
 	Furnace,
 	Jian,
-].map(Effect => ({ Effect }));
+	JianQAttacking,
+	Shifting,
+].map((Effect) => [Effect.prototype, EFFECT_IDS.get(Effect)]));
+const DEFAULT_SELECTABLE_EFFECTS = [
+	Poet,
+	Knife,
+	Broadsward,
+	Furnace,
+	Jian,
+].map(Effect => (EFFECT_IDS_MAP.get(Effect)));
 
 class Waiting { };
 class BeforeAttack {
@@ -430,8 +439,9 @@ module.exports = class Forty extends Game {
 			id: 'forty',
 		};
 		this.settings = settings;
-		const { teamCount = null } = settings;
+		const { teamCount = null, selectableEffectIDs = DEFAULT_SELECTABLE_EFFECTS } = settings;
 		this.teamCount = vaild.integer(teamCount, { hint: 'teamCount', min: 2, allows: [null] });
+		this.selectableEffects = selectableEffectIDs.map(id => ({ Effect: EFFECT_IDS_MAP.get(id) }));
 		if (this.teamCount !== null) {
 			this.teams = [];
 			for (let i = 1; i <= this.teamCount; i++) {
@@ -756,8 +766,8 @@ module.exports = class Forty extends Game {
 					throw new Error('player cannot select a passive skill');
 				}
 				const { passive } = data;
-				let passiveSkillID = vaild.integer(passive, { min: 0, max: SELECTABLE_EFFECTS.length - 1, hint: 'passiveSkillID' });
-				let Effect = SELECTABLE_EFFECTS[passiveSkillID].Effect;
+				let passiveSkillID = vaild.integer(passive, { min: 0, max: this.selectableEffects.length - 1, hint: 'passiveSkillID' });
+				let Effect = DEFAULT_SELECTABLE_EFFECTS[passiveSkillID].Effect;
 				player.applyEffect(new Effect());
 				player.state = PLAYER_STATE_PLAYING;
 				this.players.set(id, player);
