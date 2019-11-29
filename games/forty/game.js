@@ -399,7 +399,7 @@ const EFFECT_IDS = [
 	['shifting', Shifting],
 ];
 const ID_EFFECT_MAP = new Map(EFFECT_IDS);
-const EFFECT_ID_MAP = new Map(EFFECT_IDS.map(([a,b])=>[b,a]));
+const EFFECT_ID_MAP = new Map(EFFECT_IDS.map(([a, b]) => [b, a]));
 const VIEWED_EFFECT_ID = new Map([
 	Poet,
 	Knife,
@@ -440,9 +440,16 @@ module.exports = class Forty extends Game {
 			id: 'forty',
 		};
 		this.settings = settings;
-		const { teamCount = null, selectableEffectIDs = DEFAULT_SELECTABLE_EFFECTS } = settings;
+		const {
+			teamCount = null,
+			selectableEffectIDs = DEFAULT_SELECTABLE_EFFECTS,
+			ban = [],
+			bannedEffectIDs = ban,
+		} = settings;
 		this.teamCount = vaild.integer(teamCount, { hint: 'teamCount', min: 2, allows: [null] });
-		this.selectableEffects = selectableEffectIDs.map(id => ({ Effect: ID_EFFECT_MAP.get(id) }));
+		this.selectableEffects = selectableEffectIDs
+			.filter(id=>!bannedEffectIDs.include(id))
+			.map(id => ({ Effect: ID_EFFECT_MAP.get(id) }));
 		if (this.teamCount !== null) {
 			this.teams = [];
 			for (let i = 1; i <= this.teamCount; i++) {
@@ -768,13 +775,13 @@ module.exports = class Forty extends Game {
 				}
 				const { passive } = data;
 				let passiveSkillID = vaild.string(passive, { hint: 'passiveSkillID' });
-				let Effect;
-				if(this.selectableEffects.include(passiveSkillID)){
-					Effect=ID_EFFECT_MAP.get(passiveSkillID);
-				}	
-				else{
-					throw new Error('no such skill');
-				}		
+				let Effect = ID_EFFECT_MAP.get(passiveSkillID);
+				if (this.selectableEffects.include(Effect)) {
+					
+				}
+				else {
+					throw new Error('you cannot select that skill');
+				}
 				player.applyEffect(new Effect());
 				player.state = PLAYER_STATE_PLAYING;
 				this.players.set(id, player);
