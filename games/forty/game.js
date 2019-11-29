@@ -185,7 +185,7 @@ function makeSkill(name, cooldown, active = () => { }, disactive = () => { }) {
 const Poet = makeEffect(p => {
 	p.bloodSucking *= 2;
 });
-const Knive = makeEffect(p => {
+const Knife = makeEffect(p => {
 	p.maxSpeed += 10;
 	(a => {
 		a.damage *= 0.75;
@@ -370,18 +370,29 @@ class Jian {
 	}
 };
 
-const VIEWED_EFFECTS = [
-	Poet,
-	Knive,
-	Broadsward,
-	Furnace,
-	Jian,
-	JianQAttacking,
-];
-const VIEWED_EFFECT_ID = new Map(VIEWED_EFFECTS.map((Effect, index) => [Effect.prototype, index]));
+class Shifting{
+	constructor(time,deltaSpeed){
+		this.time=time;
+		this.deltaSpeed=deltaSpeed;
+	}
+	apply(p){
+		// TODO
+		p.on('time',()=>{});
+	}
+}
+
+const VIEWED_EFFECT_ID = new Map([[
+	[Poet,'poet'],
+	[Knife,'knife'],
+	[Broadsward,'broadsward'],
+	[Furnace,'furnace'],
+	[Jian,'king'],
+	[JianQAttacking,'king_q'],
+	[Shifting,'shifting'],
+]].map((Effect, id) => [Effect.prototype, id]));
 const SELECTABLE_EFFECTS = [
 	Poet,
-	Knive,
+	Knife,
 	Broadsward,
 	Furnace,
 	Jian,
