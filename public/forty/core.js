@@ -13,36 +13,36 @@ function hashGetColor(id) {
     id.forEach(data => hash = Mod(hash * base + data.charCodeAt() * data.charCodeAt()));
     return '#' + hash.toString(16).padStart(6, '0');
 }
-const transferEffect = [
-    (data, msg) => {
+const transferEffect = {
+    'poet': (data, msg) => {
         data.blood = true;
         data.attackType = 'initial';
     },
-    (data, msg) => {
+    'knife': (data, msg) => {
         data.attackSumTime -= 0.4;
         data.knifeRadius *= 0.75;
         data.dagger = true;
         data.attackType = 'initial';
     },
-    (data, msg) => {
+    'broadsward': (data, msg) => {
         data.knifeRadius *= 1.5;
         data.attackSumTime += 1.2;
         data.theta *= 1.5;
         data.broadsword = true;
         data.attackType = 'initial';
     },
-    (data, msg) => {
+    'furnace': (data, msg) => {
         data.knifeRadius *= 0.75;
         data.attackSumTime += 1.2;
         data.attackTheta = null;
-        data.smelting = true;
-        data.attackType = 'smelting';
+        data.furnace = true;
+        data.attackType = 'furnace';
     },
-    (data, msg) => {
+    'king': (data, msg) => {
         data.king = true;
         data.attackType = 'initial';
     },
-    (data, msg) => {
+    'king_q': (data, msg) => {
         switch (msg.part) {
             case 1: {
                 data.attackType = 'king1';
@@ -68,7 +68,7 @@ const transferEffect = [
             }
         }
     },
-]
+}
 const GAME = (() => {
     const BASE = {
         PLAYER_TIME_BEFORE_ATTACK: 0.8,
@@ -154,7 +154,7 @@ const GAME = (() => {
             if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if (this.attackState.time <= 0) {
-                    if (this.effects.some(data => data.id === EFFECT.SMELTING)) {
+                    if (this.effects.some(data => data.id === EFFECT.FURNACE)) {
                         this.attackState.time = 2;
                     }
                     else if (this.effects.some(data => data.id === EFFECT.BROADSWORD)) this.attackState = new AfterAttack({ time: 1.5 });
@@ -236,7 +236,6 @@ const GAME = (() => {
                     }
                 }
                 for (let j of i[1].effects) {
-                    if (j.id >= transferEffect.length);
                     transferEffect[j.id](data, j);
                 }
                 ans.push(data);
@@ -298,7 +297,7 @@ const GAME = (() => {
             return { players: this.output(), standing: this.ranking() };
         }
         check(playerIndex) {
-            return this.players.has(playerIndex) && this.players.get(playerIndex).passive !== EFFECT.SMELTING && this.players.get(playerIndex).attackState === Waiting;
+            return this.players.has(playerIndex) && this.players.get(playerIndex).passive !== EFFECT.FURNACE && this.players.get(playerIndex).attackState === Waiting;
         }
     }
 })();

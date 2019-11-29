@@ -47,7 +47,7 @@ var EFFECT = {
     BLOOD: 0,
     DAGGER: 1,
     BROADSWORD: 2,
-    SMELTING: 3,
+    FURNACE: 3,
 };
 
 const SETTINGS = {
@@ -527,7 +527,7 @@ async function gameInterface(msg) {
                     }
                 }
                 switch (data.attackType) {
-                    case 'smelting': {
+                    case 'furnace': {
                         if (!svgAttackMap.has(data.id)) {
                             let tmp1 = SVG.create('circle'),
                                 tmp2 = SVG.create('path'),
