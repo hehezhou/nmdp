@@ -408,7 +408,7 @@ const VIEWED_EFFECT_ID = new Map([
 	Jian,
 	JianQAttacking,
 	Shifting,
-].map((Effect) => [Effect.prototype, ID_EFFECT_MAP.get(Effect)]));
+].map((Effect) => [Effect.prototype, EFFECT_ID_MAP.get(Effect)]));
 const ALL_SELECTABLE_PASSIVE_EFFECT_IDS = [
 	Poet,
 	Knife,
