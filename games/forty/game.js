@@ -398,8 +398,8 @@ const EFFECT_IDS = [
 	['king_q', JianQAttacking],
 	['shifting', Shifting],
 ];
-const EFFECT_IDS_MAP = new Map(EFFECT_IDS);
-const ID_EFFECTS_MAP = new Map(EFFECT_IDS.map(([a,b])=>[b,a]));
+const ID_EFFECT_MAP = new Map(EFFECT_IDS);
+const EFFECT_ID_MAP = new Map(EFFECT_IDS.map(([a,b])=>[b,a]));
 const VIEWED_EFFECT_ID = new Map([
 	Poet,
 	Knife,
@@ -408,14 +408,14 @@ const VIEWED_EFFECT_ID = new Map([
 	Jian,
 	JianQAttacking,
 	Shifting,
-].map((Effect) => [Effect.prototype, EFFECT_IDS_MAP.get(Effect)]));
+].map((Effect) => [Effect.prototype, ID_EFFECT_MAP.get(Effect)]));
 const DEFAULT_SELECTABLE_EFFECTS = [
 	Poet,
 	Knife,
 	Broadsward,
 	Furnace,
 	Jian,
-].map(Effect => (ID_EFFECTS_MAP.get(Effect)));
+].map(Effect => (EFFECT_ID_MAP.get(Effect)));
 
 class Waiting { };
 class BeforeAttack {
@@ -442,7 +442,7 @@ module.exports = class Forty extends Game {
 		this.settings = settings;
 		const { teamCount = null, selectableEffectIDs = DEFAULT_SELECTABLE_EFFECTS } = settings;
 		this.teamCount = vaild.integer(teamCount, { hint: 'teamCount', min: 2, allows: [null] });
-		this.selectableEffects = selectableEffectIDs.map(id => ({ Effect: EFFECT_IDS_MAP.get(id) }));
+		this.selectableEffects = selectableEffectIDs.map(id => ({ Effect: ID_EFFECT_MAP.get(id) }));
 		if (this.teamCount !== null) {
 			this.teams = [];
 			for (let i = 1; i <= this.teamCount; i++) {
@@ -767,8 +767,14 @@ module.exports = class Forty extends Game {
 					throw new Error('player cannot select a passive skill');
 				}
 				const { passive } = data;
-				let passiveSkillID = vaild.integer(passive, { min: 0, max: this.selectableEffects.length - 1, hint: 'passiveSkillID' });
-				let Effect = DEFAULT_SELECTABLE_EFFECTS[passiveSkillID].Effect;
+				let passiveSkillID = vaild.string(passive, { hint: 'passiveSkillID' });
+				let Effect;
+				if(this.selectableEffects.include(passiveSkillID)){
+					Effect=ID_EFFECT_MAP.get(passiveSkillID);
+				}	
+				else{
+					throw new Error('no such skill');
+				}		
 				player.applyEffect(new Effect());
 				player.state = PLAYER_STATE_PLAYING;
 				this.players.set(id, player);

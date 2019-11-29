@@ -4,7 +4,7 @@ Send `skill`: `{ name:string, ... }`
 
 Send `set_direction`: `number`
 
-Send `set_skills`: `{ passive: number }`
+Send `set_skills`: `{ passive: string }`
 
 Receive `game_start`: `{ map_height:number, map_width:number, id:string }`
 
