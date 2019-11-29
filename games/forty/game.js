@@ -448,7 +448,7 @@ module.exports = class Forty extends Game {
 		} = settings;
 		this.teamCount = vaild.integer(teamCount, { hint: 'teamCount', min: 2, allows: [null] });
 		this.selectableEffects = selectableEffectIDs
-			.filter(id=>!bannedEffectIDs.include(id))
+			.filter(id=>!bannedEffectIDs.includes(id))
 			.map(id => ({ Effect: ID_EFFECT_MAP.get(id) }));
 		if (this.teamCount !== null) {
 			this.teams = [];
