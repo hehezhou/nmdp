@@ -776,10 +776,7 @@ module.exports = class Forty extends Game {
 				const { passive } = data;
 				let passiveSkillID = vaild.string(passive, { hint: 'passiveSkillID' });
 				let Effect = ID_EFFECT_MAP.get(passiveSkillID);
-				if (this.selectableEffects.include(Effect)) {
-					
-				}
-				else {
+				if (!this.selectableEffects.includes(Effect)) {
 					throw new Error('you cannot select that skill');
 				}
 				player.applyEffect(new Effect());
