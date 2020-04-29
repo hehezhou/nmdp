@@ -144,7 +144,7 @@ async function settingInterface() {
 async function skillsInterface() {
     HTML.clearBody();
     let nameList = {
-        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 0, beta: false }, { text: '匕首', value: 1, beta: false }, { text: '重刃', value: 2, beta: false }, { text: '熔炉', value: 3, beta: false }, { text: '剑魔', value: 4, beta: true }] },
+        'passive': { text: '被动: ', btnList: [{ text: '嗜血', value: 'poet', beta: false }, { text: '匕首', value: 'knife', beta: false }, { text: '重刃', value: 2, beta: false }, { text: '熔炉', value: 'broadsward', beta: false }, { text: '剑魔', value: 'furnace', beta: true }] },
     };
     let frame = HTML.create('div', 'frame skills-interface');
     document.body.appendChild(frame);

@@ -4,10 +4,11 @@ const UserD = require('./userD.js');
 const fs = require('fs');
 const vaild = require('./utils/vaild.js');
 const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
+const handle = require('./web-server.js');
 
 const options = {
-	pfx: fs.readFileSync(paths.pfxPath),
-	passphrase: paths.passphrase ? paths.passphrase : undefined,
+	cert: fs.readFileSync(paths.certPath),
+	key: fs.readFileSync(paths.keyPath),
 };
 
 const loadGame = (cache => name => {
@@ -23,11 +24,11 @@ const loadGame = (cache => name => {
 		throw new Error('Invaild game name');
 	}
 })(new Map());
-function parseCookie(cookie){
-	let result=new Map();
-	if(cookie!==undefined){
-		cookie.split(';').map(str=>str.split('=',2).map(s=>s.trim())).filter(([,v])=>v!==undefined).forEach(([key,value])=>{
-			result.set(key,value);
+function parseCookie(cookie) {
+	let result = new Map();
+	if (cookie !== undefined) {
+		cookie.split(';').map(str => str.split('=', 2).map(s => s.trim())).filter(([, v]) => v !== undefined).forEach(([key, value]) => {
+			result.set(key, value);
 		});
 	}
 	return result;
@@ -38,14 +39,14 @@ module.exports = class GameServer {
 		this.matchs = Object.create(null);
 		this.userD = new UserD();
 		if (gameData !== undefined) {
-			const {games,matchs,userD}=gameData;
-			if(games!==undefined){
+			const { games, matchs, userD } = gameData;
+			if (games !== undefined) {
 				for (let id in games) {
 					let { type, data } = games[id];
 					this.createGame(id, type, data, true);
 				}
 			}
-			if(matchs!==undefined){
+			if (matchs !== undefined) {
 				this.matchs = vaild.object(matchs, { hint: 'matchs' });
 				for (let id in this.matchs) {
 					let gameID = this.matchs[id].gameID;
@@ -54,7 +55,7 @@ module.exports = class GameServer {
 					}
 				}
 			}
-			if(userD!==undefined){
+			if (userD !== undefined) {
 				this.userD = UserD.fromJSON(userD);
 			}
 		}
@@ -145,6 +146,9 @@ module.exports = class GameServer {
 						res.end();
 					}
 				}
+				else {
+					handle(req, res);
+				}
 			});
 		});
 		server.listen(port);
@@ -182,7 +186,7 @@ module.exports = class GameServer {
 				this.playerConnect(session.username, webSocket, request);
 			}
 			catch (e) {
-				webSocket.send(JSON.stringify(['force_quit',e.message==='Why?'?'login first':e.message]))
+				webSocket.send(JSON.stringify(['force_quit', e.message === 'Why?' ? 'login first' : e.message]))
 				webSocket.close();
 			}
 		});
