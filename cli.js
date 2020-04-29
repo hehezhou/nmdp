@@ -71,7 +71,7 @@ module.exports = function CLI(gameServer) {
 		register(username,password){
 			gameServer.userD.register(username,password);
 		},
-		help: '(NO HELP!)',
+		help: 'QAQ',
 		mosiyuan: 'Link: https://lmoliver.github.io/mosiyuan',
 	};
 

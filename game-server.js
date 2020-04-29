@@ -1,13 +1,15 @@
 const WS = require('ws');
-const https = require('https');
+const http = require('http');
+const path = require('path');
 const UserD = require('./userD.js');
 const fs = require('fs');
 const vaild = require('./utils/vaild.js');
 const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
+const { promisify } = require('util');
 
 const options = {
-	pfx: fs.readFileSync(paths.pfxPath),
-	passphrase: paths.passphrase ? paths.passphrase : undefined,
+	// pfx: fs.readFileSync(paths.pfxPath),
+	// passphrase: paths.passphrase ? paths.passphrase : undefined,
 };
 
 const loadGame = (cache => name => {
@@ -23,11 +25,11 @@ const loadGame = (cache => name => {
 		throw new Error('Invaild game name');
 	}
 })(new Map());
-function parseCookie(cookie){
-	let result=new Map();
-	if(cookie!==undefined){
-		cookie.split(';').map(str=>str.split('=',2).map(s=>s.trim())).filter(([,v])=>v!==undefined).forEach(([key,value])=>{
-			result.set(key,value);
+function parseCookie(cookie) {
+	let result = new Map();
+	if (cookie !== undefined) {
+		cookie.split(';').map(str => str.split('=', 2).map(s => s.trim())).filter(([, v]) => v !== undefined).forEach(([key, value]) => {
+			result.set(key, value);
 		});
 	}
 	return result;
@@ -38,14 +40,14 @@ module.exports = class GameServer {
 		this.matchs = Object.create(null);
 		this.userD = new UserD();
 		if (gameData !== undefined) {
-			const {games,matchs,userD}=gameData;
-			if(games!==undefined){
+			const { games, matchs, userD } = gameData;
+			if (games !== undefined) {
 				for (let id in games) {
 					let { type, data } = games[id];
 					this.createGame(id, type, data, true);
 				}
 			}
-			if(matchs!==undefined){
+			if (matchs !== undefined) {
 				this.matchs = vaild.object(matchs, { hint: 'matchs' });
 				for (let id in this.matchs) {
 					let gameID = this.matchs[id].gameID;
@@ -54,7 +56,7 @@ module.exports = class GameServer {
 					}
 				}
 			}
-			if(userD!==undefined){
+			if (userD !== undefined) {
 				this.userD = UserD.fromJSON(userD);
 			}
 		}
@@ -67,7 +69,7 @@ module.exports = class GameServer {
 		}, 0);
 	}
 	listen(port) {
-		const server = https.createServer(options, (req, res) => {
+		const server = http.createServer(options, (req, res) => {
 			let data = '';
 			req.on('data', chunk => {
 				data += chunk;
@@ -145,6 +147,31 @@ module.exports = class GameServer {
 						res.end();
 					}
 				}
+				else if (req.method === 'GET') {
+					const u = path.normalize(req.url);
+					if (!/(?:\w|(?:\w\.)|\/)*/.test(u)) {
+						res.statusCode = 404;
+						res.end(u);
+					}
+					else {
+						const readFile = promisify(fs.readFile);
+						readFile(path.join('./public/', u)).catch(() =>
+							readFile(path.join('./public/', u, '/index.html'))
+						).then(result => {
+							if (u.endsWith('html')) {
+								res.setHeader('Content-Type', 'text/html');
+							}
+							res.write(result.toString('utf-8'));
+							res.end();
+						}).catch(e => {
+							res.statusCode = 404;
+							res.end(e.message);
+						});
+					}
+				}
+				else {
+					res.end('GG');
+				}
 			});
 		});
 		server.listen(port);
@@ -182,7 +209,7 @@ module.exports = class GameServer {
 				this.playerConnect(session.username, webSocket, request);
 			}
 			catch (e) {
-				webSocket.send(JSON.stringify(['force_quit',e.message==='Why?'?'login first':e.message]))
+				webSocket.send(JSON.stringify(['force_quit', e.message === 'Why?' ? 'login first' : e.message]))
 				webSocket.close();
 			}
 		});
