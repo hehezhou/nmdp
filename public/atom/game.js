@@ -51,6 +51,7 @@ function boom() {
 }
 const HTML = {
     parse: function(x) {
+        console.log(x);
         let p = this.create('p');
         p.innerText = x;
         return p.innerHTML;
@@ -443,7 +444,7 @@ const WORK = {
         CANVAS.initDraw(data.map);
         let nowRound = data.round, nowTurn = data.turn;
         function getPlayerName(index) {
-            return `<span style="color:${CANVAS.COLOR.toRGBString(CANVAS.COLOR.colorList[index])};">${playerList[index]}</span>`;
+            return `<span style="color:${CANVAS.COLOR.toRGBString(CANVAS.COLOR.colorList[index])};">${HTML.parse(playerList[index])}</span>`;
         }
         function getRoundMsg() {
             return `当前轮数: ${nowRound + 1}<br/>当前行动: ${getPlayerName(nowTurn)}<br/>你是: ${getPlayerName(playerIndex)}${playerIndex === nowTurn ? '<br/><strong>现在轮到你行动了</strong>' : '<br/>'}`;
@@ -462,7 +463,7 @@ const WORK = {
                 if (data === 0 && alive[index]) {
                     alive[index] = 0;
                     rankList.unshift(index);
-                    msgBox.innerHTML += index === playerIndex ? `你阵亡了<br/>` : `${HTML.parse(getPlayerName(index))}阵亡了<br/>`;
+                    msgBox.innerHTML += index === playerIndex ? `你阵亡了<br/>` : `${getPlayerName(index)}阵亡了<br/>`;
                 }
             });
             playerList.forEach((data, index) => {
@@ -500,8 +501,8 @@ const WORK = {
                             }
                         }
                         lastMap = newMap;
-                        roundMsg.innerHTML = parse(getRoundMsg());
-                        playerMsg.innerHTML = parse(getPlayerMsg());
+                        roundMsg.innerHTML = getRoundMsg();
+                        playerMsg.innerHTML = getPlayerMsg();
                         for (let i = 0; i < 5; i++) await new Promise(resolve => requestAnimationFrame(resolve));
                     }
                     mapList = [];
@@ -536,7 +537,7 @@ const WORK = {
                     io.removeEventListener('message', x);
                 }
                 else if (data[0] === 'decide_fail') {
-                    msgBox.innerHTML += `决策有误, 原因:${parse(data[1])}<br/>`;
+                    msgBox.innerHTML += `决策有误, 原因:${HTML.parse(data[1])}<br/>`;
                 }
             });
             function pos(event) {

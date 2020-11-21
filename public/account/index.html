@@ -49,7 +49,7 @@
                     else if(newKey.value === '') msg.innerText = '请输入新密码';
                     else if(newKey.value !== repeatKey.value) msg.innerText = '请输入相同的密码';
                     else ajaxPost({
-                        url: `https://${location.host}/api/auth/change-password`,
+                        url: `http://${location.host}/api/auth/change-password`,
                         data: JSON.stringify({oldPassword: oldKey.value, newPassword: newKey.value}),
                         fnSucceed: () => location.href = location.origin,
                         fnFail: (data) => {
@@ -69,7 +69,7 @@
                 let btn = document.getElementById('logout');
                 btn.addEventListener('click', () => {
                     ajaxPost({
-                        url: `https://${location.host}/api/auth/logout`,
+                        url: `http://${location.host}/api/auth/logout`,
                         data: '{}',
                         fnSucceed: () => location.href = location.origin,
                         fnFail: (data) => {
