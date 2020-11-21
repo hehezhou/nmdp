@@ -8,3 +8,6 @@ public/ftp/*
 public/test/*
 public/mosiyuan/ui.html
 utils/data_structures/graph.js
+package-lock.json
+package.json
+node_modules/*

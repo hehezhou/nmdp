@@ -7,7 +7,7 @@ const fs = require('fs');
 // };
 const ableList = [
 	/^\/?$/,
-	/^(?:\/[a-zA-Z_\-]+)*(?:\/[a-zA-Z_\-]+\.[a-zA-Z_\-]+)?$/,
+	/^(?:\/[a-zA-Z_0-9\-]+)*(?:\/[a-zA-Z_0-9\-]+\.[a-zA-Z_0-9\-]+)?$/,
 ];
 const regexp1 = /^\/(paint-board|area-single|mosiyuan|area|atom|forty|login)$/, regexp2 = /^\/(((paint-board|area-single|mosiyuan|area|atom|forty|login)\/)?)?$/;
 const typeList = {

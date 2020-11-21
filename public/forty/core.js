@@ -147,6 +147,7 @@ const GAME = (() => {
             this.effects = effects;
         }
         time(t, height, width) {
+            // console.log(this);
             let deltaSpeed = sub(this.targetSpeed, this.speed);
             let dl = deltaSpeed.len();
             let p = Math.min(dl / BASE.PLAYER_ACC, t);
@@ -160,10 +161,10 @@ const GAME = (() => {
             if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if (this.attackState.time <= 0) {
-                    if (this.effects.some(data => data.id === EFFECT.FURNACE)) {
+                    if (this.effects.some(data => data.id === 'furnace')) {
                         this.attackState.time = 2;
                     }
-                    else if (this.effects.some(data => data.id === EFFECT.BROADSWORD)) this.attackState = new AfterAttack({ time: 1.5 });
+                    else if (this.effects.some(data => data.id === 'broadsward')) this.attackState = new AfterAttack({ time: 1.5 });
                     else this.attackState = Waiting;
                 }
             }
@@ -309,7 +310,8 @@ const GAME = (() => {
             return { players: this.output(), standing: this.ranking() };
         }
         check(playerIndex) {
-            return this.players.has(playerIndex) && this.players.get(playerIndex).passive !== EFFECT.FURNACE && this.players.get(playerIndex).attackState === Waiting;
+            // console.log(this.players.get(playerIndex));
+            return this.players.has(playerIndex) && this.players.get(playerIndex).passive !== 'furnace' && this.players.get(playerIndex).attackState === Waiting;
         }
     }
 })();

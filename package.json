@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/hehezhou/nmdp/issues"
   },
-  "homepage": "https://github.com/hehezhou/nmdp#readme"
+  "homepage": "https://github.com/hehezhou/nmdp#readme",
+  "dependencies": {
+    "ws": "^7.4.0"
+  }
 }
