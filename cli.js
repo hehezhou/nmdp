@@ -4,7 +4,7 @@ const promisify = require('./utils/promisify.js');
 const EXIT = Symbol('EXIT');
 const PROMPT = '> ';
 module.exports = function CLI(gameServer) {
-	let cli = new ReadLine.createInterface({
+	let cli = ReadLine.createInterface({
 		input: process.stdin,
 		output: process.stdout,
 		prompt: PROMPT,
