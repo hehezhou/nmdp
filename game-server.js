@@ -1,15 +1,8 @@
 const WS = require('ws');
-const https = require('https');
+const http = require('http');
 const UserD = require('./userD.js');
-const fs = require('fs');
 const vaild = require('./utils/vaild.js');
-const paths = JSON.parse(fs.readFileSync('./paths.json').toString());
 const handle = require('./web-server.js');
-
-const options = {
-	cert: fs.readFileSync(paths.certPath),
-	key: fs.readFileSync(paths.keyPath),
-};
 
 const loadGame = (cache => name => {
 	if (cache.has(name)) {
@@ -68,7 +61,7 @@ module.exports = class GameServer {
 		}, 0);
 	}
 	listen(port) {
-		const server = https.createServer(options, (req, res) => {
+		const server = http.createServer((req, res) => {
 			let data = '';
 			req.on('data', chunk => {
 				data += chunk;
@@ -84,8 +77,8 @@ module.exports = class GameServer {
 								let n = this.userD.checkUsername(username);
 								let token = this.userD.login(n, password);
 								res.setHeader('Set-Cookie', [
-									`g=${token}; Path=/; HttpOnly; Secure`,
-									`n=${n}; Path=/; Secure`,
+									`g=${token}; Path=/; HttpOnly`,
+									`n=${n}; Path=/`,
 								]);
 								break;
 							}
@@ -97,8 +90,8 @@ module.exports = class GameServer {
 								}
 								this.userD.changePassword(session.username, oldPassword, newPassword);
 								res.setHeader('Set-Cookie', [
-									`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
-									`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
+									`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly`,
+									`n=SiyuanAKIOI; Max-Age=-1; Path=/`,
 								]);
 								break;
 							}
@@ -106,14 +99,14 @@ module.exports = class GameServer {
 								let session = inputToken ? this.userD.getSession(inputToken) : undefined;
 								if (session === undefined) {
 									res.setHeader('Set-Cookie', [
-										`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
-										`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
+										`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly`,
+										`n=SiyuanAKIOI; Max-Age=-1; Path=/`,
 									]);
 								}
 								else {
 									res.setHeader('Set-Cookie', [
-										`g=${session.token}; Path=/; HttpOnly; Secure`,
-										`n=${session.username}; Path=/; Secure`,
+										`g=${session.token}; Path=/; HttpOnly`,
+										`n=${session.username}; Path=/`,
 									]);
 								}
 								break;
@@ -125,8 +118,8 @@ module.exports = class GameServer {
 								}
 								this.userD.removeSession(session.username);
 								res.setHeader('Set-Cookie', [
-									`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly; Secure`,
-									`n=SiyuanAKIOI; Max-Age=-1; Path=/; Secure`,
+									`g=SiyuanAKIOI; Max-Age=-1; Path=/; HttpOnly`,
+									`n=SiyuanAKIOI; Max-Age=-1; Path=/`,
 								]);
 								break;
 							}
@@ -179,14 +172,14 @@ module.exports = class GameServer {
 				webSocket.on('close', () => {
 					clearInterval(interval);
 					this.userD.startExpire(token);
-				})
+				});
 				webSocket.on('ping', () => {
 					webSocket.pong();
 				});
 				this.playerConnect(session.username, webSocket, request);
 			}
 			catch (e) {
-				webSocket.send(JSON.stringify(['force_quit', e.message === 'Why?' ? 'login first' : e.message]))
+				webSocket.send(JSON.stringify(['force_quit', e.message === 'Why?' ? 'login first' : e.message]));
 				webSocket.close();
 			}
 		});
@@ -411,4 +404,4 @@ module.exports = class GameServer {
 	static unserialization(data) {
 		return new GameServer(JSON.parse(data));
 	}
-}
+};

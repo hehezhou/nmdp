@@ -1,5 +1,5 @@
 'use strict';
-const io = new WebSocket(`wss://${location.host}/wss/`);
+const io = new WebSocket(`ws://${location.host}/ws/`);
 const SUCCESS = 1, LOST = 0;
 const roomId = "paint1";
 const colorList = [

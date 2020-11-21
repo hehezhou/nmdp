@@ -2,7 +2,6 @@
 paths.json
 key
 key/*
-web-server.js
 test*.*
 public/ftp/*
 .*

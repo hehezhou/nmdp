@@ -44,7 +44,7 @@
         p.innerText = x;
         return p.innerHTML;
     }
-    const io = new WebSocket(`wss://${location.host}/wss/`);
+    const io = new WebSocket(`ws://${location.host}/ws/`);
     const SUCCESS = 1, LOST = 0, gameType = 'area';
     const GRID_EMPTY = -1, GRID_BLOCK = -2, GRID_MIST = -3, maxQueueLen = 5, Ratio = 20;
     const JOIN_AUTO_FFA = Symbol('joinAutoFFA'), GAME_CONTINUE = Symbol('gameContinue'), SINGLE = Symbol('single');

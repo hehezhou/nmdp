@@ -1,5 +1,5 @@
 ﻿try {
-    new WebSocket(`wss://${location.host}/wss/`);
+    new WebSocket(`ws://${location.host}/ws/`);
 }
 catch (e) {
 
