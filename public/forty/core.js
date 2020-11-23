@@ -154,10 +154,6 @@ const GAME = (() => {
             this.pos = plus(this.pos, mult(this.speed, p / 2));
             if (deltaSpeed.len() > 1e-5) this.speed = plus(this.speed, mult(deltaSpeed, BASE.PLAYER_ACC * p / deltaSpeed.len()));
             this.pos = plus(this.pos, mult(this.speed, (t - p / 2)));
-            if (this.pos.x < 0) this.pos.x = 0;
-            if (this.pos.y < 0) this.pos.y = 0;
-            if (this.pos.x > width) this.pos.x = width;
-            if (this.pos.y > height) this.pos.y = height;
             if (this.attackState instanceof BeforeAttack) {
                 this.attackState.time -= t;
                 if (this.attackState.time <= 0) {
@@ -203,6 +199,10 @@ const GAME = (() => {
                 }
             }
             this.health = Math.max(this.targetHealth, this.health - hurtPerSec * t);
+            if (this.pos.x < 0) this.pos.x = 0;
+            if (this.pos.y < 0) this.pos.y = 0;
+            if (this.pos.x > width) this.pos.x = width;
+            if (this.pos.y > height) this.pos.y = height;
         }
     }
     return class {
