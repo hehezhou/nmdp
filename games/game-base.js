@@ -9,10 +9,12 @@ module.exports = class Game extends EventEmitter {
 	constructor(settings) { super(settings); }
 	/**
 	 * 询问玩家能否加入游戏
-	 * @param {*} id 玩家 ID
+	 * @param {string} id 玩家 ID
 	 * @returns {boolean} 玩家能否加入游戏
 	 */
-	canJoin(id) { }
+	canJoin(id) {
+		throw new Error('no canJoin method');
+	}
 	/**
 	 * 玩家加入游戏
 	 * @param {string} id 玩家 ID
@@ -27,7 +29,7 @@ module.exports = class Game extends EventEmitter {
 	/**
 	 * 玩家给出输入
 	 * @param {string} id 玩家 ID
-	 * @param {object} input 输入
+	 * @param {any} input 输入
 	 */
 	input(id, input) { }
 	/**
@@ -39,11 +41,15 @@ module.exports = class Game extends EventEmitter {
 	 * 序列化
 	 * @returns {string} 序列化结果
 	 */
-	serialization() { }
+	serialization() {
+		throw new Error('no serialization method');
+	}
 	/**
 	 * 反序列化，不保存玩家连接的 `WebSocket`
 	 * @param {string} data 序列化结果
 	 * @returns {Game} 游戏对象
 	 */
-	static unserialization(data) { }
-}
+	static unserialization(data) {
+		throw new Error('no unserialization method');
+	}
+};

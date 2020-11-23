@@ -2,6 +2,7 @@ const { makeObject, makeArray, makeSet } = require('../../utils/map_maker.js');
 const { forEach, map } = require('../../utils/two_dim.js');
 const { size } = require('../../utils/object.js');
 const vaild = require('../../utils/vaild.js');
+const { InvaildError: InvalidError } = vaild;
 const NORTH = 'n';
 const WEST = 'w';
 const SOUTH = 's';
@@ -233,7 +234,7 @@ class GameMap {
 						destination: this.adjacents(dest)[d],
 						amount,
 					});
-				}
+				};
 				let b = building;
 				if (b.is_corner()) {
 					go(b[TURN[d]] ? TURN[d] : TURN_AROUND[TURN[d]]);
@@ -369,7 +370,7 @@ class Game {
 			};
 			const listener = ((called) => (result) => {
 				if (called) {
-					throw new Error('repeated decide');
+					throw new InvalidError('repeated decide');
 				}
 				if (result !== null) {
 					let { x, y } = result;
@@ -378,7 +379,7 @@ class Game {
 						y: vaild.integer(y, { hint: 'y', min: 0, max: this.gameMap.map[0].length }),
 					};
 					if (!this.check(player, result)) {
-						throw new Error('invalid result');
+						throw new InvalidError('invalid result');
 					}
 				}
 				called = true;

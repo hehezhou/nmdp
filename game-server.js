@@ -2,6 +2,7 @@ const WS = require('ws');
 const http = require('http');
 const UserD = require('./userD.js');
 const vaild = require('./utils/vaild.js');
+const { InvaildError } = vaild;
 const handle = require('./web-server.js');
 
 const loadGame = (cache => name => {
@@ -14,7 +15,7 @@ const loadGame = (cache => name => {
 		return result;
 	}
 	else {
-		throw new Error('Invaild game name');
+		throw new InvaildError('invaild game name');
 	}
 })(new Map());
 function parseCookie(cookie) {
@@ -86,7 +87,7 @@ module.exports = class GameServer {
 								const { oldPassword, newPassword } = JSON.parse(data);
 								let session = inputToken ? this.userD.getSession(inputToken) : undefined;
 								if (session === undefined) {
-									throw new Error('login first');
+									throw new InvaildError('login first');
 								}
 								this.userD.changePassword(session.username, oldPassword, newPassword);
 								res.setHeader('Set-Cookie', [
@@ -114,7 +115,7 @@ module.exports = class GameServer {
 							case '/api/auth/logout': {
 								let session = inputToken ? this.userD.getSession(inputToken) : undefined;
 								if (session === undefined) {
-									throw new Error('Why?');
+									throw new InvaildError('Why?');
 								}
 								this.userD.removeSession(session.username);
 								res.setHeader('Set-Cookie', [
@@ -124,7 +125,7 @@ module.exports = class GameServer {
 								break;
 							}
 							default: {
-								throw new Error('Why?');
+								throw new InvaildError('Why?');
 							}
 						}
 						res.setHeader('Content-Type', 'text/plain;charset=utf-8');
@@ -150,15 +151,15 @@ module.exports = class GameServer {
 			let cookies = request.headers.cookie;
 			try {
 				if (cookies === undefined) {
-					throw new Error('Why?');
+					throw new InvaildError('Why?');
 				}
 				let token = parseCookie(cookies).get('g');
 				if (token === undefined) {
-					throw new Error('Why?');
+					throw new InvaildError('Why?');
 				}
 				let session = this.userD.getSession(token);
 				if (session === undefined) {
-					throw new Error('Why?');
+					throw new InvaildError('Why?');
 				}
 				session.on('remove', () => {
 					this.playerDisconnect(session.username, 'session removed');
@@ -238,10 +239,10 @@ module.exports = class GameServer {
 		let gameID = vaild.string(playerInput, { hint: 'gameID' });
 		try {
 			if (this.isPlayerInGame(playerID)) {
-				throw new Error('the player is already in a game');
+				throw new InvaildError('the player is already in a game');
 			}
 			if (!(gameID in this.games)) {
-				throw new Error('the game doesn\'t exist');
+				throw new InvaildError('the game doesn\'t exist');
 			}
 			let game = this.games[gameID];
 			if (game.canJoin(playerID)) {
@@ -252,7 +253,7 @@ module.exports = class GameServer {
 				});
 			}
 			else {
-				throw new Error('the player cannot join the game');
+				throw new InvaildError('the player cannot join the game');
 			}
 		}
 		catch (e) {
@@ -281,10 +282,10 @@ module.exports = class GameServer {
 		let matchID = vaild.string(playerInput, { hint: 'matchID' });
 		try {
 			if (!(matchID in this.matchs)) {
-				throw new Error('the match doesn\'t exist');
+				throw new InvaildError('the match doesn\'t exist');
 			}
 			if (this.isPlayerInGame(playerID)) {
-				throw new Error('the player is already in a game');
+				throw new InvaildError('the player is already in a game');
 			}
 			let match = this.matchs[matchID];
 			let gameID = match.gameID;
@@ -312,7 +313,7 @@ module.exports = class GameServer {
 			player.gameID = null;
 		}
 		else {
-			throw new Error('the player is not in a game');
+			throw new InvaildError('the player is not in a game');
 		}
 	}
 	receiveMessage(playerID, playerMessage) {
@@ -334,27 +335,32 @@ module.exports = class GameServer {
 					this.playerLeave(playerID);
 					break;
 				}
-				case 'create': {
-					// FALL DOWN
-				}
+				// case 'create': {
+				// 	// FALL DOWN
+				// }
 				default: {
 					if (this.isPlayerInGame(playerID)) {
 						this.games[player.gameID].input(playerID, content);
 						return;
 					}
 					else {
-						throw new Error('the type is not supported');
+						throw new InvaildError('unknown input type');
 					}
 				}
 			}
 		}
 		catch (e) {
-			this.sendMessage(playerID, ['invalid', e.stack.split('\n')]);
+			if (e instanceof InvaildError) {
+				this.sendMessage(playerID, ['invalid', e.message]);
+			}
+			else {
+				console.error(e);
+			}
 		}
 	}
 	createGame(id, type, data, unserialization = false) {
 		if (id in this.games) {
-			throw new Error('game id already exists');
+			throw new InvaildError('game id already exists');
 		}
 		const GameClass = loadGame(type);
 		let game = unserialization
@@ -369,7 +375,7 @@ module.exports = class GameServer {
 	}
 	createMatch(id, type, settings) {
 		if (id in this.matchs) {
-			throw new Error('match id already exists');
+			throw new InvaildError('match id already exists');
 		}
 		this.matchs[id] = {
 			type,

@@ -144,6 +144,4 @@ module.exports = class MatchGame extends Game {
 			this.emit('start');
 		}
 	}
-	serialization() { }
-	static unserialization(data) { }
 };

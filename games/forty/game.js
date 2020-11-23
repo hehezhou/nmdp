@@ -4,11 +4,17 @@ const V = require('../../utils/v.js');
 const { mid } = require('../../utils/math.js');
 const { randomReal } = require('../../utils/random.js');
 const vaild = require('../../utils/vaild.js');
+const { InvaildError } = vaild;
+const { ALL } = require('dns');
 const ARENA_HEIGHT = 1000;
 const ARENA_WIDTH = 1000;
 const UPDATE_COOLDOWN = 0.05;
+/**@typedef {{type:'line',dest:V}} LineEdge*/
+/**@typedef {{type:'arc',dest:V,circleCenter:V,isClockwise:boolean}} ArcEdge*/
+/**@typedef {LineEdge|ArcEdge} Edge*/
 class Shape {
 	constructor(data = []) {
+		/**@type {Edge[]} */
 		this.edges = [];
 		for (let element of data) {
 			this[element.type](element);
@@ -17,6 +23,9 @@ class Shape {
 		this.rorate = 0;
 		this.translation = new V(0, 0);
 	}
+	/**
+	 * @param {V|{dest:V}} input 
+	 */
 	line(input) {
 		let dest = input instanceof V ? input : input.dest;
 		this.edges.push({
@@ -25,6 +34,9 @@ class Shape {
 		});
 		return this;
 	}
+	/**
+	 * @param {{dest:V,circleCenter:V,isClockwise:boolean}} input 
+	 */
 	arc({ dest, circleCenter, isClockwise }) {
 		this.edges.push({
 			type: 'arc',
@@ -34,6 +46,9 @@ class Shape {
 		});
 		return this;
 	}
+	/**
+	 * @param {V} point 
+	 */
 	_unTransform(point) {
 		let qwq = point.sub(this.translation);
 		let { x, y } = V.fromAngle(-this.rorate);
@@ -42,6 +57,9 @@ class Shape {
 			(y * qwq.x + x * qwq.y) / this.scale.y
 		);
 	}
+	/**
+	 * @param {V} point 
+	 */
 	include(point) {
 		if (this.edges.length === 0) {
 			return false;
@@ -61,7 +79,7 @@ class Shape {
 				}
 				case 'arc': {
 					let { circleCenter, isClockwise } = element;
-					angle += turn - ((point.sub(circleCenter).sqrlen < element.dest.sub(circleCenter).sqrlen && ((facing.cross(dest) < 0) ^ isClockwise)) ^ (turn <= Math.PI) ? 0 : 2 * Math.PI);
+					angle += turn - ((point.sub(circleCenter).sqrlen < element.dest.sub(circleCenter).sqrlen && ((facing.cross(dest) < 0) !== isClockwise)) !== (turn <= Math.PI) ? 0 : 2 * Math.PI);
 					break;
 				}
 				default: {
@@ -76,30 +94,44 @@ class Shape {
 };
 class SkillMap {
 	constructor() {
+		/**@type {Record<string,Skill>} */
 		this.o = Object.create(null);
 	}
+	/**
+	 * @param {Skill} skill 
+	 */
 	addSkill(skill) {
 		this.o[skill.name] = skill;
 	}
+	/**
+	 * @param {string} key
+	 */
 	removeSkill(key) {
 		delete (this.o)[key];
 	}
+	/**
+	 * @param {string} key
+	 */
 	getSkill(key) {
 		if (key in this.o) {
 			return this.o[key];
 		}
 		else {
-			throw new Error('no such skill');
+			throw new InvaildError('no such skill');
 		}
 	}
-	forEach(f) {
+	/**
+	 * @param {(key:string,skill:Skill)=>void} callback
+	 */
+	forEach(callback) {
 		for (let key in this.o) {
-			f(key, this.o[key]);
+			callback(key, this.o[key]);
 		}
 	}
 	toJSON() {
 		let result = [];
 		this.forEach((name, skill) => {
+			/**@type {object} */
 			let data = { ...skill };
 			data.total_cooldown = data.totalCooldown;
 			delete data.totalCooldown;
@@ -111,81 +143,118 @@ class SkillMap {
 	}
 }
 class PlayerProp extends EventEmitter {
+	maxSpeed = 60;
+	acc = 200;
+	maxHealth = 200;
+	attack = {
+		range: 40,
+		angle: Math.PI / 6,
+		shape: null,
+		damage: 40,
+		prepareTime: 0.8,
+		cooldownTime: 0,
+		auto: false,
+		eventAttackReach: [],
+		eventAttackDone: [],
+	};
+	bloodSucking = 0.4;
+	defense = 0;
+	hurtRate = 200;
+	killSteal = 0.5;
+	KillScore = 100;
 	constructor() {
 		super();
-		const DEFAULT_PLAYER_PROP = {
-			maxSpeed: 60,
-			acc: 200,
-			maxHealth: 200,
-			attack: {
-				range: 40,
-				angle: Math.PI / 6,
-				shape: null,
-				damage: 40,
-				prepareTime: 0.8,
-				cooldownTime: 0,
-				auto: false,
-				eventAttackReach: [],
-				eventAttackDone: [],
-			},
-			bloodSucking: 0.4,
-			defense: 0,
-			hurtRate: 200,
-			killSteal: 0.5,
-			KillScore: 100,
-		};
-		for (let key in DEFAULT_PLAYER_PROP) {
-			this[key] = DEFAULT_PLAYER_PROP[key];
-		}
 	}
 };
 
 function getDefaultPlayerProp() {
 	return new PlayerProp();
 }
-function makeEffect(apply) {
-	return class Effect {
-		constructor(time = Infinity) {
-			this.time = time;
-		}
+class Effect {
+	constructor(time = Infinity) {
+		this.time = time;
+	}
+	/**@param {PlayerProp} _*/
+	apply(_) { }
+};
+/**
+ * @param {string} id
+ * @param {(p:PlayerProp)=>void} apply 
+ */
+function makeEffect(id, apply) {
+	return class extends Effect {
+		static id = id;
 		apply(playerProp) {
 			apply(playerProp);
 		}
 	};
 }
-class Skill {
-	constructor() { }
+class Skill extends Effect {
+	constructor(name, cooldown) {
+		super(Infinity);
+		this.name = name;
+		this.totalCooldown = cooldown;
+		this.cooldown = 0;
+		this.isActive = false;
+	}
+	/**
+	 * @param {Player} player 
+	 * @param  {...any[]} args 
+	 */
+	active(player, ...args) {
+		if (this.cooldown > 0) {
+			throw new InvaildError('skill is cooldowning');
+		}
+		if (this.isActive) {
+			throw new InvaildError('skill is active');
+		}
+		this.isActive = true;
+	}
+	/**
+	 * @param {Player} player 
+	 * @param  {...any[]} args 
+	 */
+	disactive(player, ...args) {
+		this.isActive = false;
+		this.cooldown = this.totalCooldown;
+	}
 }
+
+/**
+ * 
+ * @param {string} name 
+ * @param {number} cooldown 
+ * @param {(player:Player,...args:any[])=>void} active 
+ * @param {(player:Player,...args:any[])=>void} disactive 
+ */
 function makeSkill(name, cooldown, active = () => { }, disactive = () => { }) {
 	return class extends Skill {
+		static id = name;
 		constructor() {
-			super();
-			this.name = name;
-			this.totalCooldown = cooldown;
-			this.cooldown = 0;
-			this.isActive = false;
+			super(name, cooldown);
 		}
+		/**
+		 * @param {Player} player 
+		 * @param  {...any[]} args 
+		 */
 		active(player, ...args) {
-			if (this.cooldown > 0) {
-				throw new Error('skill is cooldowning');
-			}
-			if (this.isActive) {
-				throw new Error('skill is active');
-			}
-			this.isActive = true;
+			super.active(player, ...args);
 			active(player, ...args);
 		}
+		/**
+		 * @param {Player} player 
+		 * @param  {...any[]} args 
+		 */
 		disactive(player, ...args) {
 			disactive(player, ...args);
-			this.isActive = false;
-			this.cooldown = this.totalCooldown;
+			super.disactive(player, ...args);
 		}
 	};
 };
-const Poet = makeEffect(p => {
+const Poet = makeEffect('poet', p => {
 	p.bloodSucking *= 2;
 });
-const Knife = makeEffect(p => {
+const Knife = makeEffect('knife', p => {
 	p.maxSpeed += 10;
 	(a => {
 		a.damage *= 0.75;
@@ -193,7 +262,7 @@ const Knife = makeEffect(p => {
 		a.prepareTime -= 0.4;
 	})(p.attack);
 });
-const Broadsward = makeEffect(p => {
+const Broadsward = makeEffect('broadsword', p => {
 	p.maxSpeed -= 10;
 	p.bloodSucking *= 0.75;
 	(a => {
@@ -205,7 +274,7 @@ const Broadsward = makeEffect(p => {
 	})(p.attack);
 	p.defense += 0.2;
 });
-const Furnace = makeEffect(p => {
+const Furnace = makeEffect('furnace', p => {
 	p.maxSpeed += 25;
 	p.bloodSucking *= 1.5;
 	(a => {
@@ -217,12 +286,15 @@ const Furnace = makeEffect(p => {
 	})(p.attack);
 });
 const JIAN_Q_MAX_SEP_TIME = 4;
-class JianQAttacking {
-	constructor(time, part = 1) {
-		this.time = time;
-		this.part = part;
+class JianQAttacking extends Effect {
+	static id = 'king_q';
+	/**@param {number} time @param {number} stage*/
+	constructor(time, stage = 1) {
+		super(time);
+		this.part = stage;
 		this._combo_hited = new Map();
 	}
+	/**@param {PlayerProp} p*/
 	apply(p) {
 		(a => {
 			switch (this.part) {
@@ -281,7 +353,7 @@ class JianQAttacking {
 				player.skills.getSkill('king_q').disactive(player);
 			}
 			catch (_) { }
-		}
+		};
 		p.on('beforeexpire', (player, { effect }) => {
 			if (effect === this) {
 				comboEnd(player);
@@ -354,11 +426,17 @@ class JianQAttacking {
 		});
 	}
 }
-class Shifting {
+class Shifting extends Effect {
+	static id = 'shifting';
+	/**
+	 * @param {number} time 
+	 * @param {V} deltaSpeed 
+	 */
 	constructor(time, deltaSpeed) {
-		this.time = time;
+		super(time);
 		this.deltaSpeed = deltaSpeed;
 	}
+	/**@param {PlayerProp} p*/
 	apply(p) {
 		p.on('time', (player, { time }) => {
 			player.pos.addM(this.deltaSpeed.mul(time));
@@ -371,13 +449,15 @@ const JianQ = makeSkill('king_q', 10, (player) => {
 const JianE = makeSkill('king_e', 10, (player, { angle }) => {
 	angle = vaild.real(angle, { hint: 'angle', min: 0, max: 2 * Math.PI });
 	player.applyEffect(new Shifting(0.2, V.fromAngle(angle, 100)));
-	player.skills.getSkill('king_e').disactive();
+	player.skills.getSkill('king_e').disactive(player);
 });
 
-class Jian {
+class Jian extends Effect {
+	static id = 'king';
 	constructor() {
-		this.time = Infinity;
+		super();
 	}
+	/**@param {PlayerProp} p*/
 	apply(p) {
 		p.maxSpeed *= 1.25;
 		p.bloodSucking *= 1.5;
@@ -389,17 +469,6 @@ class Jian {
 		});
 	}
 };
-const EFFECT_IDS = [
-	['poet', Poet],
-	['knife', Knife],
-	['broadsward', Broadsward],
-	['furnace', Furnace],
-	['king', Jian],
-	['king_q', JianQAttacking],
-	['shifting', Shifting],
-];
-const ID_EFFECT_MAP = new Map(EFFECT_IDS);
-const EFFECT_ID_MAP = new Map(EFFECT_IDS.map(([a, b]) => [b, a]));
 const VIEWED_EFFECT_ID = new Map([
 	Poet,
 	Knife,
@@ -408,32 +477,308 @@ const VIEWED_EFFECT_ID = new Map([
 	Jian,
 	JianQAttacking,
 	Shifting,
-].map((Effect) => [Effect.prototype, EFFECT_ID_MAP.get(Effect)]));
-const ALL_SELECTABLE_PASSIVE_EFFECT_IDS = [
+].map(Effect => [Effect.prototype, Effect.id]));
+const ALL_SELECTABLE_PASSIVE_EFFECTS = [
 	Poet,
 	Knife,
 	Broadsward,
 	Furnace,
 	Jian,
-].map(Effect => (EFFECT_ID_MAP.get(Effect)));
+];
+const ALL_SELECTABLE_PASSIVE_EFFECT_IDS = ALL_SELECTABLE_PASSIVE_EFFECTS.map(Effect => Effect.id);
+const ID_EFFECT_MAP = new Map(ALL_SELECTABLE_PASSIVE_EFFECTS.map(Effect => [Effect.id, Effect]));
 
 class Waiting { };
 class BeforeAttack {
+	/**
+	 * @param {number} time 
+	 * @param {number} angle 
+	 */
 	constructor(time, angle) {
 		this.time = time;
 		this.angle = angle;
 	}
 };
 class AfterAttack {
+	/**
+	 * @param {number} time 
+	 */
 	constructor(time) {
 		this.time = time;
 	}
 };
 
+/**@typedef {Waiting|BeforeAttack|AfterAttack} AttackState*/
+
 const PLAYER_STATE_SELECTING_PASSIVE_SKILL = Symbol('PLAYER_STATE_SECLETING_PASSIVE_SKILL');
 const PLAYER_STATE_PLAYING = Symbol('PLAYER_STATE_PLAYING');
+/**@typedef {PLAYER_STATE_SELECTING_PASSIVE_SKILL|PLAYER_STATE_PLAYING} PlayerState*/
 
-module.exports = class Forty extends Game {
+class Player {
+	/**
+	 * 
+	 * @param {{
+	state?:PlayerState,
+	pos?:V,
+	speed?:V,
+	targetSpeed?:V,
+	facing?:V,
+	attackState?:AttackState,
+	prop?:PlayerProp,
+	health?:number,
+	targetHealth?:number,
+	lastDamager?:Player|null,
+	effects?:Effect[],
+	skills?:SkillMap,
+	score?:number,
+	teamID:string,
+	id:string,
+	callback:function,
+	game:Forty,
+	}} input
+	 */
+	constructor({
+		state = PLAYER_STATE_SELECTING_PASSIVE_SKILL,
+		pos = new V(),
+		speed = new V(),
+		targetSpeed = new V(),
+		facing = V.fromAngle(randomReal(0, 2 * Math.PI)),
+		attackState = new Waiting(),
+		prop = getDefaultPlayerProp(),
+		health = prop.maxHealth,
+		targetHealth = prop.maxHealth,
+		lastDamager = null,
+		effects = [],
+		skills = new SkillMap(),
+		score = 0,
+		teamID,
+		id,
+		callback,
+		game,
+	}) {
+		this.state = state;
+		this.pos = pos;
+		this.speed = speed;
+		this.targetSpeed = targetSpeed;
+		this.facing = facing;
+		this.attackState = attackState;
+		this.health = health;
+		this.targetHealth = targetHealth;
+		this.lastDamager = lastDamager;
+		this.effects = effects;
+		this.skills = skills;
+		this.prop = prop;
+		this.score = score;
+		this.teamID = teamID;
+		this.id = id;
+		this.callback = callback;
+		this.game = game;
+	}
+	startAttack(angle) {
+		if (!(this.attackState instanceof Waiting)) {
+			throw new InvaildError('player is attacking');
+		}
+		let prepareTime = this.prop.attack.prepareTime;
+		let a = { prepareTime, angle };
+		this.prop.emit('beforestartattack', this, a);
+		({ prepareTime, angle } = a);
+		this.attackState = new BeforeAttack(prepareTime, angle);
+		this.prop.emit('afterstartattack', this, { prepareTime, angle });
+	}
+	/**
+	 * @param {V} targetSpeed 
+	 */
+	startMove(targetSpeed) {
+		let len = targetSpeed.len;
+		if (len > 0) {
+			targetSpeed.mulM(this.prop.maxSpeed / len);
+		}
+		this.targetSpeed = targetSpeed;
+	}
+	/**
+	 * @param {Player} player 
+	 */
+	canDamage(player) {
+		return player.teamID !== this.teamID;
+	}
+	/**
+	 * @param {Shape} shape 
+	 */
+	modifyShapeTransform(shape) {
+		if (!(this.attackState instanceof BeforeAttack)) {
+			throw new TypeError('not in BeforeAttack state');
+		}
+		shape.translation = this.pos;
+		shape.rorate = this.attackState.angle;
+	}
+	/**
+	 * @param {Player} player 
+	 */
+	canAttackReach(player) {
+		if (!(this.attackState instanceof BeforeAttack)) {
+			throw new TypeError('not in BeforeAttack state');
+		}
+		let shape = this.prop.attack.shape;
+		if (shape !== null) {
+			this.modifyShapeTransform(shape);
+			return shape.include(player.pos);
+		}
+		let distance = player.pos.sub(this.pos);
+		let len = distance.len;
+		let angle = this.prop.attack.angle;
+		if (len === 0 || len > this.prop.attack.range) {
+			return false;
+		}
+		let theta = distance.angle - this.attackState.angle;
+		if (theta < 0) {
+			theta += 2 * Math.PI;
+		}
+		return theta <= angle || theta >= 2 * Math.PI - angle;
+	}
+	/**
+	 * @param {number} s 
+	 */
+	move(s) {
+		let deltaSpeed = this.targetSpeed.sub(this.speed);
+		let len = deltaSpeed.len;
+		let accT = Math.min(len / this.prop.acc, s);
+		this.pos.addM(this.speed.mul(accT / 2));
+		if (len > 0) {
+			this.speed.addM(deltaSpeed.mul(1 / len).mul(accT * this.prop.acc));
+		}
+		this.pos.addM(this.speed.mul(s - accT / 2));
+		let speedLen = this.speed.len;
+		if (speedLen > 0) {
+			this.facing = this.speed.mul(1 / speedLen);
+		}
+		this.pos.x = mid(this.pos.x, 0, ARENA_WIDTH);
+		this.pos.y = mid(this.pos.y, 0, ARENA_HEIGHT);
+	}
+	dealDamage(target, damage, options = {}) {
+		let data = {
+			source: this,
+			target,
+			damage,
+			bloodSucking: this.prop.bloodSucking,
+			...options,
+		};
+		this.prop.emit('beforedealdamage', this, data);
+		target.prop.emit('beforehurt', target, data);
+		let source, bloodSucking;
+		({ source, target, damage, bloodSucking } = data);
+		let defense = target.prop.defense;
+		damage = Math.max((1 - defense) * damage, 0);
+		target.targetHealth -= damage;
+		target.lastDamager = source;
+		target.prop.emit('afterhurt', target, { source, target, damage });
+		this.targetHealth += damage * bloodSucking;
+		if (this.targetHealth > this.prop.maxHealth) {
+			this.targetHealth = this.prop.maxHealth;
+		}
+		this.prop.emit('afterdealdamage', this, { source, target, damage });
+	}
+	attack() {
+		this.prop.emit('beforeattack', this);
+		for (let [, target] of this.game.players) {
+			if (this.canDamage(target) && this.canAttackReach(target)) {
+				let data = { target, damage: this.prop.attack.damage };
+				this.prop.emit('beforeattackreach', this, data);
+				this.dealDamage(target, data.damage);
+				this.prop.emit('afterattackreach', this, data);
+				this.game.needUpdate = true;
+			}
+		}
+		this.prop.emit('afterattack', this);
+	}
+	updateEffect() {
+		this.prop = getDefaultPlayerProp();
+		for (let effect of this.effects) {
+			effect.apply(this.prop);
+		}
+	}
+	applyEffect(effect) {
+		this.effects.push(effect);
+		this.updateEffect();
+		this.prop.emit('aftereffectapply', this, { effect });
+	}
+	removeEffect(effect) {
+		let index = this.effects.indexOf(effect);
+		if (index !== -1) {
+			this.effects.splice(index, 1);
+			this.updateEffect();
+			return true;
+		}
+		return false;
+	}
+	findEffect(f) {
+		return this.effects.find(f);
+	}
+	time(s) {
+		this.prop.emit('time', this, { time: s });
+		this.move(s);
+
+		let attackTime = s;
+		/**
+		 * @template {typeof BeforeAttack|typeof AfterAttack} T
+		 * @param {T} state
+		 * @param {()=>void} done
+		 */
+		const updateAttackState = (state, done) => {
+			if (this.attackState instanceof state) {
+				if (this.attackState.time <= attackTime) {
+					attackTime -= Math.min(this.attackState.time);
+					done();
+				}
+				else {
+					this.attackState.time -= attackTime;
+					attackTime = 0;
+				}
+			}
+		};
+		do {
+			updateAttackState(BeforeAttack, () => {
+				this.attack();
+				this.attackState = new AfterAttack(this.prop.attack.cooldownTime);
+			});
+			updateAttackState(AfterAttack, () => {
+				this.attackState = new Waiting();
+			});
+			if (this.attackState instanceof Waiting) {
+				if (this.prop.attack.auto) {
+					this.attackState = new BeforeAttack(this.prop.attack.prepareTime, this.facing.angle);
+				}
+				else {
+					break;
+				}
+			}
+		} while (attackTime > 0);
+
+		this.health = Math.max(this.targetHealth, this.health - this.prop.hurtRate * s);
+
+		this.skills.forEach((name, skill) => {
+			if (!skill.isActive) {
+				skill.cooldown = Math.max(skill.cooldown - s, 0);
+			}
+		});
+
+		this.effects.forEach(effect => effect.time -= s);
+		if (this.effects.some(effect => effect.time <= 0)) {
+			this.effects = this.effects.filter(effect => {
+				if (effect.time <= 0) {
+					let data = { effect, canceled: false };
+					this.prop.emit('beforeexpire', this, data);
+					return data.canceled;
+				}
+				else {
+					return true;
+				}
+			});
+			this.updateEffect();
+		}
+	}
+}
+
+class Forty extends Game {
 	constructor(settings) {
 		super(settings);
 		this.info = {
@@ -447,9 +792,9 @@ module.exports = class Forty extends Game {
 			bannedEffectIDs = ban || [],
 		} = settings;
 		this.teamCount = vaild.integer(teamCount, { hint: 'teamCount', min: 2, allows: [null] });
-		this.selectableEffects = selectableEffectIDs
-			.filter(id=>!bannedEffectIDs.includes(id))
-			.map(id => ID_EFFECT_MAP.get(id));
+		this.selectableEffectIDs = vaild.array(selectableEffectIDs)
+			.map(s => vaild.string(s))
+			.filter(id => !bannedEffectIDs.includes(id));
 		if (this.teamCount !== null) {
 			this.teams = [];
 			for (let i = 1; i <= this.teamCount; i++) {
@@ -459,227 +804,14 @@ module.exports = class Forty extends Game {
 				this.teams.push(team);
 			}
 		}
+		/**@type {Map<string,Player>} */
 		let players = new Map();
 		this.players = players;
+		/**@type {Map<string,Player>} */
 		this.waitingPlayers = new Map();
 		this.time = -Infinity;
-		let game = this;
 		this.needUpdate = false;
 		this.updateCooldown = 0;
-		this.Player = class Player {
-			constructor({
-				state = PLAYER_STATE_SELECTING_PASSIVE_SKILL,
-				pos = new V(),
-				speed = new V(),
-				targetSpeed = new V(),
-				facing = V.fromAngle(randomReal(0, 2 * Math.PI)),
-				attackState = new Waiting(),
-				prop = getDefaultPlayerProp(),
-				health = prop.maxHealth,
-				targetHealth = prop.maxHealth,
-				lastDamager = null,
-				effects = [],
-				skills = new SkillMap(),
-				score = 0,
-				teamID,
-				id,
-				callback,
-			}) {
-				this.state = state;
-				this.pos = pos;
-				this.speed = speed;
-				this.targetSpeed = targetSpeed;
-				this.facing = facing;
-				this.attackState = attackState;
-				this.health = health;
-				this.targetHealth = targetHealth;
-				this.lastDamager = lastDamager;
-				this.effects = effects;
-				this.skills = skills;
-				this.prop = prop;
-				this.score = score;
-				this.teamID = teamID;
-				this.id = id;
-				this.callback = callback;
-				this.game = game;
-			}
-			startAttack(angle) {
-				if (!(this.attackState instanceof Waiting)) {
-					throw new Error('player is attacking');
-				}
-				let prepareTime = this.prop.attack.prepareTime;
-				let a = { prepareTime, angle };
-				this.prop.emit('beforestartattack', this, a);
-				({ prepareTime, angle } = a);
-				this.attackState = new BeforeAttack(prepareTime, angle);
-				this.prop.emit('afterstartattack', this, { prepareTime, angle });
-			}
-			startMove(targetSpeed) {
-				let len = targetSpeed.len;
-				if (len > 0) {
-					targetSpeed.mulM(this.prop.maxSpeed / len);
-				}
-				this.targetSpeed = targetSpeed;
-			}
-			canDamage(player) {
-				return player.teamID !== this.teamID;
-			}
-			modifyShapeTransform(shape) {
-				shape.translation = this.pos;
-				shape.rorate = this.attackState.angle;
-			}
-			canAttackReach(player) {
-				let shape = this.prop.attack.shape;
-				if (shape !== null) {
-					this.modifyShapeTransform(shape);
-					return shape.include(player.pos);
-				}
-				let distance = player.pos.sub(this.pos);
-				let len = distance.len;
-				let angle = this.prop.attack.angle;
-				if (len === 0 || len > this.prop.attack.range) {
-					return false;
-				}
-				let theta = distance.angle - this.attackState.angle;
-				if (theta < 0) {
-					theta += 2 * Math.PI;
-				}
-				return theta <= angle || theta >= 2 * Math.PI - angle;
-			}
-			move(s) {
-				let deltaSpeed = this.targetSpeed.sub(this.speed);
-				let len = deltaSpeed.len;
-				let accT = Math.min(len / this.prop.acc, s);
-				this.pos.addM(this.speed.mul(accT / 2));
-				if (len > 0) {
-					this.speed.addM(deltaSpeed.mul(1 / len).mul(accT * this.prop.acc));
-				}
-				this.pos.addM(this.speed.mul(s - accT / 2));
-				let speedLen = this.speed.len;
-				if (speedLen > 0) {
-					this.facing = this.speed.mul(1 / speedLen);
-				}
-			}
-			dealDamage(target, damage, options = {}) {
-				let data = {
-					source: this,
-					target,
-					damage,
-					bloodSucking: this.prop.bloodSucking,
-					...options,
-				};
-				this.prop.emit('beforedealdamage', this, data);
-				target.prop.emit('beforehurt', target, data);
-				let source, bloodSucking;
-				({ source, target, damage, bloodSucking } = data);
-				let defense = target.prop.defense;
-				damage = Math.max((1 - defense) * damage, 0);
-				target.targetHealth -= damage;
-				target.lastDamager = source;
-				target.prop.emit('afterhurt', target, { source, target, damage });
-				this.targetHealth += damage * bloodSucking;
-				if (this.targetHealth > this.prop.maxHealth) {
-					this.targetHealth = this.prop.maxHealth;
-				}
-				this.prop.emit('afterdealdamage', this, { source, target, damage });
-			}
-			attack() {
-				this.prop.emit('beforeattack', this);
-				for (let [, target] of players) {
-					if (this.canDamage(target) && this.canAttackReach(target)) {
-						let data = { target, damage: this.prop.attack.damage };
-						this.prop.emit('beforeattackreach', this, data);
-						this.dealDamage(target, data.damage);
-						this.prop.emit('afterattackreach', this, data);
-						this.game.needUpdate = true;
-					}
-				}
-				this.prop.emit('afterattack', this);
-			}
-			updateEffect() {
-				this.prop = getDefaultPlayerProp();
-				for (let effect of this.effects) {
-					effect.apply(this.prop);
-				}
-			}
-			applyEffect(effect) {
-				this.effects.push(effect);
-				this.updateEffect();
-				this.prop.emit('aftereffectapply', this, { effect });
-			}
-			removeEffect(effect) {
-				let index = this.effects.indexOf(effect);
-				if (index !== -1) {
-					this.effects.splice(index, 1);
-					this.updateEffect();
-					return true;
-				}
-				return false;
-			}
-			findEffect(f) {
-				return this.effects.find(f);
-			}
-			time(s) {
-				this.prop.emit('time', this, { time: s });
-				this.move(s);
-				this.pos.x = mid(this.pos.x, 0, ARENA_WIDTH);
-				this.pos.y = mid(this.pos.y, 0, ARENA_HEIGHT);
-
-				let attackTime = s;
-				const updateAttackState = (state, done) => {
-					if (this.attackState instanceof state) {
-						if (this.attackState.time <= attackTime) {
-							attackTime -= Math.min(this.attackState.time);
-							done();
-						}
-						else {
-							this.attackState.time -= attackTime;
-							attackTime = 0;
-						}
-					}
-				}
-				do {
-					updateAttackState(BeforeAttack, () => {
-						this.attack();
-						this.attackState = new AfterAttack(this.prop.attack.cooldownTime)
-					});
-					updateAttackState(AfterAttack, () => {
-						this.attackState = new Waiting();
-					});
-					if (this.attackState instanceof Waiting) {
-						if (this.prop.attack.auto) {
-							this.attackState = new BeforeAttack(this.prop.attack.prepareTime, this.facing.angle);
-						}
-						else {
-							break;
-						}
-					}
-				} while (attackTime > 0);
-
-				this.health = Math.max(this.targetHealth, this.health - this.prop.hurtRate * s);
-
-				this.skills.forEach((name, skill) => {
-					if (!skill.isActive) {
-						skill.cooldown = Math.max(skill.cooldown - s, 0);
-					}
-				});
-
-				this.effects.forEach(effect => effect.time -= s);
-				if (this.effects.some(effect => effect.time <= 0)) {
-					this.effects = this.effects.filter(effect => {
-						if (effect.time <= 0) {
-							let data = { effect, canceled: false };
-							this.prop.emit('beforeexpire', this, data);
-							return data.canceled;
-						}
-						else {
-							return true;
-						}
-					});
-					this.updateEffect();
-				}
-			}
-		};
 	}
 	canJoin(id) {
 		return true;
@@ -706,7 +838,7 @@ module.exports = class Forty extends Game {
 			player.callback = callback;
 		}
 		else {
-			player = new this.Player({
+			player = new Player({
 				pos: new V(
 					randomReal(0, ARENA_WIDTH),
 					randomReal(0, ARENA_HEIGHT),
@@ -717,6 +849,7 @@ module.exports = class Forty extends Game {
 					this.players.forEach(player => {
 						count.set(player.teamID, count.get(player.teamID) + 1);
 					});
+					/**@type {string} */
 					let minTeamID;
 					let min = Infinity;
 					count.forEach((playerCount, teamID) => {
@@ -728,6 +861,7 @@ module.exports = class Forty extends Game {
 					return minTeamID;
 				})(),
 				id,
+				game: this,
 			});
 			callback(['request_choice', { type: 'skills' }]);
 			this.waitingPlayers.set(id, player);
@@ -766,19 +900,19 @@ module.exports = class Forty extends Game {
 		let [type, data] = input;
 		let player = this.players.get(id) || this.waitingPlayers.get(id);
 		if (player === undefined) {
-			throw new Error('player is died');
+			throw new InvaildError('player is died');
 		}
 		switch (type) {
 			case 'set_skills': {
 				if (player.state !== PLAYER_STATE_SELECTING_PASSIVE_SKILL) {
-					throw new Error('player cannot select a passive skill');
+					throw new InvaildError('player cannot select a passive skill');
 				}
 				const { passive } = data;
-				let passiveSkillID = vaild.string(passive, { hint: 'passiveSkillID' });
-				let Effect = ID_EFFECT_MAP.get(passiveSkillID);
-				if (!this.selectableEffects.includes(Effect)) {
-					throw new Error('you cannot select that skill');
+				const passiveSkillID = vaild.string(passive, { hint: 'passiveSkillID' });
+				if (!this.selectableEffectIDs.includes(passiveSkillID)) {
+					throw new InvaildError('you cannot select that skill');
 				}
+				const Effect = ID_EFFECT_MAP.get(passiveSkillID);
 				player.applyEffect(new Effect());
 				player.state = PLAYER_STATE_PLAYING;
 				this.players.set(id, player);
@@ -788,7 +922,7 @@ module.exports = class Forty extends Game {
 			}
 			case 'attack': {
 				if (player.state !== PLAYER_STATE_PLAYING) {
-					throw new Error('player is not playing');
+					throw new InvaildError('player is not playing');
 				}
 				player.startAttack(vaild.real(data, { min: 0, max: Math.PI * 2, hint: 'angle' }));
 				this.needUpdate = true;
@@ -796,7 +930,7 @@ module.exports = class Forty extends Game {
 			}
 			case 'skill': {
 				if (player.state !== PLAYER_STATE_PLAYING) {
-					throw new Error('player is not playing');
+					throw new InvaildError('player is not playing');
 				}
 				player.skills.getSkill(vaild.string(data.name, { hint: 'name' })).active(player, data);
 				this.needUpdate = true;
@@ -804,14 +938,14 @@ module.exports = class Forty extends Game {
 			}
 			case 'set_direction': {
 				if (player.state !== PLAYER_STATE_PLAYING) {
-					throw new Error('player is not playing');
+					throw new InvaildError('player is not playing');
 				}
 				player.startMove(this.getDirection(vaild.integer(data, { min: -1, max: 7, hint: 'direction' })));
 				this.needUpdate = true;
 				break;
 			}
 			default: {
-				throw new Error('unknown input type');
+				throw new InvaildError('unknown input type');
 			}
 		}
 	}
@@ -911,4 +1045,6 @@ module.exports = class Forty extends Game {
 	static unserialization(data) {
 		return new Forty(JSON.parse(data));
 	}
-}
+};
+
+module.exports = Forty;

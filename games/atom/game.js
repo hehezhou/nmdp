@@ -1,5 +1,6 @@
 const MatchGame = require('../match-game-base.js');
 const vaild = require('../../utils/vaild.js');
+const { InvaildError: InvalidError } = vaild;
 const { randomPick } = require('../../utils/random.js');
 const { Game } = require('./core.js');
 const mapGens = require('./map-generator.js');
@@ -19,7 +20,7 @@ module.exports = class Atom extends MatchGame {
 		this.on('start', () => this.onStart());
 		this.on('input', (playerID, data) => {
 			this.onInput(playerID, data);
-		})
+		});
 		this.info.id = 'atom';
 	}
 	join(playerID, callback) {
@@ -98,13 +99,13 @@ module.exports = class Atom extends MatchGame {
 		switch (type) {
 			case 'decide': {
 				if (this.game.turn !== index) {
-					throw new Error('not player\'s turn');
+					throw new InvalidError('not player\'s turn');
 				}
 				this.onChoice(data);
 				break;
 			}
 			default: {
-				throw new Error('unknown input type');
+				throw new InvalidError('unknown input type');
 			}
 		}
 	}
