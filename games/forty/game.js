@@ -142,28 +142,29 @@ class SkillMap {
 		return result;
 	}
 }
+
 class PlayerProp extends EventEmitter {
-	maxSpeed = 60;
-	acc = 200;
-	maxHealth = 200;
-	attack = {
-		range: 40,
-		angle: Math.PI / 6,
-		shape: null,
-		damage: 40,
-		prepareTime: 0.8,
-		cooldownTime: 0,
-		auto: false,
-		eventAttackReach: [],
-		eventAttackDone: [],
-	};
-	bloodSucking = 0.4;
-	defense = 0;
-	hurtRate = 200;
-	killSteal = 0.5;
-	KillScore = 100;
 	constructor() {
 		super();
+		this.maxSpeed = 60;
+		this.acc = 200;
+		this.maxHealth = 200;
+		this.attack = {
+			range: 40,
+			angle: Math.PI / 6,
+			shape: null,
+			damage: 40,
+			prepareTime: 0.8,
+			cooldownTime: 0,
+			auto: false,
+			eventAttackReach: [],
+			eventAttackDone: [],
+		};
+		this.bloodSucking = 0.4;
+		this.defense = 0;
+		this.hurtRate = 200;
+		this.killSteal = 0.5;
+		this.KillScore = 100;
 	}
 };
 
