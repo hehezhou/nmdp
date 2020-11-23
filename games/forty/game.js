@@ -184,7 +184,9 @@ class Effect {
  */
 function makeEffect(id, apply) {
 	return class extends Effect {
-		static id = id;
+		static get id() {
+			return id;
+		}
 		apply(playerProp) {
 			apply(playerProp);
 		}
@@ -230,7 +232,9 @@ class Skill extends Effect {
  */
 function makeSkill(name, cooldown, active = () => { }, disactive = () => { }) {
 	return class extends Skill {
-		static id = name;
+		static get id() {
+			return name;
+		}
 		constructor() {
 			super(name, cooldown);
 		}
@@ -288,7 +292,9 @@ const Furnace = makeEffect('furnace', p => {
 });
 const JIAN_Q_MAX_SEP_TIME = 4;
 class JianQAttacking extends Effect {
-	static id = 'king_q';
+	static get id() {
+		return 'king_q';
+	}
 	/**@param {number} time @param {number} stage*/
 	constructor(time, stage = 1) {
 		super(time);
@@ -428,7 +434,9 @@ class JianQAttacking extends Effect {
 	}
 }
 class Shifting extends Effect {
-	static id = 'shifting';
+	static get id() {
+		return 'shifting';
+	}
 	/**
 	 * @param {number} time 
 	 * @param {V} deltaSpeed 
@@ -454,7 +462,9 @@ const JianE = makeSkill('king_e', 5, (player, { angle }) => {
 });
 
 class Jian extends Effect {
-	static id = 'king';
+	static get id() {
+		return 'king';
+	}
 	constructor() {
 		super();
 	}
