@@ -24,15 +24,15 @@ const transferEffect = {
         data.dagger = true;
         data.attackType = 'initial';
     },
-    'broadsward': (data, msg) => {
-        data.knifeRadius *= 1.5;
+    'broadsword': (data, msg) => {
+        data.knifeRadius *= 1.75;
         data.attackSumTime += 1.2;
         data.theta *= 1.5;
         data.broadsword = true;
         data.attackType = 'initial';
     },
     'furnace': (data, msg) => {
-        data.knifeRadius *= 0.75;
+        data.knifeRadius *= 0.8;
         data.attackSumTime += 1.2;
         data.attackTheta = null;
         data.furnace = true;
@@ -48,7 +48,7 @@ const transferEffect = {
             case 1: {
                 data.img.king_q = 'king_q1.jpg';
                 data.attackType = 'king1';
-                data.attackSumTime = 0.7;
+                data.attackSumTime = 0.5;
                 data.attackWidth = 20;
                 data.attackLength = 50;
                 data.attackSPJ = 30;
@@ -65,9 +65,9 @@ const transferEffect = {
             case 3: {
                 data.img.king_q = 'king_q3.jpg';
                 data.attackType = 'king3';
-                data.attackSumTime = 0.5;
-                data.knifeRadius *= 25 / 40;
-                data.attackSPJ = 15;
+                data.attackSumTime = 0.9;
+                data.knifeRadius *= 22 / 40;
+                data.attackSPJ = 13;
                 break;
             }
         }
@@ -160,7 +160,7 @@ const GAME = (() => {
                     if (this.effects.some(data => data.id === 'furnace')) {
                         this.attackState.time = 2;
                     }
-                    else if (this.effects.some(data => data.id === 'broadsward')) this.attackState = new AfterAttack({ time: 1.5 });
+                    else if (this.effects.some(data => data.id === 'broadsword')) this.attackState = new AfterAttack({ time: 1.5 });
                     else this.attackState = Waiting;
                 }
             }
