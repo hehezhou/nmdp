@@ -481,8 +481,8 @@ class Jian extends Effect {
 	}
 	/**@param {PlayerProp} p*/
 	apply(p) {
-		p.maxSpeed += 5;
-		p.bloodSucking *= 1.2;
+		p.maxSpeed += 10;
+		p.bloodSucking *= 1.5;
 		p.on('aftereffectapply', (player, { effect }) => {
 			if (effect === this) {
 				player.skills.addSkill(new JianQ());
