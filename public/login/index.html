@@ -21,15 +21,17 @@
     <body style="margin: 0;">
         <script src="../sources/js/post.js"></script>
         <div style="display: grid; align-content: center; justify-content: center; height: 100vh; width: 100vw;">
-            <h1 style="text-align: center; font-size: 30px;">登录</h1>
-            <div id="username-box" style="margin: 1vh;">
-                <label style="display: block; font-size: 18px;">用户名</label>
-                <input id="user-name" style="height: 20px; width: 200px;">
-            </div>
-            <div id="key-box" style="margin: 1vh;">
-                <label style="display: block; font-size: 18px;">密码</label>
-                <input id="key" type="password" style="height: 20px; width: 200px;">
-            </div>
+            <form>
+                <h1 style="text-align: center; font-size: 30px;">登录</h1>
+                <div id="username-box" style="margin: 1vh;">
+                    <label style="display: block; font-size: 18px;">用户名</label>
+                    <input id="user-name" style="height: 20px; width: 200px;" autocomplete="username">
+                </div>
+                <div id="key-box" style="margin: 1vh;">
+                    <label style="display: block; font-size: 18px;">密码</label>
+                    <input id="key" type="password" style="height: 20px; width: 200px;" autocomplete="current-password">
+                </div>
+            </form>
             <div id="submit-box" style="justify-self: center; margin: 1vh;">
                 <button id="submit" style="font-size: 18px; height: 30px; width: 65px;">登录</button>
             </div>
@@ -39,8 +41,8 @@
             let btn = document.getElementById('submit'), userName = document.getElementById('user-name'), key = document.getElementById('key'), msg = document.getElementById('msg');
             btn.addEventListener('click', async () => {
                 let userNameData = userName.value, keyData = key.value;
-                if(userNameData === "") msg.innerText = '请输入用户名';
-                else if(keyData === "") msg.innerText = '请输入密码';
+                if (userNameData === "") msg.innerText = '请输入用户名';
+                else if (keyData === "") msg.innerText = '请输入密码';
                 else {
                     try {
                         await new Promise((resolve, reject) => {
@@ -51,7 +53,7 @@
                                     msg.innerText = '登录成功', history.go(-1), resolve(true);
                                 },
                                 fnFail: (data) => {
-                                    if(data.status === 401) msg.innerText = data.text, key.value = '', resolve(false);
+                                    if (data.status === 401) msg.innerText = data.text, key.value = '', resolve(false);
                                     else msg.innerText = data, reject(data);
                                 },
                                 fnLoading: () => {
@@ -61,7 +63,7 @@
                             });
                         });
                     }
-                    catch(e) {
+                    catch (e) {
                         msg.innerText = e;
                     }
                     btn.innerText = '登录';
@@ -69,7 +71,7 @@
                 }
             });
             document.addEventListener('keydown', (data) => {
-                if(data.key.trim().toLowerCase() === 'enter') btn.click();
+                if (data.key && data.key.trim().toLowerCase() === 'enter') btn.click();
             });
         </script>
     </body>
