@@ -266,6 +266,7 @@ const Poet = makeEffect('poet', p => {
 });
 const Knife = makeEffect('knife', p => {
 	p.maxSpeed += 15;
+	p.maxHealth *= 0.75;
 	(a => {
 		a.damage *= 2.5;
 		a.range *= 0.7;
