@@ -74,11 +74,6 @@ const HTML = {
         p.innerText = x;
         return p.innerHTML;
     },
-    setPixelated: function (x) {
-        let type = navigator.userAgent;
-        if (type.indexOf('Firefox') > -1) x.style.imageRendering = 'crisp-edges';
-        else x.style.imageRendering = 'pixelated';
-    },
     clearBody: function () {
         document.body.innerHTML = '';
     },
