@@ -719,6 +719,7 @@ class Player {
 		for (let effect of this.effects) {
 			effect.apply(this.prop);
 		}
+		this.targetHealth = Math.min(this.targetHealth, this.prop.maxHealth);
 	}
 	applyEffect(effect) {
 		this.effects.push(effect);
