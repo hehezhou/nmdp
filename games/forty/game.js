@@ -171,8 +171,9 @@ class PlayerProp extends EventEmitter {
 function getDefaultPlayerProp() {
 	return new PlayerProp();
 }
-class Effect {
+class Effect extends EventEmitter {
 	constructor(time = Infinity) {
+		super();
 		this.time = time;
 	}
 	/**@param {PlayerProp} _*/
@@ -227,32 +228,36 @@ class Skill extends Effect {
  * 
  * @param {string} name 
  * @param {number} cooldown 
- * @param {(player:Player,...args:any[])=>void} active 
- * @param {(player:Player,...args:any[])=>void} disactive 
+ * @param {{[x:string]:(player:Player,...args:any[])=>void}} events
  */
-function makeSkill(name, cooldown, active = () => { }, disactive = () => { }) {
+function makeSkill(name, cooldown, events) {
 	return class extends Skill {
 		static get id() {
 			return name;
 		}
 		constructor() {
 			super(name, cooldown);
+			for (const [event, callback] of Object.entries(events)) {
+				this.on(event, callback);
+			}
 		}
 		/**
 		 * @param {Player} player 
 		 * @param  {...any[]} args 
 		 */
 		active(player, ...args) {
+			this.emit('beforeactive', player, ...args);
 			super.active(player, ...args);
-			active(player, ...args);
+			this.emit('afteractive', player, ...args);
 		}
 		/**
 		 * @param {Player} player 
 		 * @param  {...any[]} args 
 		 */
 		disactive(player, ...args) {
-			disactive(player, ...args);
+			this.emit('beforedisactive', player, ...args);
 			super.disactive(player, ...args);
+			this.emit('afterdisactive', player, ...args);
 		}
 	};
 };
@@ -417,56 +422,6 @@ class JianQAttacking extends Effect {
 				data.damage *= 1.5;
 			}
 		});
-		// p.on('afterattackreach', (player, data) => {
-		// 	const W = 20;
-		// 	const H1 = 30;
-		// 	const H2 = 50;
-		// 	const A = Math.PI / 6;
-		// 	const R21 = 30;
-		// 	const R22 = 45;
-		// 	const R3 = 13;
-		// 	let special_shape = {
-		// 		1: (new Shape())
-		// 			.line(new V(H1, W / 2))
-		// 			.line(new V(H2, W / 2))
-		// 			.line(new V(H2, -W / 2))
-		// 			.line(new V(H1, -W / 2))
-		// 			.line(new V(H1, 0)),
-		// 		2: (new Shape())
-		// 			.line(V.fromAngle(A, R22))
-		// 			.arc({
-		// 				dest: V.fromAngle(-A, R22),
-		// 				circleCenter: new V(0, 0),
-		// 				isClockwise: true,
-		// 			})
-		// 			.line(V.fromAngle(-A, R21))
-		// 			.arc({
-		// 				dest: V.fromAngle(A, R21),
-		// 				circleCenter: new V(0, 0),
-		// 				isClockwise: false,
-		// 			}),
-		// 		3: (new Shape())
-		// 			.arc({
-		// 				dest: new V(2 * R3, 0),
-		// 				circleCenter: new V(R3, 0),
-		// 				isClockwise: false,
-		// 			})
-		// 			.arc({
-		// 				dest: new V(0, 0),
-		// 				circleCenter: new V(R3, 0),
-		// 				isClockwise: false,
-		// 			})
-		// 	}[this.part];
-		// 	player.modifyShapeTransform(special_shape);
-		// 	let { target } = data;
-		// 	if (special_shape.include(target.pos)) {
-		// 		let hited = (this._combo_hited.get(target) || 0) + 1;
-		// 		this._combo_hited.set(target, hited);
-		// 		if (hited === 3) {
-		// 			player.dealDamage(target, 80, { bloodSucking: 5 / 8 });
-		// 		}
-		// 	}
-		// });
 		p.on('afterattack', player => {
 			if (this.part === 3) {
 				comboEnd(player);
@@ -499,13 +454,22 @@ class Shifting extends Effect {
 		});
 	}
 }
-const JianQ = makeSkill('king_q', 10, (player) => {
-	player.applyEffect(new JianQAttacking(JIAN_Q_MAX_SEP_TIME));
+const JianQ = makeSkill('king_q', 10, {
+	beforeactive(player) {
+		if (player.attackState instanceof BeforeAttack) {
+			throw new InvaildError('player is attacking');
+		}
+	},
+	afteractive(player) {
+		player.applyEffect(new JianQAttacking(JIAN_Q_MAX_SEP_TIME));
+	},
 });
-const JianE = makeSkill('king_e', 5, (player, { angle }) => {
-	angle = vaild.real(angle, { hint: 'angle', min: 0, max: 2 * Math.PI });
-	player.applyEffect(new Shifting(0.2, V.fromAngle(angle, 100)));
-	player.skills.getSkill('king_e').disactive(player);
+const JianE = makeSkill('king_e', 5, {
+	afteractive(player, { angle }) {
+		angle = vaild.real(angle, { hint: 'angle', min: 0, max: 2 * Math.PI });
+		player.applyEffect(new Shifting(0.2, V.fromAngle(angle, 100)));
+		player.skills.getSkill('king_e').disactive(player);
+	},
 });
 
 class Jian extends Effect {
