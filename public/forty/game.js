@@ -392,6 +392,12 @@ async function gameInterface(msg) {
             players.forEach(data => {
                 if (data.id === playerIndex) myData = data, X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1, myTeam = data.team;
             });
+            const skillBanChecks = {
+                "king_q": (data) => {
+                    if (data.onattack && data.attackRestTime >= 0) return 1;
+                    return 0;
+                }
+            };
             for (let [name, skill] of nowSkills) {
                 let id;
                 switch (name[name.length - 1]) {
@@ -421,6 +427,11 @@ async function gameInterface(msg) {
                 skill.cooldown = Math.max(skill.cooldown, 0);
                 cover.style.height = `${10 * skill.cooldown / skill.total_cooldown}vh`;
                 img.style.borderColor = skill.is_active ? 'red' : 'black';
+                if (skill.cooldown === 0 && !skill.is_active) {
+                    if (skillBanChecks[name] && skillBanChecks[name](myData)) {
+                        cover.style.height = `${10}vh`;
+                    }
+                }
             }
             flush();
             g_knife.innerHTML = '';
@@ -925,6 +936,7 @@ async function gameInterface(msg) {
                         let tmp = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
                         for (let i of nowSkills) {
                             if (i[0][i[0].length - 1] === key) {
+                                if (skillBanChecks[i[0]] && skillBanChecks[i[0]](myData)) continue;
                                 if (i[1].cooldown <= 0) send(['skill', { name: i[0], angle: tmp < 0 ? tmp + 2 * Math.PI : tmp }]);
                             }
                         }
