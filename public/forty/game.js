@@ -379,6 +379,13 @@ async function gameInterface(msg) {
             return x * fixInnerWidth;
         }
         let lastCalcTime = 0;
+        const skillBanChecks = {
+            "king_q": (data) => {
+                if (data.onattack && data.attackRestTime >= 0) return 1;
+                return 0;
+            }
+        };
+        let myTeam, myData;
         requestAnimationFrame(async function x() {
             for (let i of skillBoxs) {
                 i.box.style.display = 'none';
@@ -386,18 +393,11 @@ async function gameInterface(msg) {
             let delta = Date.now() - lastCalcTime;
             lastCalcTime += delta;
             delta /= 1000;
-            let myTeam, myData;
             let tag = 0;
             let { players, standing } = FORTY.getNowMap();
             players.forEach(data => {
                 if (data.id === playerIndex) myData = data, X = data.x - nowHeight / 2, Y = data.y - nowWidth / 2, tag = 1, myTeam = data.team;
             });
-            const skillBanChecks = {
-                "king_q": (data) => {
-                    if (data.onattack && data.attackRestTime >= 0) return 1;
-                    return 0;
-                }
-            };
             for (let [name, skill] of nowSkills) {
                 let id;
                 switch (name[name.length - 1]) {
@@ -430,6 +430,7 @@ async function gameInterface(msg) {
                 if (skill.cooldown === 0 && !skill.is_active) {
                     if (skillBanChecks[name] && skillBanChecks[name](myData)) {
                         cover.style.height = `${10}vh`;
+                        img.style.borderColor = 'gray';
                     }
                 }
             }
@@ -936,7 +937,8 @@ async function gameInterface(msg) {
                         let tmp = Math.atan2(nowHeight / 2 - nowMouseX, nowMouseY - nowWidth / 2);
                         for (let i of nowSkills) {
                             if (i[0][i[0].length - 1] === key) {
-                                if (skillBanChecks[i[0]] && skillBanChecks[i[0]](myData)) continue;
+                                if (skillBanChecks[i[0]] && myData && skillBanChecks[i[0]](myData)) continue;
+                                console.log('qwq');
                                 if (i[1].cooldown <= 0) send(['skill', { name: i[0], angle: tmp < 0 ? tmp + 2 * Math.PI : tmp }]);
                             }
                         }
