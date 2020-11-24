@@ -265,21 +265,22 @@ const Poet = makeEffect('poet', p => {
 	p.bloodSucking *= 2;
 });
 const Knife = makeEffect('knife', p => {
-	p.maxSpeed += 10;
+	p.maxSpeed += 15;
 	(a => {
-		a.damage *= 0.75;
-		a.range *= 0.75;
-		a.prepareTime -= 0.4;
+		a.damage *= 2.5;
+		a.range *= 0.7;
+		a.prepareTime -= 0.5;
+		a.cooldownTime += 3;
 	})(p.attack);
 });
 const Broadsword = makeEffect('broadsword', p => {
 	p.maxSpeed -= 5;
-	p.bloodSucking *= 0.75;
+	p.bloodSucking *= 0.9;
 	(a => {
 		a.range *= 1.75;
 		a.prepareTime += 1.2;
 		a.cooldownTime += 1.5;
-		a.damage *= 2;
+		a.damage *= 3;
 		a.angle *= 1.5;
 	})(p.attack);
 	p.defense += 0.2;

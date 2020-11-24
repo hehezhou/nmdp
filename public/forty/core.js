@@ -19,8 +19,8 @@ const transferEffect = {
         data.attackType = 'initial';
     },
     'knife': (data, msg) => {
-        data.attackSumTime -= 0.4;
-        data.knifeRadius *= 0.75;
+        data.attackSumTime -= 0.5;
+        data.knifeRadius *= 0.7;
         data.dagger = true;
         data.attackType = 'initial';
     },
@@ -161,6 +161,7 @@ const GAME = (() => {
                         this.attackState.time = 2;
                     }
                     else if (this.effects.some(data => data.id === 'broadsword')) this.attackState = new AfterAttack({ time: 1.5 });
+                    else if (this.effects.some(data => data.id === 'knife')) this.attackState = new AfterAttack({ time: 3 });
                     else this.attackState = Waiting;
                 }
             }
