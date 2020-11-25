@@ -20,7 +20,7 @@ const transferEffect = {
     },
     'knife': (data, msg) => {
         data.maxHP *= 0.75;
-        data.attackSumTime -= 0.5;
+        data.attackSumTime -= 0.4;
         data.knifeRadius *= 0.7;
         data.dagger = true;
         data.attackType = 'initial';

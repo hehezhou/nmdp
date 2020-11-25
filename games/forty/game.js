@@ -263,14 +263,17 @@ function makeSkill(name, cooldown, events) {
 };
 const Poet = makeEffect('poet', p => {
 	p.bloodSucking *= 2;
+	(a => {
+		a.damage *= 1.2;
+	})(p.attack);
 });
 const Knife = makeEffect('knife', p => {
 	p.maxSpeed += 15;
-	p.maxHealth *= 0.75;
+	p.maxHealth *= 0.7;
 	(a => {
 		a.damage *= 2.5;
 		a.range *= 0.7;
-		a.prepareTime -= 0.5;
+		a.prepareTime -= 0.4;
 		a.cooldownTime += 3;
 	})(p.attack);
 });
@@ -483,8 +486,8 @@ class Jian extends Effect {
 	}
 	/**@param {PlayerProp} p*/
 	apply(p) {
-		p.maxSpeed += 5;
-		p.bloodSucking *= 1.2;
+		p.maxSpeed += 10;
+		p.bloodSucking *= 1.25;
 		p.on('aftereffectapply', (player, { effect }) => {
 			if (effect === this) {
 				player.skills.addSkill(new JianQ());
